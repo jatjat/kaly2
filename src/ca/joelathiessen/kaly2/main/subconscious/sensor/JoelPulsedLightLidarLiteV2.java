@@ -12,12 +12,12 @@ import lejos.hardware.sensor.EV3IRSensor;
 
 public class JoelPulsedLightLidarLiteV2 extends I2CSensor {
 
-	public JoelPulsedLightLidarLiteV2(Port port) {
-		super(port);
-	}
+  public JoelPulsedLightLidarLiteV2(Port port) {
+    super(port);
+  }
 
-	// TODO: install the sensor!
-	public void fetchSample(float[] sample, int offset) {
+  // TODO: install the sensor!
+  public void fetchSample(float[] sample, int offset) {
 
-	}
+  }
 }

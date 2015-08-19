@@ -4,13 +4,17 @@ import ca.joelathiessen.kaly2.main.subconscious.Subconscious;
 
 public class Robot {
 
-	public Robot(Subconscious subconsc) {
-		// TODO Auto-generated constructor stub
-	}
+  private Subconscious subconsc;
+  private Thread subconscThread;
 
-	public void start() {
-		System.out.println("Robot starting");
+  public Robot(Subconscious subconsc) {
+    this.subconsc = subconsc;
+    subconscThread = new Thread(subconsc);
+  }
 
-	}
+  public void start() {
+    System.out.println("Robot starting");
+    subconscThread.start();
+  }
 
 }
