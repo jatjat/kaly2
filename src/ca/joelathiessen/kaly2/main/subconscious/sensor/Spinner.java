@@ -7,14 +7,14 @@ public class Spinner {
 
   private RegulatedMotor motor;
 
-  private static final int MAX_DETECTOR_ANGLE_DEG = 180;
-  private static final int MIN_DETECTOR_ANGLE_DEG = -180;
+  public static final int MAX_DETECTOR_ANGLE_DEG = 180;
+  public static final int MIN_DETECTOR_ANGLE_DEG = -180;
 
   private int maxDetectorAngleDeg;
   private int minDetectorAngleDeg;
 
-  boolean turnClockwise = true;
-  boolean spin = false;
+  private boolean turnClockwise = true;
+  private boolean spin = false;
 
   public Spinner(RegulatedMotor motor, int maxDetectorAngleDeg, int minDetectorAngleDeg) {
 
@@ -51,5 +51,9 @@ public class Spinner {
 
   public float getAngle() {
     return (float) Math.toRadians(motor.getTachoCount());
+  }
+
+  public boolean turningClockwise() {
+    return turnClockwise;
   }
 }

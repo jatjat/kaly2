@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import lejos.hardware.motor.EV3LargeRegulatedMotor;
+import lejos.hardware.sensor.I2CSensor;
+import lejos.robotics.RegulatedMotor;
 import lejos.robotics.localization.OdometryPoseProvider;
 import lejos.robotics.navigation.DifferentialPilot;
 import lejos.robotics.navigation.Pose;
@@ -33,10 +35,39 @@ import org.mockito.stubbing.Answer;
 @RunWith(MockitoJUnitRunner.class)
 public class SubconsciousTest {
 
-  @Test
-  public void testRun_1SweepOf3Measurements() {
+  private JoelPulsedLightLidarLiteV2 sensor;
+  private Spinner spinner;
+  private DifferentialPilot pilot;
+  private OdometryPoseProvider odometry;
+  private ConcurrentLinkedQueue<ArrayList<Measurement>> sweeps;
 
-    long timeout = System.currentTimeMillis() + 1000;
+  @Before
+  public void setUp() {
+    sensor = Mockito.mock(JoelPulsedLightLidarLiteV2.class);
+    pilot = Mockito.mock(DifferentialPilot.class);
+    odometry = Mockito.mock(OdometryPoseProvider.class);
+    RegulatedMotor motor = Mockito.mock(RegulatedMotor.class);
+    spinner = new Spinner(motor);
+    sweeps = new ConcurrentLinkedQueue<ArrayList<Measurement>>();
+  }
+
+  @Test
+  public void testConstructSubconscious_PassedValuesUnmodified() {
+
+    Subconscious sub = new Subconscious(sensor, pilot, odometry, spinner, sweeps);
+    sub.toString();
+
+    assertNotNull(sensor);
+    assertNotNull(pilot);
+    assertNotNull(odometry);
+    assertNotNull(spinner);
+    assertNotNull(sweeps);
+  }
+
+  @Test
+  public void testRun_atLeast1SweepOf3Measurements() {
+
+    long timeout;
     ConcurrentLinkedQueue<ArrayList<Measurement>> sweeps =
         new ConcurrentLinkedQueue<ArrayList<Measurement>>();
     JoelPulsedLightLidarLiteV2 sensor = Mockito.mock(JoelPulsedLightLidarLiteV2.class);
@@ -59,6 +90,7 @@ public class SubconsciousTest {
 
     }).when(sensor).fetchSample(any(float[].class), anyInt());
 
+    timeout = System.currentTimeMillis() + 100;
     thread.start();
     // I think polling is fine, at least for now:
     while (sweeps.isEmpty() == true && System.currentTimeMillis() < timeout) {

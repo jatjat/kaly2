@@ -19,11 +19,10 @@ public class Subconscious implements Runnable {
   // 350 degree spin of the distance detector
   public static final int PROBABLE_MAX_MEASUREMENTS_PER_SWEEP = 360;
 
-  private I2CSensor sensor;
+  private JoelPulsedLightLidarLiteV2 sensor;
   private Spinner spinner;
   private DifferentialPilot pilot;
   private OdometryPoseProvider odometry;
-
   private ConcurrentLinkedQueue<ArrayList<Measurement>> sweeps;
 
   public Subconscious(JoelPulsedLightLidarLiteV2 sensor, DifferentialPilot pilot,
