@@ -29,12 +29,26 @@ public class RobotTest {
     robot = new Robot(sub, sweeps);
   }
 
-  @After
-  public void tearDown() throws Exception {}
-
   @Test
   public void testRobot() {
-    assertNotNull(robot);
+    assertNotNull(robot); // is this sort of test actually necessary?
+  }
+  
+  @Test
+  public void testConstructRobot_PassedValuesUnmodified() {
+
+    Subconscious sub = Mockito.mock(Subconscious.class);
+    ConcurrentLinkedQueue<ArrayList<Measurement>> sweeps =
+        new ConcurrentLinkedQueue<ArrayList<Measurement>>();
+    
+    Subconscious subCopy = sub;
+    ConcurrentLinkedQueue<ArrayList<Measurement>> sweepsCopy = sweeps;
+    
+    Robot robot2 = new Robot(sub, sweeps);
+    robot2.toString();
+    
+    assertEquals(sub,subCopy);
+    assertEquals(sweeps,sweepsCopy);
   }
 
   @Test
@@ -53,7 +67,7 @@ public class RobotTest {
     assertTrue(robot.isRunning());
     robot.stopRobot();
     assertFalse(robot.isRunning());
-    
+
     thread.interrupt();
     try {
       thread.join(150);
