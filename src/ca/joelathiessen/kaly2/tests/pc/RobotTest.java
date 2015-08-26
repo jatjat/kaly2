@@ -54,8 +54,11 @@ public class RobotTest {
   @Test
   public void testStartStopRobotSimple() {
     robot.startRobot();
+    
     assertTrue(robot.isRunning());
+    
     robot.stopRobot();
+    
     assertFalse(robot.isRunning());
   }
 
@@ -64,17 +67,20 @@ public class RobotTest {
     Thread thread = new Thread(robot);
     thread.start();
     robot.startRobot();
+    
     assertTrue(robot.isRunning());
+    
     robot.stopRobot();
+    
     assertFalse(robot.isRunning());
 
     thread.interrupt();
+    
     try {
       thread.join(150);
     } catch (InterruptedException e) {
       fail("Robot thread was interupted but didn't stop in a timely fashion");
     }
-    assertFalse(thread.isAlive());
   }
 
 }

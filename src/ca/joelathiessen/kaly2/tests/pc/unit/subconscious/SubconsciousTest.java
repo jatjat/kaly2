@@ -47,7 +47,7 @@ public class SubconsciousTest {
     pilot = Mockito.mock(DifferentialPilot.class);
     odometry = Mockito.mock(OdometryPoseProvider.class);
     RegulatedMotor motor = Mockito.mock(RegulatedMotor.class);
-    spinner = new Spinner(motor);
+    spinner = Mockito.mock(Spinner.class);
     sweeps = new ConcurrentLinkedQueue<ArrayList<Measurement>>();
   }
 
@@ -74,15 +74,9 @@ public class SubconsciousTest {
   public void testRun_atLeast1SweepOf3Measurements() {
 
     long timeout;
-    ConcurrentLinkedQueue<ArrayList<Measurement>> sweeps =
-        new ConcurrentLinkedQueue<ArrayList<Measurement>>();
-    Kaly2PulsedLightLidarLiteV2 sensor = Mockito.mock(Kaly2PulsedLightLidarLiteV2.class);
-    DifferentialPilot pilot = Mockito.mock(DifferentialPilot.class);
-    OdometryPoseProvider odometry = Mockito.mock(OdometryPoseProvider.class);
-    Spinner spinner = Mockito.mock(Spinner.class);
     Subconscious sub = new Subconscious(sensor, pilot, odometry, spinner, sweeps);
     Thread thread = new Thread(sub);
-
+    
     when(odometry.getPose()).thenReturn(new Pose());
     // spin thrice:
     when(spinner.spinning()).thenReturn(true).thenReturn(true).thenReturn(true).thenReturn(false);
@@ -114,6 +108,19 @@ public class SubconsciousTest {
         // well it works on my computer!
       }
 
+    }
+  }
+  
+  @Test
+  public void testRun_interruptionHaltsExcecution() {
+    Subconscious sub = new Subconscious(sensor, pilot, odometry, spinner, sweeps);
+    Thread thread = new Thread(sub);
+    thread.start();
+    thread.interrupt();
+    try {
+      thread.join(150);
+    } catch (InterruptedException e) {
+      fail("Subconscious thread was interupted but didn't stop in a timely fashion");
     }
   }
 }
