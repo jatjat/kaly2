@@ -8,6 +8,7 @@ import static org.mockito.Mockito.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
@@ -16,13 +17,14 @@ import ca.joelathiessen.kaly2.main.subconscious.sensor.Spinner;
 @RunWith(MockitoJUnitRunner.class)
 public class SpinnerTest {
 
+  @Mock
   private RegulatedMotor motor;
+  
   private Spinner spinner;
 
   @Before
-  public void setUp() {
+  public void setUpBeforeClass() {
     motor = Mockito.mock(RegulatedMotor.class);
-
   }
 
   @Test

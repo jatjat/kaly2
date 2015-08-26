@@ -18,7 +18,7 @@ import org.mockito.Mockito;
 import ca.joelathiessen.kaly2.main.Robot;
 import ca.joelathiessen.kaly2.main.subconscious.Measurement;
 import ca.joelathiessen.kaly2.main.subconscious.Subconscious;
-import ca.joelathiessen.kaly2.main.subconscious.sensor.JoelPulsedLightLidarLiteV2;
+import ca.joelathiessen.kaly2.main.subconscious.sensor.Kaly2PulsedLightLidarLiteV2;
 import ca.joelathiessen.kaly2.main.subconscious.sensor.Spinner;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -35,7 +35,7 @@ import org.mockito.stubbing.Answer;
 @RunWith(MockitoJUnitRunner.class)
 public class SubconsciousTest {
 
-  private JoelPulsedLightLidarLiteV2 sensor;
+  private Kaly2PulsedLightLidarLiteV2 sensor;
   private Spinner spinner;
   private DifferentialPilot pilot;
   private OdometryPoseProvider odometry;
@@ -43,7 +43,7 @@ public class SubconsciousTest {
 
   @Before
   public void setUp() {
-    sensor = Mockito.mock(JoelPulsedLightLidarLiteV2.class);
+    sensor = Mockito.mock(Kaly2PulsedLightLidarLiteV2.class);
     pilot = Mockito.mock(DifferentialPilot.class);
     odometry = Mockito.mock(OdometryPoseProvider.class);
     RegulatedMotor motor = Mockito.mock(RegulatedMotor.class);
@@ -70,7 +70,7 @@ public class SubconsciousTest {
     long timeout;
     ConcurrentLinkedQueue<ArrayList<Measurement>> sweeps =
         new ConcurrentLinkedQueue<ArrayList<Measurement>>();
-    JoelPulsedLightLidarLiteV2 sensor = Mockito.mock(JoelPulsedLightLidarLiteV2.class);
+    Kaly2PulsedLightLidarLiteV2 sensor = Mockito.mock(Kaly2PulsedLightLidarLiteV2.class);
     DifferentialPilot pilot = Mockito.mock(DifferentialPilot.class);
     OdometryPoseProvider odometry = Mockito.mock(OdometryPoseProvider.class);
     Spinner spinner = Mockito.mock(Spinner.class);
@@ -87,10 +87,9 @@ public class SubconsciousTest {
         sample[0] = 10;
         return null;
       }
-
     }).when(sensor).fetchSample(any(float[].class), anyInt());
 
-    timeout = System.currentTimeMillis() + 100;
+    timeout = System.currentTimeMillis() + 1000;
     thread.start();
     // I think polling is fine, at least for now:
     while (sweeps.isEmpty() == true && System.currentTimeMillis() < timeout) {

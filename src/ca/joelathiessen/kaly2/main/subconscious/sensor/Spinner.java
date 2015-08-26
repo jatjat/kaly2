@@ -34,8 +34,8 @@ public class Spinner {
 
   public void spin() {
 
-    // spin the detector back and forth (if we spun one direction
-    // the wires would jam):
+    // spin the detector back and forth (if we spun one direction,
+    // for the current sensor configuration the wires would jam):
     if (turnClockwise == true) {
       motor.rotateTo(maxDetectorAngleDeg, true);
       turnClockwise = false;

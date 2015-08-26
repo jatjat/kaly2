@@ -1,8 +1,9 @@
 package ca.joelathiessen.kaly2.main.subconscious;
 
 import java.util.ArrayList;
+import java.util.List;
 
-import ca.joelathiessen.kaly2.main.subconscious.sensor.JoelPulsedLightLidarLiteV2;
+import ca.joelathiessen.kaly2.main.subconscious.sensor.Kaly2PulsedLightLidarLiteV2;
 import ca.joelathiessen.kaly2.main.subconscious.sensor.Spinner;
 import lejos.hardware.motor.Motor;
 import lejos.hardware.sensor.I2CSensor;
@@ -19,13 +20,13 @@ public class Subconscious implements Runnable {
   // 350 degree spin of the distance detector
   public static final int PROBABLE_MAX_MEASUREMENTS_PER_SWEEP = 360;
 
-  private JoelPulsedLightLidarLiteV2 sensor;
+  private Kaly2PulsedLightLidarLiteV2 sensor;
   private Spinner spinner;
   private DifferentialPilot pilot;
   private OdometryPoseProvider odometry;
   private ConcurrentLinkedQueue<ArrayList<Measurement>> sweeps;
 
-  public Subconscious(JoelPulsedLightLidarLiteV2 sensor, DifferentialPilot pilot,
+  public Subconscious(Kaly2PulsedLightLidarLiteV2 sensor, DifferentialPilot pilot,
       OdometryPoseProvider odometry, Spinner spinner,
       ConcurrentLinkedQueue<ArrayList<Measurement>> sweeps) {
     this.sensor = sensor;
@@ -49,6 +50,17 @@ public class Subconscious implements Runnable {
     float[] sensorReading = new float[1];
 
     while (Thread.interrupted() == false) {
+      
+      // to save my poor processor:
+      try {
+        Thread.sleep(100);
+      } catch (InterruptedException e) {
+        synchronized (this) {
+          Thread.currentThread().interrupt();
+        }
+      }
+      
+      
       // spin the detector back or forth (if we spun one direction the
       // wires would jam):
       spinner.spin();
@@ -56,6 +68,7 @@ public class Subconscious implements Runnable {
       // take a sweep of sensor readings:
       sweep = new ArrayList<Measurement>(PROBABLE_MAX_MEASUREMENTS_PER_SWEEP);
       while (spinner.spinning() == true) {
+
         sensor.fetchSample(sensorReading, 0);
 
         distance = sensorReading[0];
@@ -71,7 +84,7 @@ public class Subconscious implements Runnable {
         sweeps.add(sweep);
       }
     }
-
+    System.out.println("Subconscious completed");
   }
 
 }

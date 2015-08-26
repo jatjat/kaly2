@@ -5,10 +5,11 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.mockito.Mockito;
 
+import ca.joelathiessen.kaly2.main.Commander;
 import ca.joelathiessen.kaly2.main.Robot;
 import ca.joelathiessen.kaly2.main.subconscious.Measurement;
 import ca.joelathiessen.kaly2.main.subconscious.Subconscious;
-import ca.joelathiessen.kaly2.main.subconscious.sensor.JoelPulsedLightLidarLiteV2;
+import ca.joelathiessen.kaly2.main.subconscious.sensor.Kaly2PulsedLightLidarLiteV2;
 import ca.joelathiessen.kaly2.main.subconscious.sensor.Spinner;
 import lejos.hardware.motor.EV3LargeRegulatedMotor;
 import lejos.hardware.sensor.I2CSensor;
@@ -20,7 +21,7 @@ public class Demo {
   public static void main(String[] args) {
     System.out.println("Running kaly2 on a PC, attempting to mock only access to the hardware");
 
-    JoelPulsedLightLidarLiteV2 sensor = Mockito.mock(JoelPulsedLightLidarLiteV2.class);
+    Kaly2PulsedLightLidarLiteV2 sensor = Mockito.mock(Kaly2PulsedLightLidarLiteV2.class);
     DifferentialPilot pilot = Mockito.mock(DifferentialPilot.class);
     OdometryPoseProvider odometry = Mockito.mock(OdometryPoseProvider.class);
     EV3LargeRegulatedMotor spinMotor = Mockito.mock(EV3LargeRegulatedMotor.class);
@@ -29,8 +30,11 @@ public class Demo {
         new ConcurrentLinkedQueue<ArrayList<Measurement>>();
 
     Subconscious sub = new Subconscious(sensor, pilot, odometry, spinner, sweeps);
-    Robot robot = new Robot(sub);
-    robot.start();
+    Robot robot = new Robot(sub, sweeps);
+    Commander commander = new Commander(robot);
+    commander.takeCommands();
+    
+
 
     System.out.println("Demo completed");
   }
