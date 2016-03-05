@@ -15,7 +15,7 @@ I've written some JUnit tests as well.
 
 
 Todo:
-  - write a super simple IC2 "driver" for a laser distance sensor.
+  - write a super simple IC2 "driver" for a laser distance sensor
   - incorporate the FastSLAM implementation I previously wrote
   - implement a low-level object avoidance algorithm
   - implement a persistent obstacle map
