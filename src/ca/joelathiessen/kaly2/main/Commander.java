@@ -21,7 +21,7 @@ public class Commander {
   public void takeCommands() {
     String input;
     boolean quit = false;
-    System.out.println("Enter a command (q to quit):");
+    System.out.println("Enter a command (q to quit, h for help):");
     robotThread.start();
     try {
 
@@ -34,6 +34,8 @@ public class Commander {
           robot.startRobot();
         } else if (input.equals("r")) {
           robot.stopRobot();
+        } else if (input.equals("h")) {
+          System.out.println("Press the 'g' key to start the robot, 'r' to stop it, and 'q' to quit.");
         }
       }
       robot.stopRobot();
@@ -53,8 +55,10 @@ public class Commander {
   }
 
   public static void main(String[] args) {
-    // the robot will start from here; i.e. :
+    // the robot will start itself from here; i.e. :
     // Commander commander = new Commander(robot);
+    // ...
+    
   }
 
 }

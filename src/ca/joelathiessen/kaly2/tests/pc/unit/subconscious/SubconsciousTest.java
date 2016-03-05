@@ -54,20 +54,20 @@ public class SubconsciousTest {
   @Test
   public void testConstructSubconscious_PassedValuesUnmodified() {
 
-    Kaly2PulsedLightLidarLiteV2 sensorCopy = sensor;
-    Spinner spinCopy = spinner;
-    DifferentialPilot pilotCopy = pilot;
-    OdometryPoseProvider odoCopy = odometry;
-    ConcurrentLinkedQueue<ArrayList<Measurement>> sweepsCopy = sweeps;
+    String sensorCopy = sensor.toString();
+    String spinCopy = spinner.toString();
+    String pilotCopy = pilot.toString();
+    String odoCopy = odometry.toString();
+    String sweepsCopy = sweeps.toString();
 
     Subconscious sub = new Subconscious(sensor, pilot, odometry, spinner, sweeps);
     sub.toString();
 
-    assertEquals(sensor, sensorCopy);
-    assertEquals(pilot, pilotCopy);
-    assertEquals(odometry, odoCopy);
-    assertEquals(spinner, spinCopy);
-    assertEquals(sweeps, sweepsCopy);
+    assertEquals(sensor.toString(), sensorCopy);
+    assertEquals(pilot.toString(), pilotCopy);
+    assertEquals(odometry.toString(), odoCopy);
+    assertEquals(spinner.toString(), spinCopy);
+    assertEquals(sweeps.toString(), sweepsCopy);
   }
 
   @Test

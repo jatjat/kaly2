@@ -3,19 +3,19 @@ package ca.joelathiessen.kaly2.main.subconscious.sensor;
 import lejos.robotics.RegulatedMotor;
 
 public class Spinner {
-  private static final int DETECTOR_SPEED_DEGS_SEC = 100;
 
   private RegulatedMotor motor;
-
-  public static final int MAX_DETECTOR_ANGLE_DEG = 180;
-  public static final int MIN_DETECTOR_ANGLE_DEG = -180;
+  
+  public static final int DETECTOR_SPEED_DEGS_SEC = 100;
+  
+  public static final int DEFAULT_MAX_DETECTOR_ANGLE_DEG = 180;
+  public static final int DEFAULT_MIN_DETECTOR_ANGLE_DEG = -180;
 
   private int maxDetectorAngleDeg;
   private int minDetectorAngleDeg;
 
   private boolean turnClockwise = true;
-  private boolean spin = false;
-
+  
   public Spinner(RegulatedMotor motor, int maxDetectorAngleDeg, int minDetectorAngleDeg) {
 
     this.motor = motor;
@@ -27,8 +27,8 @@ public class Spinner {
   public Spinner(RegulatedMotor motor) {
 
     this.motor = motor;
-    this.maxDetectorAngleDeg = MAX_DETECTOR_ANGLE_DEG;
-    this.minDetectorAngleDeg = MIN_DETECTOR_ANGLE_DEG;
+    this.maxDetectorAngleDeg = DEFAULT_MAX_DETECTOR_ANGLE_DEG;
+    this.minDetectorAngleDeg = DEFAULT_MIN_DETECTOR_ANGLE_DEG;
     motor.setSpeed(DETECTOR_SPEED_DEGS_SEC);
   }
 
