@@ -2,7 +2,7 @@
 ## A total refactor of the "kaly" FastSLAM &amp; Navigation project.
 
 This project will enable simultaneous localization and mapping, and navigation, for a robot I have built.
-leJOS is required. The project can be opened in Eclipse.
+leJOS is required to compile. The project can be opened in Eclipse.
 
 Development is in-progress.
 
