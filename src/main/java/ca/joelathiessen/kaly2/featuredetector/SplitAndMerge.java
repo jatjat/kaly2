@@ -1,11 +1,9 @@
 package ca.joelathiessen.kaly2.featuredetector;
 
+import ca.joelathiessen.kaly2.subconscious.Measurement;
+
 import java.util.ArrayList;
 import java.util.List;
-
-import lejos.robotics.geometry.Point;
-import ca.joelathiessen.kaly2.subconscious.Measurement;
-import ca.joelathiessen.kaly2.featuredetector.Kaly2Feature;
 
 public class SplitAndMerge implements FeatureDetector {
 
@@ -31,7 +29,7 @@ public class SplitAndMerge implements FeatureDetector {
         int distMaxIndex = 0;
         ArrayList<SplitAndMergeFeature> results = new ArrayList<>(2);
 
-        for (int i = 1; i < inputPoints.size()-1; i++) {
+        for (int i = 1; i < inputPoints.size() - 1; i++) {
             float dist = distanceFromLineToPoint(inputPoints.get(i), inputPoints.get(0), inputPoints.get(inputPoints.size() - 1));
             if (dist > distMax) {
                 distMaxIndex = i;
@@ -48,8 +46,8 @@ public class SplitAndMerge implements FeatureDetector {
             results.addAll(list1.subList(0, subLength));
             results.addAll(list2);
         } else { // discard all the points between the start and end points
-            inputPoints.get(0).incrDiscardedPointsCount(inputPoints.size()-2);
-            results.add(0,inputPoints.get(0));
+            inputPoints.get(0).incrDiscardedPointsCount(inputPoints.size() - 2);
+            results.add(0, inputPoints.get(0));
             results.add(1, inputPoints.get(inputPoints.size() - 1));
         }
         return results;
