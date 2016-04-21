@@ -30,6 +30,7 @@ import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SplitAndMergeTest {
+  private static double EPSILON = 0.001;
 
   private Measurement makeMeasFromXY(float x, float y) {
     return new Measurement((float)Math.sqrt(x*x + y*y),(float)Math.atan2(y,x), null, 0);
@@ -49,17 +50,17 @@ public class SplitAndMergeTest {
 
     assertTrue(features.size() == measurements.size());
 
-    assertEquals(features.get(0).getX(), 0, 0.0001);
-    assertEquals(features.get(0).getY(), 0, 0.0001);
+    assertEquals(features.get(0).getX(), 0, EPSILON);
+    assertEquals(features.get(0).getY(), 0, EPSILON);
 
-    assertEquals(features.get(1).getX(), 0, 0.0001);
-    assertEquals(features.get(1).getY(), 1, 0.0001);
+    assertEquals(features.get(1).getX(), 0, EPSILON);
+    assertEquals(features.get(1).getY(), 1, EPSILON);
 
-    assertEquals(features.get(2).getX(), 1, 0.0001);
-    assertEquals(features.get(2).getY(), 1, 0.0001);
+    assertEquals(features.get(2).getX(), 1, EPSILON);
+    assertEquals(features.get(2).getY(), 1, EPSILON);
 
-    assertEquals(features.get(3).getX(), 1, 0.0001);
-    assertEquals(features.get(3).getY(), 0, 0.0001);
+    assertEquals(features.get(3).getX(), 1, EPSILON);
+    assertEquals(features.get(3).getY(), 0, EPSILON);
   }
 
   @Test
@@ -74,6 +75,8 @@ public class SplitAndMergeTest {
 
     List<? extends Kaly2Feature> features = merge.getFeatures(measurements);
 
+    assertEquals(features.get(0).getY(),0, EPSILON);
+    assertEquals(features.get(1).getY(),3, EPSILON);
     assertTrue(features.size() == 2);
   }
 
