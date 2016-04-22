@@ -2,7 +2,7 @@ package ca.joelathiessen.kaly2.tests.pc.acceptance;
 
 import ca.joelathiessen.kaly2.Commander;
 import ca.joelathiessen.kaly2.Robot;
-import ca.joelathiessen.kaly2.subconscious.Measurement;
+import ca.joelathiessen.kaly2.sensor.Measurement;
 import ca.joelathiessen.kaly2.subconscious.Subconscious;
 import ca.joelathiessen.kaly2.subconscious.sensor.Kaly2PulsedLightLidarLiteV2;
 import ca.joelathiessen.kaly2.subconscious.sensor.Spinner;

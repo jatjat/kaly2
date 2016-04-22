@@ -1,5 +1,6 @@
 package ca.joelathiessen.kaly2.subconscious
 
+import ca.joelathiessen.kaly2.sensor.Measurement
 import ca.joelathiessen.kaly2.subconscious.sensor.Kaly2PulsedLightLidarLiteV2
 import ca.joelathiessen.kaly2.subconscious.sensor.Spinner
 import lejos.robotics.localization.OdometryPoseProvider
