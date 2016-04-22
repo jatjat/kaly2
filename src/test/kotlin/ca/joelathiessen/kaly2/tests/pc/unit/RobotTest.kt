@@ -1,4 +1,4 @@
-package ca.joelathiessen.kaly2.tests.pc
+package ca.joelathiessen.kaly2.tests.pc.unit
 
 import ca.joelathiessen.kaly2.Robot
 import ca.joelathiessen.kaly2.subconscious.Measurement
