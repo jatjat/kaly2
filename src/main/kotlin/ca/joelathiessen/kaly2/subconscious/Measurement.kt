@@ -1,4 +1,4 @@
-package ca.joelathiessen.kaly2.sensor
+package ca.joelathiessen.kaly2.subconscious
 
 import lejos.robotics.navigation.Pose
 

@@ -1,6 +1,6 @@
 package ca.joelathiessen.kaly2.tests.pc.unit.subconscious
 
-import ca.joelathiessen.kaly2.sensor.Measurement
+import ca.joelathiessen.kaly2.subconscious.Measurement
 import ca.joelathiessen.kaly2.subconscious.Subconscious
 import ca.joelathiessen.kaly2.subconscious.sensor.Kaly2PulsedLightLidarLiteV2
 import ca.joelathiessen.kaly2.subconscious.sensor.Spinner
@@ -11,17 +11,19 @@ import lejos.robotics.navigation.Pose
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.Mockito
-import org.mockito.runners.MockitoJUnitRunner
 
 import java.util.ArrayList
 import java.util.concurrent.ConcurrentLinkedQueue
 
 import org.junit.Assert.*
-import org.mockito.Mockito.*
-import org.mockito.Matchers
+import com.nhaarman.mockito_kotlin.*
+import org.mockito.Mockito.`when`
+import org.powermock.api.mockito.PowerMockito
+import org.powermock.core.classloader.annotations.PrepareForTest
+import org.powermock.modules.junit4.PowerMockRunner
 
-@RunWith(MockitoJUnitRunner::class)
+@RunWith(PowerMockRunner::class)
+@PrepareForTest(Kaly2PulsedLightLidarLiteV2::class, Spinner::class)
 class SubconsciousTest {
 
     lateinit private var sensor: Kaly2PulsedLightLidarLiteV2
@@ -32,11 +34,12 @@ class SubconsciousTest {
 
     @Before
     fun setUp() {
-        sensor = Mockito.mock(Kaly2PulsedLightLidarLiteV2::class.java)
-        pilot = Mockito.mock(DifferentialPilot::class.java)
-        odometry = Mockito.mock(OdometryPoseProvider::class.java)
-        val motor = Mockito.mock(RegulatedMotor::class.java)
-        spinner = Mockito.mock(Spinner::class.java)
+        sensor = PowerMockito.mock(Kaly2PulsedLightLidarLiteV2::class.java)
+        pilot = PowerMockito.mock(DifferentialPilot::class.java)
+        odometry = PowerMockito.mock(OdometryPoseProvider::class.java)
+
+        var motor = PowerMockito.`mock`(RegulatedMotor::class.java)
+        spinner = PowerMockito.`mock`(Spinner::class.java)
         sweeps = ConcurrentLinkedQueue<ArrayList<Measurement>>()
     }
 
@@ -74,7 +77,8 @@ class SubconsciousTest {
             val sample = invocation.arguments[0] as FloatArray
             sample[0] = 10f
             null
-        }.`when`<Kaly2PulsedLightLidarLiteV2>(sensor).fetchSample(Matchers.any(FloatArray::class.java), Matchers.anyInt())
+        }.`when`<Kaly2PulsedLightLidarLiteV2>(sensor).fetchSample(any<FloatArray>(), any<Int>())
+
 
         timeout = System.currentTimeMillis() + 1000
         thread.start()
