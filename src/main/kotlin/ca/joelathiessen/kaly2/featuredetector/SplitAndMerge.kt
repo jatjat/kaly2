@@ -1,6 +1,6 @@
 package ca.joelathiessen.kaly2.featuredetector
 
-import ca.joelathiessen.kaly2.sensor.Measurement
+import ca.joelathiessen.kaly2.subconscious.Measurement
 
 import java.util.ArrayList
 

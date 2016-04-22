@@ -37,13 +37,13 @@ public class SpinnerTest {
 
         assertTrue(spinner.spinning());
         assertFalse(spinner.turningClockwise());
-        verify(motor).rotateTo(Spinner.DEFAULT_MAX_DETECTOR_ANGLE_DEG, true);
+        verify(motor).rotateTo(Spinner.Companion.getDEFAULT_MAX_DETECTOR_ANGLE_DEG(), true);
 
         spinner.spin();
 
         assertFalse(spinner.spinning());
         assertTrue(spinner.turningClockwise());
-        verify(motor).rotateTo(Spinner.DEFAULT_MIN_DETECTOR_ANGLE_DEG, true);
+        verify(motor).rotateTo(Spinner.Companion.getDEFAULT_MAX_DETECTOR_ANGLE_DEG(), true);
     }
 
     @Test
