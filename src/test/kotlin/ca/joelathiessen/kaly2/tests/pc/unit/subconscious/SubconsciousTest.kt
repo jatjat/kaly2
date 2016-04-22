@@ -1,6 +1,6 @@
 package ca.joelathiessen.kaly2.tests.pc.unit.subconscious
 
-import ca.joelathiessen.kaly2.subconscious.Measurement
+import ca.joelathiessen.kaly2.sensor.Measurement
 import ca.joelathiessen.kaly2.subconscious.Subconscious
 import ca.joelathiessen.kaly2.subconscious.sensor.Kaly2PulsedLightLidarLiteV2
 import ca.joelathiessen.kaly2.subconscious.sensor.Spinner

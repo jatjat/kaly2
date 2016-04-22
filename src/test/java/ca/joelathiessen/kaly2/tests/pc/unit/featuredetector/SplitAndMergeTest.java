@@ -1,8 +1,8 @@
 package ca.joelathiessen.kaly2.tests.pc.unit.featuredetector;
 
-import ca.joelathiessen.kaly2.featuredetector.Kaly2Feature;
 import ca.joelathiessen.kaly2.featuredetector.SplitAndMerge;
-import ca.joelathiessen.kaly2.subconscious.Measurement;
+import ca.joelathiessen.kaly2.sensor.Measurement;
+import ca.joelathiessen.kaly2.featuredetector.Kaly2Feature;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
