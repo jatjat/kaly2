@@ -30,16 +30,3 @@ dependencies {
 
     testCompile 'com.nhaarman:mockito-kotlin:0.4.0'
 }
-
-/*plugins {
-    id "com.jfrog.bintray" version "1.6"
-}*/
-
-//apply plugin: 'application'
-//mainClassName = 'ca.joelathiessen.kaly2.tests.pc.acceptance.Demo'
-
-/*
-task runSimple(type: JavaExec, dependsOn: 'classes') {
-    main = mainClassName
-    classpath = configurations.runtime
-}*/

@@ -3,6 +3,7 @@ package ca.joelathiessen.kaly2.tests.pc.unit.featuredetector;
 import ca.joelathiessen.kaly2.featuredetector.SplitAndMerge;
 import ca.joelathiessen.kaly2.subconscious.Measurement;
 import ca.joelathiessen.kaly2.featuredetector.Kaly2Feature;
+import lejos.robotics.navigation.Pose;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -18,7 +19,7 @@ public class SplitAndMergeTest {
     private static double EPSILON = 0.001;
 
     private Measurement makeMeasFromXY(float x, float y) {
-        return new Measurement((float) Math.sqrt(x * x + y * y), (float) Math.atan2(y, x), null, 0);
+        return new Measurement((float) Math.sqrt(x * x + y * y), (float) Math.atan2(y, x), new Pose(0,0,0), 0);
     }
 
     @Test
