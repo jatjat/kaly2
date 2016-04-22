@@ -34,7 +34,7 @@ class Robot(private val subconsc: Subconscious, private val sweeps: ConcurrentLi
 
     val isRunning: Boolean
         get() = runRobot.get()
-    
+
     override fun run() {
         println("Robot starting")
 
