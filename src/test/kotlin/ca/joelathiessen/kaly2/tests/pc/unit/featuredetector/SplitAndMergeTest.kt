@@ -1,17 +1,14 @@
 package ca.joelathiessen.kaly2.tests.pc.unit.featuredetector
 
+import ca.joelathiessen.kaly2.Measurement
 import ca.joelathiessen.kaly2.featuredetector.SplitAndMerge
-import ca.joelathiessen.kaly2.subconscious.Measurement
-import ca.joelathiessen.kaly2.featuredetector.Kaly2Feature
 import lejos.robotics.navigation.Pose
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.runners.MockitoJUnitRunner
-
-import java.util.ArrayList
-
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
+import java.util.*
 
 @RunWith(MockitoJUnitRunner::class)
 class SplitAndMergeTest {
@@ -19,7 +16,7 @@ class SplitAndMergeTest {
 
     private fun makeMeasFromXY(x: Float, y: Float): Measurement {
         val dist = Math.sqrt((x * x + y * y).toDouble()).toFloat()
-        val angle = Math.atan2(y.toDouble(),x.toDouble()).toFloat()
+        val angle = Math.atan2(y.toDouble(), x.toDouble()).toFloat()
         return Measurement(dist, angle, Pose(0f, 0f, 0f), 0)
     }
 

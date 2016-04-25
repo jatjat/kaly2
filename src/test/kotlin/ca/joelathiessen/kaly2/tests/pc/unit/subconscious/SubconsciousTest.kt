@@ -1,26 +1,25 @@
 package ca.joelathiessen.kaly2.tests.pc.unit.subconscious
 
-import ca.joelathiessen.kaly2.subconscious.Measurement
+import ca.joelathiessen.kaly2.Measurement
 import ca.joelathiessen.kaly2.subconscious.Subconscious
 import ca.joelathiessen.kaly2.subconscious.sensor.Kaly2PulsedLightLidarLiteV2
 import ca.joelathiessen.kaly2.subconscious.sensor.Spinner
+import com.nhaarman.mockito_kotlin.any
+import com.nhaarman.mockito_kotlin.doAnswer
 import lejos.robotics.RegulatedMotor
 import lejos.robotics.localization.OdometryPoseProvider
 import lejos.robotics.navigation.DifferentialPilot
 import lejos.robotics.navigation.Pose
+import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-
-import java.util.ArrayList
-import java.util.concurrent.ConcurrentLinkedQueue
-
-import org.junit.Assert.*
-import com.nhaarman.mockito_kotlin.*
 import org.mockito.Mockito.`when`
 import org.powermock.api.mockito.PowerMockito
 import org.powermock.core.classloader.annotations.PrepareForTest
 import org.powermock.modules.junit4.PowerMockRunner
+import java.util.*
+import java.util.concurrent.ConcurrentLinkedQueue
 
 @RunWith(PowerMockRunner::class)
 @PrepareForTest(Kaly2PulsedLightLidarLiteV2::class, Spinner::class)

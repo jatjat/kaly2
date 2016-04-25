@@ -2,16 +2,13 @@ package ca.joelathiessen.kaly2.tests.pc.unit.sensor
 
 import ca.joelathiessen.kaly2.subconscious.sensor.Spinner
 import lejos.robotics.RegulatedMotor
-import org.junit.Before
+import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mock
-import org.mockito.Mockito
-import org.mockito.runners.MockitoJUnitRunner
-
-import org.junit.Assert.*
-import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
+import org.mockito.Mockito.verify
+import org.mockito.runners.MockitoJUnitRunner
 
 @RunWith(MockitoJUnitRunner::class)
 class SpinnerTest {

@@ -1,12 +1,11 @@
 package ca.joelathiessen.kaly2.featuredetector
 
-import ca.joelathiessen.kaly2.subconscious.Measurement
-
-import java.util.ArrayList
+import ca.joelathiessen.kaly2.Measurement
+import java.util.*
 
 class SplitAndMerge : FeatureDetector {
 
-    override fun getFeatures(measurements: List<Measurement>): List<Kaly2Feature> {
+    override fun getFeatures(measurements: List<Measurement>): List<Feature> {
         //create a list of points from the measurements
         val features = ArrayList<SplitAndMergeFeature>(measurements.size)
         for (mes in measurements) {
@@ -52,7 +51,7 @@ class SplitAndMerge : FeatureDetector {
         return results
     }
 
-    private fun distanceFromLineToPoint(point: Kaly2Feature, lineOne: Kaly2Feature, lineTwo: Kaly2Feature): Float {
+    private fun distanceFromLineToPoint(point: Feature, lineOne: Feature, lineTwo: Feature): Float {
         val x2MinusX1 = lineTwo.x - lineOne.x
         val y2MinusY1 = lineTwo.y - lineOne.y
 

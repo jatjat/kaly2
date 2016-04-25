@@ -1,20 +1,17 @@
 package ca.joelathiessen.kaly2.tests.pc.unit
 
+import ca.joelathiessen.kaly2.Measurement
 import ca.joelathiessen.kaly2.Robot
-import ca.joelathiessen.kaly2.subconscious.Measurement
 import ca.joelathiessen.kaly2.subconscious.Subconscious
+import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
-import org.mockito.Mockito
-
-import java.util.ArrayList
-import java.util.concurrent.ConcurrentLinkedQueue
-
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-
-import org.junit.Assert.*
 import org.junit.runner.RunWith
+import org.mockito.Mockito
+import org.powermock.core.classloader.annotations.PrepareForTest
+import org.powermock.modules.junit4.PowerMockRunner
+import java.util.*
+import java.util.concurrent.ConcurrentLinkedQueue
 
 @RunWith(PowerMockRunner::class)
 @PrepareForTest(Subconscious::class, Measurement::class)
