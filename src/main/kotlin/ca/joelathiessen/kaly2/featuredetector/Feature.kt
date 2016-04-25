@@ -1,6 +1,6 @@
 package ca.joelathiessen.kaly2.featuredetector
 
-interface Kaly2Feature {
+interface Feature {
     val x: Float
 
     val y: Float

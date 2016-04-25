@@ -1,22 +1,16 @@
 package ca.joelathiessen.kaly2.tests.pc.acceptance
 
 import ca.joelathiessen.kaly2.Commander
+import ca.joelathiessen.kaly2.Measurement
 import ca.joelathiessen.kaly2.Robot
-import ca.joelathiessen.kaly2.subconscious.Measurement
 import ca.joelathiessen.kaly2.subconscious.Subconscious
-import ca.joelathiessen.kaly2.subconscious.sensor.Kaly2PulsedLightLidarLiteV2
 import ca.joelathiessen.kaly2.subconscious.sensor.Kaly2Sensor
 import ca.joelathiessen.kaly2.subconscious.sensor.Spinner
 import lejos.hardware.motor.EV3LargeRegulatedMotor
 import lejos.robotics.localization.OdometryPoseProvider
 import lejos.robotics.navigation.DifferentialPilot
-import org.junit.runner.RunWith
 import org.mockito.Mockito
-import org.powermock.api.mockito.PowerMockito
-import org.powermock.core.classloader.annotations.PrepareForTest
-import org.powermock.modules.junit4.PowerMockRunner
-
-import java.util.ArrayList
+import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 
 

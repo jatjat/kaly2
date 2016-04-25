@@ -1,13 +1,12 @@
 package ca.joelathiessen.kaly2.subconscious
 
-import ca.joelathiessen.kaly2.subconscious.Measurement
+import ca.joelathiessen.kaly2.Measurement
 import ca.joelathiessen.kaly2.subconscious.sensor.Kaly2Sensor
 import ca.joelathiessen.kaly2.subconscious.sensor.Spinner
 import lejos.robotics.localization.OdometryPoseProvider
 import lejos.robotics.navigation.DifferentialPilot
 import lejos.robotics.navigation.Pose
-
-import java.util.ArrayList
+import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 
 class Subconscious(private val sensor: Kaly2Sensor, private val pilot: DifferentialPilot,
