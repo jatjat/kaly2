@@ -33,7 +33,6 @@ class RobotTest {
 
     @Test
     fun testConstructRobot_PassedValuesUnmodified() {
-
         val sub = Mockito.mock(Subconscious::class.java)
         val sweeps = ConcurrentLinkedQueue<ArrayList<Measurement>>()
 
