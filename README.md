@@ -1,5 +1,6 @@
 # kaly2
 ## A total refactor of the "kaly" FastSLAM &amp; Navigation project.
+![alt text](https://travis-ci.org/jatjat/kaly2.svg?branch=master "Build Status")
 
 This project will enable simultaneous localization and mapping, and navigation, for a robot I have built.
 The project is written in Kotlin, and can be opened in Intellij IDEA
@@ -7,10 +8,9 @@ The project is written in Kotlin, and can be opened in Intellij IDEA
 Development is in-progress.
 
 To run the tests, invoke:
-
-`gradle test`
-
-
+```
+gradle test
+```
 The code was architected to allow running it in a test environment on the PC, and on the EV3 programmable brick, while only changing wrapper code.
 Different distance sensors are allowed (IR, IR laser, Ultrasound), and different feature gathering algorithms are permitted.
 (currently implementing Split and Merge for feature detection, since it is very fast and accurate, especially compared to RANSAC).
