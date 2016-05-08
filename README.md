@@ -1,6 +1,6 @@
 # kaly2
 ## A total refactor of the "kaly" FastSLAM &amp; Navigation project.
-![alt text](https://travis-ci.org/jatjat/kaly2.svg?branch=master "Build Status")
+[![Build Status](https://travis-ci.org/jatjat/kaly2.svg?branch=master)](https://travis-ci.org/jatjat/kaly2)
 
 This project will enable simultaneous localization and mapping, and navigation, for a robot I have built.
 The project is written in Kotlin, and can be opened in Intellij IDEA
