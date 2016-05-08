@@ -18,13 +18,6 @@ class Movements : MoveListener {
         moves.put(move.timeStamp, move)
     }
 
-    /*
-    private fun getWholeMovements(startTime: Long, endTime: Long = Long.MAX_VALUE): Collection<Move> {
-        //val firstMove = moves.ceilingKey(startTime)
-        val ourMoves = moves.subMap(startTime, true, endTime, true)
-        return ourMoves.values
-    }*/
-
     public fun getMovements(startTime: Long, endTime: Long = Long.MAX_VALUE): Collection<Move> {
         val wholeMovesMap = moves.subMap(startTime, true, endTime, true)
         val wholeMoves = wholeMovesMap.values
