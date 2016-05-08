@@ -15,7 +15,7 @@ class NNDataAssociator : DataAssociator{
         for(feature in features) {
             val offsetPoint = Point(feature.x + pose.x, feature.y + pose.y)
             val matchedLandmark = landmarks.getNearestNeighbor(offsetPoint)
-            featureLandmarks.putIfAbsent(feature, matchedLandmark)
+            featureLandmarks.put(feature, matchedLandmark)
         }
         return featureLandmarks
     }
