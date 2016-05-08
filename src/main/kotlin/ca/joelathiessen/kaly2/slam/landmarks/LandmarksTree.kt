@@ -5,6 +5,10 @@ import ags.utils.dataStructures.trees.thirdGenKD.SquareEuclideanDistanceFunction
 import lejos.robotics.geometry.Point
 
 class LandmarksTree() : AssociatableLandmarks {
+    override fun addLandmark(landmark: Landmark) {
+        landmarksTree.addLeafPoint(doubleArrayOf(landmark.x.toDouble(),landmark.y.toDouble()), landmark)
+    }
+
     private val landmarksTree = KdTree<Landmark>(2)
 
     override fun getNearestNeighbor(point: Point): Landmark {
