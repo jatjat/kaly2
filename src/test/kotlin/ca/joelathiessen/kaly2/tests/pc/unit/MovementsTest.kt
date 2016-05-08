@@ -39,5 +39,17 @@ class MovementsTest {
         assertEquals(itrAngle.next().angleTurned,0.25f)
     }
 
+    @Test
+    fun tooWideTimeframe() {
+        val moveProvider = mock<MoveProvider>()
+        val movements = Movements()
+        for (index in 2..8) {
+            val move = TimedMove(index.toLong(), 1f, 0.5f, true)
+            movements.moveStopped(move, moveProvider)
+        }
 
+        var selectedMovements = movements.getMovements(1L, 9L)
+
+        assertEquals(selectedMovements.size, 6)
+    }
 }
