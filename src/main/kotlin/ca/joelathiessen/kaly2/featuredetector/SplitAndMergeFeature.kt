@@ -1,7 +1,6 @@
 package ca.joelathiessen.kaly2.featuredetector
 
-class SplitAndMergeFeature(override val x: Float, override val y: Float) : Feature {
-    override var stdDev: Float = 0.toFloat()
+class SplitAndMergeFeature(x: Float, y: Float, stdDev: Float = 0f) : Feature(x, y, stdDev) {
 
     private var discardedPoints: Int = 0// the number of points along the line starting at this point that were discarded during the split and merge
 

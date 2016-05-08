@@ -1,9 +1,4 @@
 package ca.joelathiessen.kaly2.featuredetector
 
-interface Feature {
-    val x: Float
-
-    val y: Float
-
-    val stdDev: Float
+open class Feature(val x: Float, val y: Float, val stdDev: Float = 0f) {
 }
