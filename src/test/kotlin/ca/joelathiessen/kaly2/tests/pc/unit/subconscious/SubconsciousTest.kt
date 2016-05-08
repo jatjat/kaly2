@@ -37,14 +37,12 @@ class SubconsciousTest {
         pilot = PowerMockito.mock(DifferentialPilot::class.java)
         odometry = PowerMockito.mock(OdometryPoseProvider::class.java)
 
-        var motor = PowerMockito.`mock`(RegulatedMotor::class.java)
         spinner = PowerMockito.`mock`(Spinner::class.java)
         sweeps = ConcurrentLinkedQueue<ArrayList<Measurement>>()
     }
 
     @Test
     fun testConstructSubconscious_PassedValuesUnmodified() {
-
         val sensorCopy = sensor.toString()
         val spinCopy = spinner.toString()
         val pilotCopy = pilot.toString()
@@ -63,7 +61,6 @@ class SubconsciousTest {
 
     @Test
     fun testRun_atLeast1SweepOf3Measurements() {
-
         val timeout: Long
         val sub = Subconscious(sensor, pilot, odometry, spinner, sweeps)
         val thread = Thread(sub)
