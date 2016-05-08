@@ -26,10 +26,11 @@ class Movements : MoveListener {
 
         val itr = wholeMoves.iterator()
         val first = itr.next()
-        val beforeFirst = moves.lowerEntry(wholeMovesMap.firstKey()).value
-        val afterLast = moves.higherEntry(wholeMovesMap.lastKey()).value
+        val beforeFirstKV = moves.lowerEntry(wholeMovesMap.firstKey())
+        val afterLastKV = moves.higherEntry(wholeMovesMap.lastKey())
 
-        if (startTime < first.timeStamp) {
+        if (startTime < first.timeStamp && beforeFirstKV != null ){
+            val beforeFirst = beforeFirstKV.value
             val duration = first.timeStamp - startTime
             val keepFraction = duration.toFloat() / (first.timeStamp - beforeFirst.timeStamp)
             val generatedFirstMove = TimedMove(first.timeStamp, first.moveType, first.distanceTraveled * keepFraction,
@@ -43,7 +44,8 @@ class Movements : MoveListener {
 
         val last = wholeMoves.last()
 
-        if(endTime > last.timeStamp) {
+        if(endTime > last.timeStamp && afterLastKV != null) {
+            val afterLast = afterLastKV.value
             val duration = endTime - last.timeStamp
             val keepFraction = duration.toFloat() / (afterLast.timeStamp - last.timeStamp)
             val generatedLastMove = TimedMove(last.timeStamp + duration, afterLast.moveType, afterLast.distanceTraveled * keepFraction,
