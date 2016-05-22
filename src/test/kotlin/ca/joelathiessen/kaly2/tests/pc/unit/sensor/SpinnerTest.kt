@@ -66,7 +66,7 @@ class SpinnerTest {
 
         `when`(motor.tachoCount).thenReturn(77)
 
-        assertEquals(spinner.angle.toDouble(), Math.toRadians(77.0), 0.0001)
+        assertEquals(spinner.angle, Math.toRadians(77.0), 0.0001)
     }
 
 }

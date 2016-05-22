@@ -1,4 +1,28 @@
 package ca.joelathiessen.kaly2.featuredetector
 
-open class Feature(val x: Float, val y: Float, val stdDev: Float = 0f) {
+import Jama.Matrix
+
+open class Feature(val sensorX: Double, val sensorY: Double, val distance: Double, val angle: Double,
+                   val stdDev: Double) {
+    val x = Math.cos(angle) * distance + sensorX
+    val y = Math.sin(angle) * distance + sensorY
+
+    private lateinit var oneCalcJacob: Matrix
+    private var madeOneCalcJacob = false
+
+    val jacobian: Matrix
+        get() {
+            if (!madeOneCalcJacob) {
+                val distSq = distance * distance
+                val dX = x - sensorX
+                val dY = y - sensorY
+                oneCalcJacob = Matrix(arrayOf(
+                        doubleArrayOf(-1.0 * dX / distance, -1.0 * dY / distance, 0.0),
+                        doubleArrayOf(dY / distSq, -1.0 * dX / distSq, -1.0),
+                        doubleArrayOf(0.0, 0.0, 1.0)
+                ))
+                madeOneCalcJacob = true
+            }
+            return oneCalcJacob
+        }
 }

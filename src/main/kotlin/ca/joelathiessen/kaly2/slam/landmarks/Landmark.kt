@@ -1,4 +1,6 @@
 package ca.joelathiessen.kaly2.slam.landmarks
 
-data class Landmark(var x: Float, var y: Float) {
+import Jama.Matrix
+
+class Landmark(var x: Double, var y: Double, var covariance: Matrix) {
 }
