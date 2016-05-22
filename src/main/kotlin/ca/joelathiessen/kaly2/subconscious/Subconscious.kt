@@ -20,8 +20,8 @@ class Subconscious(private val sensor: Kaly2Sensor, private val pilot: Different
     override fun run() {
         println("Subconscious starting")
 
-        var distance: Float// distance to detected point in m
-        var angle: Float// angle to detected point in radians
+        var distance: Double// distance to detected point in m
+        var angle: Double// angle to detected point in radians
         var time: Long
         var pose: Pose
 
@@ -51,7 +51,7 @@ class Subconscious(private val sensor: Kaly2Sensor, private val pilot: Different
 
                 sensor.fetchSample(sensorReading, 0)
 
-                distance = sensorReading[0]
+                distance = sensorReading[0].toDouble()
                 angle = spinner.angle
                 pose = odometry.pose
                 time = System.currentTimeMillis()
@@ -66,12 +66,4 @@ class Subconscious(private val sensor: Kaly2Sensor, private val pilot: Different
         }
         println("Subconscious completed")
     }
-
-    /*companion object {
-
-        // probable maximum number of measurements we will get per
-        // 350 degree spin of the distance detector
-        //val PROBABLE_MAX_MEASUREMENTS_PER_SWEEP = 360
-    }*/
-
 }

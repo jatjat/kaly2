@@ -32,7 +32,7 @@ class Movements : MoveListener {
         if (startTime < first.timeStamp && beforeFirstKV != null ){
             val beforeFirst = beforeFirstKV.value
             val duration = first.timeStamp - startTime
-            val keepFraction = duration.toFloat() / (first.timeStamp - beforeFirst.timeStamp)
+            val keepFraction = duration / (first.timeStamp - beforeFirst.timeStamp).toFloat()
             val generatedFirstMove = TimedMove(first.timeStamp, first.moveType, first.distanceTraveled * keepFraction,
                     first.angleTurned * keepFraction, first.travelSpeed, first.rotateSpeed, first.isMoving)
             ans.add(generatedFirstMove)
@@ -47,7 +47,7 @@ class Movements : MoveListener {
         if(endTime > last.timeStamp && afterLastKV != null) {
             val afterLast = afterLastKV.value
             val duration = endTime - last.timeStamp
-            val keepFraction = duration.toFloat() / (afterLast.timeStamp - last.timeStamp)
+            val keepFraction = duration / (afterLast.timeStamp - last.timeStamp).toFloat()
             val generatedLastMove = TimedMove(last.timeStamp + duration, afterLast.moveType, afterLast.distanceTraveled * keepFraction,
                     afterLast.angleTurned * keepFraction, afterLast.travelSpeed, afterLast.rotateSpeed, afterLast.isMoving)
             ans.add(generatedLastMove)

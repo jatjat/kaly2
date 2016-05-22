@@ -7,5 +7,5 @@ import lejos.robotics.navigation.Pose
 interface Slam {
     fun resetTimeSteps()
     fun addTimeStep(features: List<Feature>, robotPose: RobotPose)
-    fun getCurPos(): Pose
+    fun getCurPos(): RobotPose
 }

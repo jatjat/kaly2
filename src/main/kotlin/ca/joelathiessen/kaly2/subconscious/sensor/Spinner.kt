@@ -42,10 +42,10 @@ class Spinner {
         return motor.isMoving
     }
 
-    val angle: Float
+    val angle: Double
         get() {
             val tachoCount: Int = motor.tachoCount.toInt()
-            return Math.toRadians(tachoCount.toDouble()).toFloat()
+            return Math.toRadians(tachoCount.toDouble())
         }
 
     fun turningClockwise(): Boolean {

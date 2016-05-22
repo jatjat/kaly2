@@ -11,12 +11,12 @@ class CarModel : MotionModel {
         val poseMoveAngle = (deltaMoveAngle + particlePose.heading)
         val robotMoveDist = endRobotPose.location.subtract(startRobotPose.location).length()
 
-        val x = Math.cos(poseMoveAngle.toDouble()).toFloat() * robotMoveDist
-        val y = Math.sin(poseMoveAngle.toDouble()).toFloat() * robotMoveDist
+        val x = Math.cos(poseMoveAngle.toDouble()) * robotMoveDist
+        val y = Math.sin(poseMoveAngle.toDouble()) * robotMoveDist
 
         val deltaHeading = endRobotPose.heading - startRobotPose.heading
 
-        particlePose.location.add(Point(x, y))
+        particlePose.location.add(Point(x.toFloat(), y.toFloat()))
         particlePose.heading += deltaHeading
     }
 

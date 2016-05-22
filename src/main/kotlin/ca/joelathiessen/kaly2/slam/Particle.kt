@@ -5,8 +5,11 @@ import ca.joelathiessen.kaly2.RobotPose
 import ca.joelathiessen.kaly2.slam.landmarks.LandmarksTree
 import lejos.robotics.navigation.Pose
 
-data class Particle(var pose: Pose, var variance: Float = 0f) {
-    val landmarks = LandmarksTree()
+class Particle(val pose: RobotPose, var weight: Double = 0.0, val landmarks: LandmarksTree = LandmarksTree()) {
+
+    fun copy(): Particle {
+        return Particle(pose, weight, landmarks.copy())
+    }
 
     //render obeisance to encapsulation...
     fun moveRandom(startRobotPose: RobotPose, endRobotPose: RobotPose, motionModel: MotionModel) {

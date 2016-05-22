@@ -5,14 +5,13 @@ import java.util.*
 
 class SplitAndMerge : FeatureDetector {
 
+    private val THRESHOLD_DIST = 0.1
+
     override fun getFeatures(measurements: List<Measurement>): List<Feature> {
         //create a list of points from the measurements
         val features = ArrayList<SplitAndMergeFeature>(measurements.size)
         for (mes in measurements) {
-            val x = mes.distance * Math.cos(mes.angle.toDouble()).toFloat()
-            val y = mes.distance * Math.sin(mes.angle.toDouble()).toFloat()
-
-            features.add(SplitAndMergeFeature(x, y))
+            features.add(SplitAndMergeFeature(0.0, 0.0, mes.distance, mes.angle))
         }
 
         val featuresOfInterest = splitAndMerge(features, THRESHOLD_DIST)
@@ -20,8 +19,8 @@ class SplitAndMerge : FeatureDetector {
         return featuresOfInterest
     }
 
-    private fun splitAndMerge(inputPoints: List<SplitAndMergeFeature>, epsilon: Float): List<SplitAndMergeFeature> {
-        var distMax = 0f
+    private fun splitAndMerge(inputPoints: List<SplitAndMergeFeature>, epsilon: Double): List<SplitAndMergeFeature> {
+        var distMax = 0.0
         var distMaxIndex = 0
         val results = ArrayList<SplitAndMergeFeature>(2)
 
@@ -51,19 +50,13 @@ class SplitAndMerge : FeatureDetector {
         return results
     }
 
-    private fun distanceFromLineToPoint(point: Feature, lineOne: Feature, lineTwo: Feature): Float {
+    private fun distanceFromLineToPoint(point: Feature, lineOne: Feature, lineTwo: Feature): Double {
         val x2MinusX1 = lineTwo.x - lineOne.x
         val y2MinusY1 = lineTwo.y - lineOne.y
 
         val numerator = Math.abs(y2MinusY1 * point.x - x2MinusX1 * point.y + lineTwo.x * lineOne.y - lineTwo.y * lineOne.x)
-        val denominator = Math.sqrt((y2MinusY1 * y2MinusY1 + x2MinusX1 * x2MinusX1).toDouble()).toFloat()
+        val denominator = Math.sqrt((y2MinusY1 * y2MinusY1 + x2MinusX1 * x2MinusX1))
 
         return numerator / denominator
     }
-
-    companion object {
-
-        private val THRESHOLD_DIST = 0.1f
-    }
-
 }
