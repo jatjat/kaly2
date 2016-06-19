@@ -1,4 +1,4 @@
-package ca.joelathiessen.kaly2
+package ca.joelathiessen.kaly2.odometry
 
 import lejos.robotics.navigation.Pose
 

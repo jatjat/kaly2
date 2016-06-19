@@ -1,14 +1,14 @@
 package ca.joelathiessen.kaly2.slam
 
 import Jama.Matrix
-import ca.joelathiessen.kaly2.CarModel
-import ca.joelathiessen.kaly2.RobotPose
 import ca.joelathiessen.kaly2.featuredetector.Feature
+import ca.joelathiessen.kaly2.odometry.CarModel
+import ca.joelathiessen.kaly2.odometry.RobotPose
 import ca.joelathiessen.kaly2.slam.landmarks.Landmark
 import ca.joelathiessen.kaly2.subconscious.sensor.SensorInfo
 import java.util.*
 
-class FastSlam(val startPose: RobotPose, private val motionModel: CarModel, private val dataAssoc: DataAssociator,
+class FastSLAM(val startPose: RobotPose, private val carMotionModel: CarModel, private val dataAssoc: DataAssociator,
                private val partResamp: ParticleResampler, val sensorInfo: SensorInfo) : Slam {
     val NUM_PARTICLES = 100
     val DIST_VARIANCE = 0.1
@@ -23,6 +23,7 @@ class FastSlam(val startPose: RobotPose, private val motionModel: CarModel, priv
     private var lastKnownPose = startPose
 
     private var particles = ArrayList<Particle>(NUM_PARTICLES)
+
     init {
         for (i in 0..NUM_PARTICLES) {
             particles.add(Particle(startPose, 1.0 / NUM_PARTICLES))
@@ -32,13 +33,14 @@ class FastSlam(val startPose: RobotPose, private val motionModel: CarModel, priv
     override fun getCurPos(): RobotPose {
         throw UnsupportedOperationException()
     }
+
     override fun resetTimeSteps() {
         throw UnsupportedOperationException()
     }
 
     override fun addTimeStep(features: List<Feature>, curPose: RobotPose) {
 
-        particles.forEach { it.moveRandom(lastKnownPose, curPose, motionModel) }
+        particles.forEach { it.moveRandom(lastKnownPose, curPose, carMotionModel) }
 
         val newParticles = ArrayList<Particle>(particles.size)
 
@@ -46,8 +48,8 @@ class FastSlam(val startPose: RobotPose, private val motionModel: CarModel, priv
             val newParticle = Particle(pose = particle.pose)
             val featuresToLandmarks: Map<Feature, Landmark> = dataAssoc.associate(particle.pose, features, particle.landmarks)
 
-            for((feat, land) in featuresToLandmarks) {
-                if(land != null) {
+            for ((feat, land) in featuresToLandmarks) {
+                if (land != null) {
 
                     //Using the distance and angle from the particle to the landmark...
                     val dX = land.x - particle.pose.x
@@ -66,10 +68,10 @@ class FastSlam(val startPose: RobotPose, private val motionModel: CarModel, priv
                     val Q = GPrime.times(E).times(G).plus(R)
                     val K = E.times(G).times(Q.inverse())
 
-                    //Mix the ideal and real (sensor) measurements to update landmark's position:
+                    //Mix the ideal and real sensor measurements to update landmark's position:
                     val dPos = K.times(residual)
-                    val updatedX = land.x + dPos.get(0,0)
-                    val updatedY = land.y + dPos.get(0,1)
+                    val updatedX = land.x + dPos[0, 0]
+                    val updatedY = land.y + dPos[0, 1]
 
                     //Update the landmark's covariance:
                     val I = Matrix.identity(K.rowDimension, K.columnDimension)
@@ -80,18 +82,34 @@ class FastSlam(val startPose: RobotPose, private val motionModel: CarModel, priv
                     //Update particle's weight:
                     val firstPart = Math.pow(Q.times(2 * Math.PI).norm2(), -0.5)
                     val secondPart = Math.exp((residual.transpose().times(-0.5)
-                            .times(Q.inverse()).times(residual)).get(0, 0))
+                            .times(Q.inverse()).times(residual))[0, 0])
                     newParticle.weight = newParticle.weight * (firstPart * secondPart)
 
                     newParticle.landmarks.markForUpdatingOnCopy(updatedLandmark)
-                    newParticles.add(newParticle)
-                } else { //we have a new landmark!
+                } else {
+                    //we have a new landmark!
                     newParticle.landmarks.markForInsertionOnCopy(feat)
                 }
+                newParticles += newParticle
             }
         }
 
         lastKnownPose = curPose
         particles = partResamp.resample(newParticles)
     }
+
+    var particlePoses: List<RobotPose> = ArrayList()
+        get() {
+            return particles.map { it.pose }
+        }
+        private set
+
+    var avgPose: RobotPose = RobotPose(0, 0f, 0f, 0f, 0f)
+        get() {
+            val xAvg = particles.map { it.pose.x }.sum() / particles.size
+            val yAvg = particles.map { it.pose.y }.sum() / particles.size
+            val thetaAvg = particles.map { it.pose.heading }.sum() / particles.size
+            return RobotPose(lastKnownPose.time, 0f, xAvg, yAvg, thetaAvg)
+        }
+        private set
 }

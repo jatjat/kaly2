@@ -6,5 +6,5 @@ interface AssociatableLandmarks {
 
     fun addLandmark(landmark: Landmark)
 
-    fun getNearestNeighbor(point: Point): Landmark
+    fun getNearestNeighbor(point: Point): Landmark?
 }
