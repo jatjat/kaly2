@@ -1,7 +1,7 @@
 package ca.joelathiessen.kaly2.slam
 
-import ca.joelathiessen.kaly2.MotionModel
-import ca.joelathiessen.kaly2.RobotPose
+import ca.joelathiessen.kaly2.odometry.MotionModel
+import ca.joelathiessen.kaly2.odometry.RobotPose
 import ca.joelathiessen.kaly2.slam.landmarks.LandmarksTree
 import lejos.robotics.navigation.Pose
 

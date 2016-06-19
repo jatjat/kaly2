@@ -9,7 +9,7 @@ Development is in-progress.
 
 To run the tests, invoke:
 ```
-gradle test
+./gradlew test
 ```
 The code was architected to allow running it in a test environment on the PC, and on the EV3 programmable brick, while only changing wrapper code.
 Different distance sensors are allowed (IR, IR laser, Ultrasound), and different feature gathering algorithms are permitted.

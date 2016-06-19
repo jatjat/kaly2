@@ -15,8 +15,10 @@ class NNDataAssociator(val threshold: Double = 0.01) : DataAssociator {
         for(feature in features) {
             val offsetPoint = Point((feature.x + pose.x).toFloat(), (feature.y + pose.y).toFloat())
             val matchedLandmark = landmarks.getNearestNeighbor(offsetPoint)
-            if(offsetPoint.distance(Point(matchedLandmark.x.toFloat(), matchedLandmark.y.toFloat())) < threshold) {
-                featureLandmarks.put(feature, matchedLandmark)
+            if(matchedLandmark != null) {
+                if (offsetPoint.distance(Point(matchedLandmark.x.toFloat(), matchedLandmark.y.toFloat())) < threshold) {
+                    featureLandmarks.put(feature, matchedLandmark)
+                }
             }
         }
         return featureLandmarks
