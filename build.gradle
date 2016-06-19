@@ -22,7 +22,6 @@ dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib:1.0.1"
     compile 'gov.nist.math:jama:1.0.3'
     compile files("lib/leJOS_EV3_0.9.1-beta/lib/ev3/ev3classes.jar")
-    compile files("lib/rednaxela_kd_tree/kdtree.jar")
 
     testCompile 'junit:junit:4.12'
     testCompile 'org.powermock:powermock-api-mockito:1.6.1'
