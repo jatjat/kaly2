@@ -1,39 +1,42 @@
 package ca.joelathiessen.kaly2.slam.landmarks
 
-import ags.utils.dataStructures.BinaryHeap
-import ags.utils.dataStructures.MaxHeap
 import ags.utils.dataStructures.trees.thirdGenKD.KdTree
 import ags.utils.dataStructures.trees.thirdGenKD.SquareEuclideanDistanceFunction
-import ca.joelathiessen.kaly2.featuredetector.Feature
 import lejos.robotics.geometry.Point
+import java.util.*
 
 class LandmarksTree() : AssociatableLandmarks {
 
-    private var landmarksTree = KdTree<Landmark>(2)
+    private var kdTree = KdTree<Landmark>(2)
+    private val landmarksForInsert = ArrayList<Landmark>()
+    private val landmarksForDelete = ArrayList<Landmark>()
 
     constructor(landmarksTree: KdTree<Landmark>): this() {
-        this.landmarksTree = landmarksTree
+        this.kdTree = landmarksTree
     }
 
     fun copy(): LandmarksTree {
-        throw UnsupportedOperationException()
+        var newTree = kdTree
+        landmarksForInsert.forEach { newTree = newTree.addPointAsCopy(doubleArrayOf(it.x, it.y), it) }
+        landmarksForDelete.forEach { newTree.removePoint(doubleArrayOf(it.x, it.y), it) }
+        return LandmarksTree(newTree)
     }
 
-    fun markForUpdatingOnCopy(updatedLandmark: Landmark) {
-        throw UnsupportedOperationException()
+    fun markForUpdateOnCopy(newLandmark: Landmark, oldLandmark: Landmark) {
+        landmarksForInsert += newLandmark
+        landmarksForDelete += oldLandmark
     }
 
-    fun markForInsertionOnCopy(feat: Feature) {
-        throw UnsupportedOperationException()
-    }
-
-    override fun addLandmark(landmark: Landmark) {
-        landmarksTree.addLeafPoint(doubleArrayOf(landmark.x,landmark.y), landmark)
+    fun markForInsertOnCopy(landmark: Landmark) {
+        landmarksForInsert += landmark
     }
 
     override fun getNearestNeighbor(point: Point): Landmark? {
-            val nearestHeap = landmarksTree.findNearestNeighbors(doubleArrayOf(point.x.toDouble(), point.y.toDouble()),
-                    1, SquareEuclideanDistanceFunction())
-        return nearestHeap.max
+        var nearest: Landmark? = null
+        if(kdTree.size() > 0) {
+            nearest = kdTree.findNearestNeighbors(doubleArrayOf(point.x.toDouble(), point.y.toDouble()),
+                    1, SquareEuclideanDistanceFunction()).max
+        }
+        return nearest
     }
 }
