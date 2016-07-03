@@ -1,25 +1,27 @@
 package ca.joelathiessen.kaly2.odometry
 
-import ca.joelathiessen.kaly2.odometry.MotionModel
-import ca.joelathiessen.kaly2.odometry.RobotPose
-import lejos.robotics.geometry.Point
+import Jama.Matrix
 import lejos.robotics.navigation.Pose
+import java.util.*
 
 class CarModel : MotionModel {
+    private val ANGLE_ERROR = 0.005
+    private val DIST_ERROR = 0.5
+    private val random = Random()
+
     override fun moveRandom(inputPose: Pose, startReadPose: RobotPose, endReadPose: RobotPose): Pose {
 
-        val robotMoveAngle = startReadPose.angleTo(endReadPose.location)
-        val deltaMoveAngle = robotMoveAngle - startReadPose.heading
-        val poseMoveAngle = (deltaMoveAngle + inputPose.heading)
-        val robotMoveDist = endReadPose.location.subtract(startReadPose.location).length()
+        val robotMoveAngle = Math.toRadians(startReadPose.angleTo(endReadPose.location).toDouble())
+        val dMoveAngStartPoseHead = robotMoveAngle - startReadPose.heading
 
-        val dX = Math.cos(poseMoveAngle.toDouble()) * robotMoveDist
-        val dY = Math.sin(poseMoveAngle.toDouble()) * robotMoveDist
+        val moveAngle = (inputPose.heading + dMoveAngStartPoseHead) //+ random.nextGaussian() * ANGLE_ERROR
+        val moveDist = startReadPose.location.distance(endReadPose.location) + random.nextGaussian() * DIST_ERROR
 
-        val dHeading = endReadPose.heading - startReadPose.heading
+        val dX = Math.cos(moveAngle.toDouble()) * moveDist
+        val dY = Math.sin(moveAngle.toDouble()) * moveDist
+        val dHeading = endReadPose.heading - startReadPose.heading + random.nextGaussian() * ANGLE_ERROR
 
-        val movedPose = Pose( inputPose.x + dX.toFloat(), inputPose.y + dY.toFloat(),
-                inputPose.heading + dHeading)
+        val movedPose = Pose((inputPose.x + dX).toFloat(), (inputPose.y + dY).toFloat(), (inputPose.heading + dHeading).toFloat())
         return movedPose
     }
 

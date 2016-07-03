@@ -4,8 +4,11 @@ import Jama.Matrix
 
 open class Feature(val sensorX: Double, val sensorY: Double, val distance: Double, val angle: Double,
                    val stdDev: Double) {
-    val x = Math.cos(angle) * distance + sensorX
-    val y = Math.sin(angle) * distance + sensorY
+    val dX = Math.cos(angle) * distance
+    val dY = Math.sin(angle) * distance
+
+    val x = dX + sensorX
+    val y = dY + sensorY
 
     private lateinit var oneCalcJacob: Matrix
     private var madeOneCalcJacob = false

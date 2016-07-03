@@ -17,38 +17,37 @@ class NNDataAssociatorTest() {
 
     val DELTA = 0.0001
 
-    private fun makeFeatFromXY(x: Double, y: Double): Feature {
+    private fun makeFeatFromXY(pose: Pose, x: Double, y: Double): Feature {
         val dist = Math.sqrt((x * x + y * y))
         val angle = Math.atan2(y, x)
         val sensorX = 1.0
         val sensorY = 1.0
         val stDev = 0.0
-        return Feature(sensorX, sensorY, dist, angle, stDev)
+        return Feature(sensorX, sensorY, 0.0, 0.0, stDev)
     }
 
     @Test
     fun simpleOffsetAssociation() {
-        val assoc = NNDataAssociator()
+        val assoc = NNDataAssociator(1000.0)
         val pose = Pose(1f,1f,1f)
         val features = ArrayList<Feature>()
         var landmarks = LandmarksTree()
         for(index in 0..10) {
             val indexDouble = index.toDouble()
-            features.add(makeFeatFromXY(indexDouble, indexDouble))
+            features.add(makeFeatFromXY(pose, indexDouble, indexDouble))
             landmarks.markForInsertOnCopy(Landmark(indexDouble, indexDouble, Matrix(0,0)))
-            landmarks = landmarks.copy()
         }
+        val landmarksMade = landmarks.copy()
+        val featuresToLandmarks = assoc.associate(pose, features, landmarksMade)
 
-        val featuresToLandmarks = assoc.associate(pose, features, landmarks)
-
-        for( featLand in featuresToLandmarks) {
-            if(featLand.key.x != 10.0) {
-                assertEquals(featLand.key.x + 1.0, featLand.value.x, DELTA)
-                assertEquals(featLand.key.y + 1.0, featLand.value.y, DELTA)
-            } else { // the furthest feature should match the furthest landmark
-                assertEquals(featLand.key.x, featLand.value.x, DELTA)
-                assertEquals(featLand.key.y, featLand.value.y, DELTA)
-            }
+        for((feat, land) in featuresToLandmarks) {
+                if (feat.x != 10.0) {
+                    assertEquals(feat.x, land!!.x, DELTA)
+                    assertEquals(feat.y, land.y, DELTA)
+                } else { // the furthest feature should match the furthest landmark
+                    assertEquals(feat.x, land!!.x, DELTA)
+                    assertEquals(feat.y, land.y, DELTA)
+                }
         }
     }
 }

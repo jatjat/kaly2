@@ -14,6 +14,7 @@ import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mockito.Mockito
 import org.mockito.Mockito.`when`
 import org.powermock.api.mockito.PowerMockito
 import org.powermock.core.classloader.annotations.PrepareForTest
@@ -34,8 +35,8 @@ class SubconsciousTest {
     @Before
     fun setUp() {
         sensor = PowerMockito.mock(Kaly2PulsedLightLidarLiteV2::class.java)
-        pilot = PowerMockito.mock(DifferentialPilot::class.java)
-        odometry = PowerMockito.mock(OdometryPoseProvider::class.java)
+        pilot = Mockito.mock(DifferentialPilot::class.java)
+        odometry = Mockito.mock(OdometryPoseProvider::class.java)
 
         spinner = PowerMockito.`mock`(Spinner::class.java)
         sweeps = ConcurrentLinkedQueue<ArrayList<Measurement>>()
