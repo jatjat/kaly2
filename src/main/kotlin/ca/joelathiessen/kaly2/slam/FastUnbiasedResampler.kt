@@ -27,7 +27,7 @@ class FastUnbiasedResampler : ParticleResampler {
             newParticlesList.add(oldParticles[count - 1].copy())
         }
 
-        newParticlesList.forEach { it.weight = it.weight / newParticlesList.size }
+        newParticlesList.forEach { it.weight = 1.0 / newParticlesList.size }
 
         return newParticlesList
     }

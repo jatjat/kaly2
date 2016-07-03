@@ -7,5 +7,5 @@ import lejos.robotics.navigation.Pose
 
 
 interface DataAssociator {
-    fun associate(pose: Pose, features: List<Feature>, landmarks: AssociatableLandmarks): Map<Feature, Landmark>
+    fun associate(pose: Pose, features: List<Feature>, landmarks: AssociatableLandmarks): Map<Feature, Landmark?>
 }

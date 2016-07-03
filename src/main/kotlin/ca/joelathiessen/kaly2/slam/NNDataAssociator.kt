@@ -8,17 +8,26 @@ import lejos.robotics.navigation.Pose
 
 import java.util.*
 
-class NNDataAssociator(val threshold: Double = 0.01) : DataAssociator {
-    override fun associate(pose: Pose, features: List<Feature>, landmarks: AssociatableLandmarks): Map<Feature, Landmark> {
-        val featureLandmarks = HashMap<Feature, Landmark>()
+class NNDataAssociator(val threshold: Double = 5.0) : DataAssociator {
+    override fun associate(pose: Pose, features: List<Feature>, landmarks: AssociatableLandmarks): Map<Feature, Landmark?> {
+        val featureLandmarks = HashMap<Feature, Landmark?>()
 
         for(feature in features) {
-            val offsetPoint = Point((feature.x + pose.x).toFloat(), (feature.y + pose.y).toFloat())
+            val xHyp = pose.x + Math.cos(pose.heading + feature.angle) * feature.distance
+            val yHyp = pose.y + Math.sin(pose.heading + feature.angle) * feature.distance
+
+            val offsetPoint = Point(xHyp.toFloat(), yHyp.toFloat())
             val matchedLandmark = landmarks.getNearestNeighbor(offsetPoint)
             if(matchedLandmark != null) {
+                val bob = offsetPoint.distance(Point(matchedLandmark.x.toFloat(), matchedLandmark.y.toFloat()))
                 if (offsetPoint.distance(Point(matchedLandmark.x.toFloat(), matchedLandmark.y.toFloat())) < threshold) {
                     featureLandmarks.put(feature, matchedLandmark)
                 }
+                else {
+                    featureLandmarks.put(feature, null)
+                }
+            } else {
+                featureLandmarks.put(feature, null)
             }
         }
         return featureLandmarks
