@@ -31,11 +31,12 @@ class NNDataAssociatorTest() {
         val assoc = NNDataAssociator()
         val pose = Pose(1f,1f,1f)
         val features = ArrayList<Feature>()
-        val landmarks = LandmarksTree()
+        var landmarks = LandmarksTree()
         for(index in 0..10) {
             val indexDouble = index.toDouble()
             features.add(makeFeatFromXY(indexDouble, indexDouble))
-            landmarks.addLandmark(Landmark(indexDouble, indexDouble, Matrix(0,0)))
+            landmarks.markForInsertOnCopy(Landmark(indexDouble, indexDouble, Matrix(0,0)))
+            landmarks = landmarks.copy()
         }
 
         val featuresToLandmarks = assoc.associate(pose, features, landmarks)

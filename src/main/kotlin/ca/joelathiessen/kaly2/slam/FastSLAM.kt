@@ -85,10 +85,10 @@ class FastSLAM(val startPose: RobotPose, private val carMotionModel: CarModel, p
                             .times(Q.inverse()).times(residual))[0, 0])
                     newParticle.weight = newParticle.weight * (firstPart * secondPart)
 
-                    newParticle.landmarks.markForUpdatingOnCopy(updatedLandmark)
+                    //newParticle.landmarks.markForUpdatingOnCopy(updatedLandmark)
                 } else {
                     //we have a new landmark!
-                    newParticle.landmarks.markForInsertionOnCopy(feat)
+                    //newParticle.landmarks.markForInsertionOnCopy(feat)
                 }
                 newParticles += newParticle
             }

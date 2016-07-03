@@ -109,6 +109,20 @@ class KdNode<T> {
         newCursor.addLeafPoint(point, value);
     }
 
+    /* -------- Joel's remove point -------- */
+    public void removePoint(double[] point, T value) {
+        KdNode<T> cursor = this;
+        while (!cursor.isLeaf()) {
+            if (point[cursor.splitDimension] > cursor.splitValue) {
+                cursor = cursor.right;
+            }
+            else {
+                cursor = cursor.left;
+            }
+        }
+        cursor.removeLeafPoint(this, point, value);
+    }
+
     /* -------- INTERNAL OPERATIONS -------- */
 
     /* -------- Joel's add child to parent -------- */
@@ -122,6 +136,49 @@ class KdNode<T> {
                 throw new IllegalStateException("Parent KdNode does not have a null child variable to add a child to");
             }
         }
+    }
+
+    /* -------- Joel's remove point from leaf -------- */
+    // Any point can be removed from the leaf without losing correctness but
+    // there's a tradeoff between a very small increase in search performance if
+    // the split values and split dimensions are then recalculated vs. increased
+    // delete performance if they are not. Here they are not recalculated.
+    public void removeLeafPoint(KdNode<T> rootParent, double[] point, T value) {
+        boolean same = true;
+        for(int i = 0; i < size; i++) { // points are stored unordered
+            if (value == data[i]) {
+                for(int j = 0; j < dimensions; j++) {
+                    if(equals(points[i][j], point[j]) == false) {
+                        same = false;
+                        break;
+                    }
+                }
+                if(same == true) {
+                    points[i] = points[size - 1];
+                    data[i] = data[size - 1];
+
+                    KdNode<T> cursor = rootParent;
+                    while (!cursor.isLeaf()) {
+                        cursor.size--;
+                        if (point[cursor.splitDimension] > cursor.splitValue) {
+                            cursor = cursor.right;
+                        }
+                        else {
+                            cursor = cursor.left;
+                        }
+                    }
+                    cursor.size--;
+                    break;
+                }
+            }
+        }
+    }
+
+    /* -------- Joel's equals -------- */
+    final double EPSILON = 0.0000001;
+    boolean equals(double a, double b) {
+        if (a == b) return true;
+        return Math.abs(a - b) < EPSILON * Math.max(Math.abs(a), Math.abs(b));
     }
 
     public void addLeafPoint(double[] point, T value) {
