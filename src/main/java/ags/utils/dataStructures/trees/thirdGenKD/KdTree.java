@@ -16,6 +16,33 @@ public class KdTree<T> extends KdNode<T> {
         super(dimensions, bucketCapacity);
     }
 
+    /* -------- Joel's constructor -------- */
+    private KdTree(int dimensions, int bucketCapacity, int size, double[][] points, Object[] data,
+                   KdNode<T> left, KdNode<T> right, int splitDimension, double splitValue,
+                   double[] minBound, double[] maxBound, boolean singlePoint) {
+        super(dimensions, bucketCapacity, size, points, data, left, right, splitDimension,
+                splitValue, minBound, maxBound, singlePoint);
+    }
+
+    /* -------- Joel's copy on insert -------- */
+    public KdTree<T> addPointAsCopy(double[] point, T value) {
+        double[][] newPoints = null;
+        if (points != null) {
+            newPoints = points.clone();
+        }
+
+        Object[] newData = null;
+        if (data != null) {
+            newData = data.clone();
+        }
+
+        KdTree<T> newTree = new KdTree<T>(dimensions, bucketCapacity, size, newPoints, newData,
+                null, null, splitDimension, splitValue, minBound, maxBound, singlePoint);
+        addPointAsCopy(newTree, point, value);
+
+        return newTree;
+    }
+
     public NearestNeighborIterator<T> getNearestNeighborIterator(double[] searchPoint, int maxPointsReturned, DistanceFunction distanceFunction) {
         return new NearestNeighborIterator<T>(this, searchPoint, maxPointsReturned, distanceFunction);
     }

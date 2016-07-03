@@ -36,6 +36,24 @@ class KdNode<T> {
         this.data = new Object[bucketCapacity+1];
     }
 
+    /* -------- Joel's constructor -------- */
+    protected KdNode(int dimensions, int bucketCapacity, int size, double[][] points,
+    Object[] data, KdNode<T> left, KdNode<T> right, int splitDimension, double splitValue, double[] minBound,
+    double[] maxBound, boolean singlePoint) {
+        this.dimensions = dimensions;
+        this.bucketCapacity = bucketCapacity;
+        this.size = size;
+        this.points = points;
+        this.data = data;
+        this.left = left;
+        this.right = right;
+        this.splitDimension = splitDimension;
+        this. splitValue = splitValue;
+        this.minBound = minBound;
+        this.maxBound = maxBound;
+        this.singlePoint = singlePoint;
+    }
+
     /* -------- SIMPLE GETTERS -------- */
 
     public int size() {
@@ -63,7 +81,48 @@ class KdNode<T> {
         cursor.addLeafPoint(point, value);
     }
 
+    /* -------- Joel's copy on insert -------- */
+    protected void addPointAsCopy(KdNode<T> newRootNode, double[] point, T value) {
+        KdNode<T> cursor = this;
+        KdNode<T> parentCurser = null;
+        KdNode<T> newCursor = newRootNode;
+
+        while (!cursor.isLeaf()) {
+            newCursor.extendBounds(point);
+            newCursor.size++;
+
+            if (point[cursor.splitDimension] > cursor.splitValue) {
+                newCursor.left = cursor.left;
+                newCursor.right = null;
+                cursor = cursor.right;
+            }
+            else {
+                newCursor.right = cursor.right;
+                newCursor.left = null;
+                cursor = cursor.left;
+            }
+            addChildToParent(newCursor, parentCurser);
+            parentCurser = newCursor;
+        }
+        addChildToParent(newCursor, parentCurser);
+
+        newCursor.addLeafPoint(point, value);
+    }
+
     /* -------- INTERNAL OPERATIONS -------- */
+
+    /* -------- Joel's add child to parent -------- */
+    private void addChildToParent(KdNode<T> childCurser, KdNode<T> parentCurser) {
+        if(parentCurser != null) {
+            if(parentCurser.left == null) {
+                parentCurser.left = childCurser;
+            } else if(parentCurser.right == null) {
+                parentCurser.right = childCurser;
+            } else {
+                throw new IllegalStateException("Parent KdNode does not have a null child variable to add a child to");
+            }
+        }
+    }
 
     public void addLeafPoint(double[] point, T value) {
         // Add the data point
