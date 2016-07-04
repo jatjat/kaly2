@@ -90,7 +90,6 @@ class KdNode<T> {
         while (!cursor.isLeaf()) {
             newCursor.extendBounds(point);
             newCursor.size++;
-
             if (point[cursor.splitDimension] > cursor.splitValue) {
                 newCursor.left = cursor.left;
                 newCursor.right = null;

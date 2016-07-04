@@ -10,7 +10,7 @@ class Particle(pose: Pose, var weight: Double = 0.0, val landmarks: LandmarksTre
     private set
 
     fun copy(): Particle {
-        return Particle(pose, weight, landmarks.copy())
+        return Particle(Pose(pose.x, pose.y, pose.heading), weight, landmarks.copy())
     }
 
     //render obeisance to encapsulation...

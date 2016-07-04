@@ -12,8 +12,8 @@ import java.util.*
 class FastSLAM(val startPose: RobotPose, private val carMotionModel: CarModel, private val dataAssoc: DataAssociator,
                private val partResamp: ParticleResampler, val sensorInfo: SensorInfo) : Slam {
     val NUM_PARTICLES = 100
-    val DIST_VARIANCE = 0.1
-    val ANGLE_VARIANCE = 0.01
+    val DIST_VARIANCE = 2.0 // normally would be ~ 0.5, but higher to prevent overfitting
+    val ANGLE_VARIANCE = 1.0 // normally 0.01, but higher to prevent overfitting
     val IDENTITY_VARIANCE = 0.0001
 
     private val R = Matrix(arrayOf(
@@ -60,10 +60,13 @@ class FastSLAM(val startPose: RobotPose, private val carMotionModel: CarModel, p
                     val particleAngle = Math.atan2(dY, dX)
 
                     //...and the distance and angle from the sensor to the feature, find the residual:
-                    val residual = Matrix(arrayOf(doubleArrayOf(
-                            particleDist - feat.distance, particleAngle - (particle.pose.heading + feat.angle))))
+                    val residual = Matrix(arrayOf(
+                            doubleArrayOf(particleDist - feat.distance),
+                            doubleArrayOf(particleAngle - (particle.pose.heading + feat.angle)),
+                            doubleArrayOf(0.0)
+                    ))
 
-                    val G = feat.jacobian
+                    val G = feat.makeJacobian(particle.pose)
                     val GPrime = G.transpose()
                     val E = land.covariance
 
@@ -73,8 +76,8 @@ class FastSLAM(val startPose: RobotPose, private val carMotionModel: CarModel, p
 
                     //Mix the ideal and real sensor measurements to update landmark's position:
                     val dPos = K.times(residual)
-                    val updatedX = land.x + dPos[0, 0]
-                    val updatedY = land.y + dPos[0, 1]
+                    val updatedX = land.x + dPos[0,0]
+                    val updatedY = land.y + dPos[1,0]
 
                     //Update the landmark's covariance:
                     val I = Matrix.identity(K.rowDimension, K.columnDimension)
@@ -86,7 +89,7 @@ class FastSLAM(val startPose: RobotPose, private val carMotionModel: CarModel, p
                     val firstPart = Math.pow(Q.times(2 * Math.PI).norm2(), -0.5)
                     val secondPart = Math.exp((residual.transpose().times(-0.5)
                             .times(Q.inverse()).times(residual))[0, 0])
-                    newParticle.weight = newParticle.weight * (firstPart * secondPart)
+                    newParticle.weight = newParticle.weight * firstPart * secondPart
 
                     newParticle.landmarks.markForUpdateOnCopy(updatedLand, land)
                 } else {
