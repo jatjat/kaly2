@@ -17,29 +17,14 @@ public class KdTree<T> extends KdNode<T> {
     }
 
     /* -------- Joel's constructor -------- */
-    private KdTree(int dimensions, int bucketCapacity, int size, double[][] points, Object[] data,
-                   KdNode<T> left, KdNode<T> right, int splitDimension, double splitValue,
-                   double[] minBound, double[] maxBound, boolean singlePoint) {
-        super(dimensions, bucketCapacity, size, points, data, left, right, splitDimension,
-                splitValue, minBound, maxBound, singlePoint);
+    private KdTree(KdTree<T> tree) {
+        super(tree);
     }
 
     /* -------- Joel's copy on insert -------- */
     public KdTree<T> addPointAsCopy(double[] point, T value) {
-        double[][] newPoints = null;
-        if (points != null) {
-            newPoints = points.clone();
-        }
-
-        Object[] newData = null;
-        if (data != null) {
-            newData = data.clone();
-        }
-
-        KdTree<T> newTree = new KdTree<T>(dimensions, bucketCapacity, size, newPoints, newData,
-                null, null, splitDimension, splitValue, minBound, maxBound, singlePoint);
+        KdTree<T> newTree = new KdTree<T>(this);
         addPointAsCopy(newTree, point, value);
-
         return newTree;
     }
 
