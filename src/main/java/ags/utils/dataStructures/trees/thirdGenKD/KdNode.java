@@ -37,21 +37,19 @@ class KdNode<T> {
     }
 
     /* -------- Joel's constructor -------- */
-    protected KdNode(int dimensions, int bucketCapacity, int size, double[][] points,
-    Object[] data, KdNode<T> left, KdNode<T> right, int splitDimension, double splitValue, double[] minBound,
-    double[] maxBound, boolean singlePoint) {
-        this.dimensions = dimensions;
-        this.bucketCapacity = bucketCapacity;
-        this.size = size;
-        this.points = points;
-        this.data = data;
-        this.left = left;
-        this.right = right;
-        this.splitDimension = splitDimension;
-        this. splitValue = splitValue;
-        this.minBound = minBound;
-        this.maxBound = maxBound;
-        this.singlePoint = singlePoint;
+    protected KdNode(KdNode<T> node) {
+        dimensions = node.dimensions;
+        bucketCapacity = node.bucketCapacity;
+        size = node.size;
+        points = node.points != null ? node.points.clone() : null;
+        data = node.data != null ? node.data.clone() : null;
+        left = node.left;
+        right = node.right;
+        splitDimension = node.splitDimension;
+        splitValue = node.splitValue;
+        minBound = node.minBound != null ? node.minBound.clone() : null;
+        maxBound = node.maxBound != null? node.maxBound.clone() : null;
+        singlePoint = node.singlePoint;
     }
 
     /* -------- SIMPLE GETTERS -------- */
@@ -84,7 +82,7 @@ class KdNode<T> {
     /* -------- Joel's copy on insert -------- */
     protected void addPointAsCopy(KdNode<T> newRootNode, double[] point, T value) {
         KdNode<T> cursor = this;
-        KdNode<T> parentCurser = null;
+        KdNode<T> parentCursor = null;
         KdNode<T> newCursor = newRootNode;
 
         while (!cursor.isLeaf()) {
@@ -100,11 +98,13 @@ class KdNode<T> {
                 newCursor.left = null;
                 cursor = cursor.left;
             }
-            addChildToParent(newCursor, parentCurser);
-            parentCurser = newCursor;
-        }
-        addChildToParent(newCursor, parentCurser);
+            addChildToParent(newCursor, parentCursor);
+            parentCursor = newCursor;
 
+            newCursor = new KdNode<T>(cursor);
+        }
+
+        addChildToParent(newCursor, parentCursor);
         newCursor.addLeafPoint(point, value);
     }
 
@@ -141,7 +141,7 @@ class KdNode<T> {
     // Any point can be removed from the leaf without losing correctness but
     // there's a tradeoff between a very small increase in search performance if
     // the split values and split dimensions are then recalculated vs. increased
-    // delete performance if they are not. Here they are not recalculated.
+    // delete performance if they are not. Here they are not.
     public void removeLeafPoint(KdNode<T> rootParent, double[] point, T value) {
         boolean same = true;
         for(int i = 0; i < size; i++) { // points are stored unordered
