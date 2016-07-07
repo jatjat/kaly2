@@ -58,9 +58,9 @@ class FastSLAMView : JPanel() {
     var theta = 0.1
     var times = 0
 
-    var drawOdoLocs: List<Pair<Int, Int>> = ArrayList()
-    var drawParticlePoses: List<Pair<Int, Int>> = ArrayList()
-    val drawRealObjectLocs = realObjectLocs.map { Pair(it.x.toInt(), it.y.toInt()) }
+    lateinit var drawOdoLocs: List<Pair<Int, Int>>
+    lateinit var drawParticlePoses: List<Pair<Int, Int>>
+    lateinit var drawRealObjectLocs: List<Pair<Int, Int>>
 
     init {
         this.setSize(MIN_WIDTH.toInt(), MIN_WIDTH.toInt())
@@ -68,6 +68,8 @@ class FastSLAMView : JPanel() {
         for (i in 0..10) {
             realObjectLocs += xyPnt(random.nextDouble() * MIN_WIDTH, random.nextDouble() * MIN_WIDTH)
         }
+
+        drawRealObjectLocs = realObjectLocs.map { Pair(it.x.toInt(), it.y.toInt()) }
 
         fixedRateTimer(period = 50) {
             mainLoop()
