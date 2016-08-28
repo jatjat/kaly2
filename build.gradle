@@ -22,12 +22,18 @@ dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib:1.0.1"
     compile 'gov.nist.math:jama:1.0.3'
     compile files("lib/leJOS_EV3_0.9.1-beta/lib/ev3/ev3classes.jar")
+    compile 'gov.nist.math:jama:1.0.3'
+
+    // Jetty versions 8+ are incompatible with Android, so use the last 7x release
+    compile 'org.eclipse.jetty:jetty-server:7.6.19.v20160209'
+    compile 'org.eclipse.jetty:jetty-servlet:7.6.19.v20160209'
+    compile 'org.eclipse.jetty:jetty-http:7.6.19.v20160209'
+    compile 'org.eclipse.jetty:jetty-websocket:7.6.19.v20160209'
 
     testCompile 'junit:junit:4.12'
     testCompile 'org.powermock:powermock-api-mockito:1.6.1'
     testCompile 'org.powermock:powermock-module-junit4-rule-agent:1.6.1'
     testCompile 'org.powermock:powermock-module-junit4-rule:1.6.1'
     testCompile 'org.powermock:powermock-module-junit4:1.6.1'
-
     testCompile 'com.nhaarman:mockito-kotlin:0.4.0'
 }
