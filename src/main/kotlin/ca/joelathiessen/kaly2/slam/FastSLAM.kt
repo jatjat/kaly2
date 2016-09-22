@@ -11,7 +11,7 @@ import java.util.*
 
 class FastSLAM(val startPose: RobotPose, private val carMotionModel: CarModel, private val dataAssoc: DataAssociator,
                private val partResamp: ParticleResampler, val sensorInfo: SensorInfo) : Slam {
-    val NUM_PARTICLES = 100
+    val NUM_PARTICLES = 10
     val DIST_VARIANCE = 2.0 // normally would be ~ 0.5, but higher to prevent overfitting
     val ANGLE_VARIANCE = 1.0 // normally 0.01, but higher to prevent overfitting
     val IDENTITY_VARIANCE = 0.0001

@@ -7,7 +7,7 @@ import org.eclipse.jetty.servlet.ServletContextHandler
 
 class KalyServer {
     companion object {
-        val PORT = 8080
+        val PORT = 9000
         val WEBSOCKET_API_ROBOT_PATH = "/api/ws/robot/*"
         val REST_API_ROBOT_PATH = "/api/rest/robot"
         val ROOT_PATH = "/"
@@ -17,6 +17,9 @@ class KalyServer {
             servletContextHandler.addServlet(KalyWebSocketServlet::class.java, WEBSOCKET_API_ROBOT_PATH)
             servletContextHandler.addServlet(RestApiServlet::class.java, REST_API_ROBOT_PATH)
             servletContextHandler.addServlet(DefaultServlet::class.java, ROOT_PATH)
+
+            val robotsManager = RobotsManager()
+            servletContextHandler.setAttribute("robotsManager", robotsManager)
 
             val contexts = HandlerList()
             contexts.handlers = arrayOf(servletContextHandler)

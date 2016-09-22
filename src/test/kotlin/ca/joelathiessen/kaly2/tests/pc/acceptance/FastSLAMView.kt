@@ -6,7 +6,7 @@ import ca.joelathiessen.kaly2.slam.FastSLAM
 import ca.joelathiessen.kaly2.slam.FastUnbiasedResampler
 import ca.joelathiessen.kaly2.slam.NNDataAssociator
 import ca.joelathiessen.kaly2.subconscious.sensor.SensorInfo
-import ca.joelathiessen.kaly2.tests.pc.unit.slam.getFeatureForPosition
+import ca.joelathiessen.util.getFeatureForPosition
 import org.mockito.Mockito
 import java.awt.Color
 import java.awt.Graphics

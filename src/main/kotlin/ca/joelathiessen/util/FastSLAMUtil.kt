@@ -1,4 +1,4 @@
-package ca.joelathiessen.kaly2.tests.pc.unit.slam
+package ca.joelathiessen.util
 
 import ca.joelathiessen.kaly2.featuredetector.Feature
 import java.util.*
