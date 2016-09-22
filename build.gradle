@@ -6,23 +6,36 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.0.1"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.0.3"
     }
 }
 
 apply plugin: 'java'
 apply plugin: 'kotlin'
+apply plugin: 'application'
+
+mainClassName = 'ca.joelathiessen.kaly2.server.KalyServer'
 
 repositories {
     mavenCentral()
     jcenter()
 }
 
+jar {
+    manifest {
+        attributes 'Main-Class': 'ca.joelathiessen.kaly2.server.KalyServer'
+    }
+
+    doFirst {
+        from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    }
+    exclude 'META-INF/*.RSA', 'META-INF/*.SF','META-INF/*.DSA'
+}
+
 dependencies {
-    compile "org.jetbrains.kotlin:kotlin-stdlib:1.0.1"
+    compile "org.jetbrains.kotlin:kotlin-stdlib:1.0.3"
     compile 'gov.nist.math:jama:1.0.3'
     compile files("lib/leJOS_EV3_0.9.1-beta/lib/ev3/ev3classes.jar")
-    compile 'gov.nist.math:jama:1.0.3'
 
     // Jetty versions 8+ are incompatible with Android, so use the last 7x release
     compile 'org.eclipse.jetty:jetty-server:7.6.19.v20160209'
