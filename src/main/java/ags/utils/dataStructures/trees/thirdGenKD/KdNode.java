@@ -143,32 +143,36 @@ class KdNode<T> {
     // the split values and split dimensions are then recalculated vs. increased
     // delete performance if they are not. Here they are not.
     public void removeLeafPoint(KdNode<T> rootParent, double[] point, T value) {
-        boolean same = true;
-        for(int i = 0; i < size; i++) { // points are stored unordered
+        boolean same = false;
+        for (int i = 0; i < size; i++) { // points are stored unordered
             if (value == data[i]) {
-                for(int j = 0; j < dimensions; j++) {
-                    if(equals(points[i][j], point[j]) == false) {
+                same = true;
+                for (int j = 0; j < dimensions; j++) {
+                    if (equals(points[i][j], point[j]) == false) {
                         same = false;
                         break;
                     }
                 }
-                if(same == true) {
-                    points[i] = points[size - 1];
-                    data[i] = data[size - 1];
+            }
 
-                    KdNode<T> cursor = rootParent;
-                    while (!cursor.isLeaf()) {
-                        cursor.size--;
-                        if (point[cursor.splitDimension] > cursor.splitValue) {
-                            cursor = cursor.right;
-                        }
-                        else {
-                            cursor = cursor.left;
-                        }
-                    }
-                    cursor.size--;
-                    break;
+            if (same == true) {
+                for (int j = i + 1; j < size; j++) {
+                    points[j - 1] = points[j];
+                    data[j - 1] = data[j];
                 }
+                data[i] = data[size - 1];
+
+                KdNode<T> cursor = rootParent;
+                while (!cursor.isLeaf()) {
+                    cursor.size--;
+                    if (point[cursor.splitDimension] > cursor.splitValue) {
+                        cursor = cursor.right;
+                    } else {
+                        cursor = cursor.left;
+                    }
+                }
+                cursor.size--;
+                break;
             }
         }
     }
