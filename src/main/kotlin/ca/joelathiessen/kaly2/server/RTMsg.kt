@@ -5,6 +5,7 @@ class RTMsg(
         val particles: List<RTParticle>,
         val features: List<RTFeature>,
 
+        val bestPose: RTPose,
         val odoPose: RTPose,
         val truePose: RTPose,
         val trueLandmarks: List<RTLandmark>

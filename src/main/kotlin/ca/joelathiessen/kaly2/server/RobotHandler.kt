@@ -102,7 +102,7 @@ class RobotHandler(val rid: Long) {
                     synchronized(slam) {
                         slam.addTimeStep(features, odoPos)
                     }
-                    sendUpdateEvent(realPos, slam.particlePoses, features, realObjectLocs)
+                    sendUpdateEvent(realPos, odoPos, slam.particlePoses, features, realObjectLocs)
 
                     val endTime = System.currentTimeMillis()
                     val timeToSleep = MIN_TIMESTEP - (endTime - startTime)
@@ -119,17 +119,28 @@ class RobotHandler(val rid: Long) {
      * Send data that is never modified after being produced, using a helper thread
      * (TODO: could hard guarantee locking not required by using immutability)
      */
-    private fun sendUpdateEvent(lastRealPos: Pose, particlePoses: List<Pose>, featuresForRT: List<Feature>,
+    private fun sendUpdateEvent(truePos: Pose, odoPos: Pose, particlePoses: List<Pose>, featuresForRT: List<Feature>,
                                 realLandmarks: ArrayList<xyPnt>) {
         updateExecutor.execute {
             val rtParticlePoses = particlePoses.map {
                 RTParticle(it.x, it.y, it.heading, ArrayList<RTLandmark>())
             }
             val rtFeatures = featuresForRT.map { RTFeature(it.distance, it.angle, it.stdDev) }
-            val odoPose = RTPose(lastRealPos.x, lastRealPos.y, lastRealPos.heading)
-            val truePose = odoPose // for now...
-            val trueLandmarks = realLandmarks.map { RTLandmark(it.x, it.y, 0.0) }
-            val rtMsg = RTMsg(System.currentTimeMillis(), rtParticlePoses, rtFeatures, odoPose, truePose, trueLandmarks)
+            val rtOdoPos = RTPose(odoPos.x, odoPos.y, odoPos.heading)
+            val rtTruePos = RTPose(truePos.x, truePos.y, truePos.heading)
+            val rtTrueLandmarks = realLandmarks.map { RTLandmark(it.x, it.y, 0.0) }
+
+            var sumX = 0.0f
+            var sumY = 0.0f
+            var sumHeading = 0.0f
+            particlePoses.forEach {
+                sumX += it.x
+                sumY += it.y
+                sumHeading += it.heading
+            }
+            val rtBestPose = RTPose(sumX/particlePoses.size, sumY/particlePoses.size, sumHeading/particlePoses.size)
+
+            val rtMsg = RTMsg(System.currentTimeMillis(), rtParticlePoses, rtFeatures,rtBestPose, rtOdoPos, rtTruePos, rtTrueLandmarks)
             rtUpdateEventCont(this, rtMsg)
         }
     }
