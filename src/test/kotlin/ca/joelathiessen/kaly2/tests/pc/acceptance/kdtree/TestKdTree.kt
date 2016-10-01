@@ -70,10 +70,10 @@ class TestKdTree {
         val tree3 = tree2.addPointAsCopy(doubleArrayOf(2.0, 2.0), obj2)
         val tree4 = tree3.addPointAsCopy(doubleArrayOf(-3.0, -3.0), obj3)
 
-        tree4.removePoint(doubleArrayOf(2.0, 2.0), obj2)
+        val tree5 = tree4.removePointAsCopy(doubleArrayOf(2.0, 2.0), obj2)
 
         // check if deleted
-        val it = tree4.getNearestNeighborIterator(doubleArrayOf(1.0, 1.0), 100, SquareEuclideanDistanceFunction())
+        val it = tree5.getNearestNeighborIterator(doubleArrayOf(1.0, 1.0), 100, SquareEuclideanDistanceFunction())
         assertEquals(it.next(), obj1)
         assertEquals(it.next(), obj3)
         assertEquals(it.hasNext(), false)
@@ -96,23 +96,29 @@ class TestKdTree {
         val tree3 = tree2.addPointAsCopy(doubleArrayOf(2.0, 2.0), obj2)
         val tree4 = tree3.addPointAsCopy(doubleArrayOf(-3.0, -3.0), obj3)
 
-        tree4.removePoint(doubleArrayOf(1.0, 1.0), obj1)
+        val tree5 = tree4.removePointAsCopy(doubleArrayOf(1.0, 1.0), obj1)
 
         // make sure deleted
-        val it = tree4.getNearestNeighborIterator(doubleArrayOf(1.0, 1.0), 100, SquareEuclideanDistanceFunction())
+        val it = tree5.getNearestNeighborIterator(doubleArrayOf(1.0, 1.0), 100, SquareEuclideanDistanceFunction())
         assertEquals(it.next(), obj2)
         assertEquals(it.next(), obj3)
         assertEquals(it.hasNext(), false)
 
         // make sure not deleted in older trees
-        val it2 = tree3.getNearestNeighborIterator(doubleArrayOf(1.0, 1.0), 100, SquareEuclideanDistanceFunction())
+        val it2 = tree4.getNearestNeighborIterator(doubleArrayOf(1.0, 1.0), 100, SquareEuclideanDistanceFunction())
         assertEquals(it2.next(), obj1)
         assertEquals(it2.next(), obj2)
+        assertEquals(it2.next(), obj3)
         assertEquals(it2.hasNext(), false)
 
-        val it3 = tree2.getNearestNeighborIterator(doubleArrayOf(1.0, 1.0), 100, SquareEuclideanDistanceFunction())
+        val it3 = tree3.getNearestNeighborIterator(doubleArrayOf(1.0, 1.0), 100, SquareEuclideanDistanceFunction())
         assertEquals(it3.next(), obj1)
+        assertEquals(it3.next(), obj2)
         assertEquals(it3.hasNext(), false)
+
+        val it4 = tree2.getNearestNeighborIterator(doubleArrayOf(1.0, 1.0), 100, SquareEuclideanDistanceFunction())
+        assertEquals(it4.next(), obj1)
+        assertEquals(it4.hasNext(), false)
     }
 
     @Test
@@ -126,23 +132,29 @@ class TestKdTree {
         val tree3 = tree2.addPointAsCopy(doubleArrayOf(2.0, 2.0), obj2)
         val tree4 = tree3.addPointAsCopy(doubleArrayOf(-3.0, -3.0), obj3)
 
-        tree4.removePoint(doubleArrayOf(2.0, 2.0), obj2)
+        val tree5 = tree4.removePointAsCopy(doubleArrayOf(2.0, 2.0), obj2)
 
         // make sure deleted
-        val it = tree4.getNearestNeighborIterator(doubleArrayOf(1.0, 1.0), 100, SquareEuclideanDistanceFunction())
+        val it = tree5.getNearestNeighborIterator(doubleArrayOf(1.0, 1.0), 100, SquareEuclideanDistanceFunction())
         assertEquals(it.next(), obj1)
         assertEquals(it.next(), obj3)
         assertEquals(it.hasNext(), false)
 
         // make sure not deleted in older trees
-        val it2 = tree3.getNearestNeighborIterator(doubleArrayOf(1.0, 1.0), 100, SquareEuclideanDistanceFunction())
+        val it2 = tree4.getNearestNeighborIterator(doubleArrayOf(1.0, 1.0), 100, SquareEuclideanDistanceFunction())
         assertEquals(it2.next(), obj1)
         assertEquals(it2.next(), obj2)
+        assertEquals(it2.next(), obj3)
         assertEquals(it2.hasNext(), false)
 
-        val it3 = tree2.getNearestNeighborIterator(doubleArrayOf(1.0, 1.0), 100, SquareEuclideanDistanceFunction())
+        val it3 = tree3.getNearestNeighborIterator(doubleArrayOf(1.0, 1.0), 100, SquareEuclideanDistanceFunction())
         assertEquals(it3.next(), obj1)
+        assertEquals(it3.next(), obj2)
         assertEquals(it3.hasNext(), false)
+
+        val it4 = tree2.getNearestNeighborIterator(doubleArrayOf(1.0, 1.0), 100, SquareEuclideanDistanceFunction())
+        assertEquals(it4.next(), obj1)
+        assertEquals(it4.hasNext(), false)
     }
 
     @Test
@@ -156,22 +168,28 @@ class TestKdTree {
         val tree3 = tree2.addPointAsCopy(doubleArrayOf(2.0, 2.0), obj2)
         val tree4 = tree3.addPointAsCopy(doubleArrayOf(-3.0, -3.0), obj3)
 
-        tree4.removePoint(doubleArrayOf(-3.0, -3.0), obj3)
+        val tree5 = tree4.removePointAsCopy(doubleArrayOf(-3.0, -3.0), obj3)
 
         // make sure deleted
-        val it = tree4.getNearestNeighborIterator(doubleArrayOf(1.0, 1.0), 100, SquareEuclideanDistanceFunction())
+        val it = tree5.getNearestNeighborIterator(doubleArrayOf(1.0, 1.0), 100, SquareEuclideanDistanceFunction())
         assertEquals(it.next(), obj1)
         assertEquals(it.next(), obj2)
         assertEquals(it.hasNext(), false)
 
         // make sure not deleted in older trees
-        val it2 = tree3.getNearestNeighborIterator(doubleArrayOf(1.0, 1.0), 100, SquareEuclideanDistanceFunction())
+        val it2 = tree4.getNearestNeighborIterator(doubleArrayOf(1.0, 1.0), 100, SquareEuclideanDistanceFunction())
         assertEquals(it2.next(), obj1)
         assertEquals(it2.next(), obj2)
+        assertEquals(it2.next(), obj3)
         assertEquals(it2.hasNext(), false)
 
-        val it3 = tree2.getNearestNeighborIterator(doubleArrayOf(1.0, 1.0), 100, SquareEuclideanDistanceFunction())
+        val it3 = tree3.getNearestNeighborIterator(doubleArrayOf(1.0, 1.0), 100, SquareEuclideanDistanceFunction())
         assertEquals(it3.next(), obj1)
+        assertEquals(it3.next(), obj2)
         assertEquals(it3.hasNext(), false)
+
+        val it4 = tree2.getNearestNeighborIterator(doubleArrayOf(1.0, 1.0), 100, SquareEuclideanDistanceFunction())
+        assertEquals(it4.next(), obj1)
+        assertEquals(it4.hasNext(), false)
     }
 }

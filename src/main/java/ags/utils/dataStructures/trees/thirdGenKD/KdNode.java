@@ -48,7 +48,7 @@ class KdNode<T> {
         splitDimension = node.splitDimension;
         splitValue = node.splitValue;
         minBound = node.minBound != null ? node.minBound.clone() : null;
-        maxBound = node.maxBound != null? node.maxBound.clone() : null;
+        maxBound = node.maxBound != null ? node.maxBound.clone() : null;
         singlePoint = node.singlePoint;
     }
 
@@ -92,8 +92,7 @@ class KdNode<T> {
                 newCursor.left = cursor.left;
                 newCursor.right = null;
                 cursor = cursor.right;
-            }
-            else {
+            } else {
                 newCursor.right = cursor.right;
                 newCursor.left = null;
                 cursor = cursor.left;
@@ -108,29 +107,43 @@ class KdNode<T> {
         newCursor.addLeafPoint(point, value);
     }
 
-    /* -------- Joel's remove point -------- */
-    public void removePoint(double[] point, T value) {
+    /* -------- Joel's copy on remove -------- */
+    protected void removePointAsCopy(KdNode<T> newRootNode, double[] point, T value) {
         KdNode<T> cursor = this;
+        KdNode<T> parentCursor = null;
+        KdNode<T> newCursor = newRootNode;
+
         while (!cursor.isLeaf()) {
+            newCursor.extendBounds(point);
+            newCursor.size--;
             if (point[cursor.splitDimension] > cursor.splitValue) {
+                newCursor.left = cursor.left;
+                newCursor.right = null;
                 cursor = cursor.right;
-            }
-            else {
+            } else {
+                newCursor.right = cursor.right;
+                newCursor.left = null;
                 cursor = cursor.left;
             }
+            addChildToParent(newCursor, parentCursor);
+            parentCursor = newCursor;
+
+            newCursor = new KdNode(cursor);
         }
-        cursor.removeLeafPoint(this, point, value);
+
+        addChildToParent(newCursor, parentCursor);
+        newCursor.removeLeafPoint(point, value);
     }
 
     /* -------- INTERNAL OPERATIONS -------- */
 
     /* -------- Joel's add child to parent -------- */
-    private void addChildToParent(KdNode<T> childCurser, KdNode<T> parentCurser) {
-        if(parentCurser != null) {
-            if(parentCurser.left == null) {
-                parentCurser.left = childCurser;
-            } else if(parentCurser.right == null) {
-                parentCurser.right = childCurser;
+    private void addChildToParent(KdNode<T> childCursor, KdNode<T> parentCursor) {
+        if (parentCursor != null) {
+            if (parentCursor.left == null) {
+                parentCursor.left = childCursor;
+            } else if (parentCursor.right == null) {
+                parentCursor.right = childCursor;
             } else {
                 throw new IllegalStateException("Parent KdNode does not have a null child variable to add a child to");
             }
@@ -142,46 +155,25 @@ class KdNode<T> {
     // there's a tradeoff between a very small increase in search performance if
     // the split values and split dimensions are then recalculated vs. increased
     // delete performance if they are not. Here they are not.
-    public void removeLeafPoint(KdNode<T> rootParent, double[] point, T value) {
-        boolean same = false;
+    public void removeLeafPoint(double[] point, T value) {
         for (int i = 0; i < size; i++) { // points are stored unordered
             if (value == data[i]) {
-                same = true;
-                for (int j = 0; j < dimensions; j++) {
-                    if (equals(points[i][j], point[j]) == false) {
-                        same = false;
-                        break;
+                if (size > 1) {
+                    for (int j = i + 1; j < size; j++) {
+                        points[j - 1] = points[j];
+                        data[j - 1] = data[j];
                     }
-                }
-            }
-
-            if (same == true) {
-                for (int j = i + 1; j < size; j++) {
-                    points[j - 1] = points[j];
-                    data[j - 1] = data[j];
-                }
-                data[i] = data[size - 1];
-
-                KdNode<T> cursor = rootParent;
-                while (!cursor.isLeaf()) {
-                    cursor.size--;
-                    if (point[cursor.splitDimension] > cursor.splitValue) {
-                        cursor = cursor.right;
-                    } else {
-                        cursor = cursor.left;
+                } else {
+                    if (size == 1) {
+                        minBound = Arrays.copyOf(point, dimensions);
+                        maxBound = Arrays.copyOf(point, dimensions);
                     }
+                    singlePoint = true;
                 }
-                cursor.size--;
+                size--;
                 break;
             }
         }
-    }
-
-    /* -------- Joel's equals -------- */
-    final double EPSILON = 0.0000001;
-    boolean equals(double a, double b) {
-        if (a == b) return true;
-        return Math.abs(a - b) < EPSILON * Math.max(Math.abs(a), Math.abs(b));
     }
 
     public void addLeafPoint(double[] point, T value) {

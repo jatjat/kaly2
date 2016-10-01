@@ -8,24 +8,25 @@ import java.util.*
 class LandmarksTree() : AssociatableLandmarks {
 
     private var kdTree = KdTree<Landmark>(2)
-    private val landmarksForInsert = ArrayList<Landmark>()
-    private val landmarksForDelete = ArrayList<Landmark>()
-    private var newLandmarksTree: LandmarksTree? = null
+    private val landmarksForInsert = HashSet<Landmark>()
+    private val landmarksForDelete = HashSet<Landmark>()
+    private var kdTreeCopy: KdTree<Landmark>? = null
 
     constructor(landmarksTree: KdTree<Landmark>): this() {
         this.kdTree = landmarksTree
     }
 
     fun copy(): LandmarksTree {
-        if(landmarksForInsert.size > 0 || landmarksForDelete.size > 0 || newLandmarksTree == null) {
+        if(kdTreeCopy == null) {
             var newTree = kdTree
+
+            landmarksForDelete.forEach { newTree = newTree.removePointAsCopy(doubleArrayOf(it.x, it.y), it) }
             landmarksForInsert.forEach { newTree = newTree.addPointAsCopy(doubleArrayOf(it.x, it.y), it) }
-            landmarksForDelete.forEach { newTree.removePoint(doubleArrayOf(it.x, it.y), it) }
             landmarksForInsert.clear()
             landmarksForDelete.clear()
-            newLandmarksTree = LandmarksTree(newTree)
+            kdTreeCopy = newTree
         }
-        return newLandmarksTree!!
+        return LandmarksTree(kdTreeCopy!!)
     }
 
     fun markForUpdateOnCopy(newLandmark: Landmark, oldLandmark: Landmark) {
