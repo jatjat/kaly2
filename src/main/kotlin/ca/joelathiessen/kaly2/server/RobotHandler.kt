@@ -16,13 +16,17 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.thread
 
 class RobotHandler(val rid: Long) {
-    val MIN_TIMESTEP = 33//33 // Don't wait for shorter than this (in ms) before starting the next simulation timestep
+    val NUM_LANDMARKS = 11
+    val MIN_TIMESTEP = 33// Don't wait for shorter than this (in ms) before starting the next simulation timestep
     val ROT_RATE = 0.03
-    val STEP_DIST = 2
+    val STEP_DIST = 20
     val STEP_ROT_STD_DEV = 0.01
     val STEP_DIST_STD_DEV = 0.5
     val MIN_WIDTH = 400.0
-    val SENSOR_STD_DEV = 0.1
+    val SENSOR_DIST_STD_DEV = 0.001
+    val SENSOR_ANG_STD_DEV = 0.001
+    val ODO_DIST_STD_DEV = 0.01
+    val ODO_ANG_STD_DEV = 0.01
 
     val startPos = RobotPose(0, 0f, MIN_WIDTH.toFloat() / 2f, MIN_WIDTH.toFloat() / 2f, 0f)
 
@@ -46,7 +50,7 @@ class RobotHandler(val rid: Long) {
     private val realObjectLocs = ArrayList<xyPnt>()
 
     init {
-        for (i in 0..10) {
+        for (i in 1..NUM_LANDMARKS) {
             realObjectLocs += xyPnt(random.nextDouble() * MIN_WIDTH, random.nextDouble() * MIN_WIDTH)
         }
 
@@ -61,25 +65,42 @@ class RobotHandler(val rid: Long) {
                 var x = MIN_WIDTH / 2
                 var y = MIN_WIDTH / 2
                 var theta = 0.1
+
+                var odoX = x
+                var odoY = y
+                var odoTheta = theta
+
                 var times = 0
                 val odoLocs = ArrayList<RobotPose>()
+                val realLocs = ArrayList<RobotPose>()
 
                 while (shouldRun.get()) {
                     val startTime = System.currentTimeMillis()
 
                     // move the robot
-                    theta += ROT_RATE + STEP_ROT_STD_DEV * random.nextGaussian()
-                    x += Math.cos(theta) * STEP_DIST + STEP_DIST_STD_DEV * random.nextGaussian()
-                    y += Math.sin(theta) * STEP_DIST + STEP_DIST_STD_DEV * random.nextGaussian()
+                    val dTheta = ROT_RATE + (STEP_ROT_STD_DEV * random.nextGaussian())
+                    theta += dTheta
+                    odoTheta += dTheta + (ODO_ANG_STD_DEV * random.nextGaussian())
+
+                    val dXCommon = STEP_DIST + (STEP_DIST_STD_DEV * random.nextGaussian())
+                    x += Math.cos(theta) * dXCommon
+                    odoX += Math.cos(odoTheta) * dXCommon + (ODO_DIST_STD_DEV * random.nextGaussian())
+
+                    val dYCommon = STEP_DIST + (STEP_DIST_STD_DEV * random.nextGaussian())
+                    y += Math.sin(theta) * dYCommon
+                    odoY += Math.sin(odoTheta) * dYCommon + (ODO_DIST_STD_DEV * random.nextGaussian())
+
                     val realPos = RobotPose(times, 0f, x.toFloat(), y.toFloat(), theta.toFloat())
-                    odoLocs.add(realPos)
+                    realLocs.add(realPos)
+                    val odoPos = RobotPose(times, 0f, odoX.toFloat(), odoY.toFloat(), odoTheta.toFloat())
+                    odoLocs.add(odoPos)
 
                     // make features as the robot sees them
-                    val features = realObjectLocs.map { getFeatureForPosition(x, y, theta, it.x, it.y, SENSOR_STD_DEV) }
+                    val features = realObjectLocs.map { getFeatureForPosition(x, y, theta, it.x, it.y, SENSOR_ANG_STD_DEV, SENSOR_DIST_STD_DEV) }
 
                     // perform a FastSLAM timestep
                     synchronized(slam) {
-                        slam.addTimeStep(features, realPos)
+                        slam.addTimeStep(features, odoPos)
                     }
                     sendUpdateEvent(realPos, slam.particlePoses, features, realObjectLocs)
 

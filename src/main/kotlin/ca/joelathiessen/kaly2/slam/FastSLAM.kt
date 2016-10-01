@@ -11,10 +11,10 @@ import java.util.*
 
 class FastSLAM(val startPose: RobotPose, private val carMotionModel: CarModel, private val dataAssoc: DataAssociator,
                private val partResamp: ParticleResampler, val sensorInfo: SensorInfo) : Slam {
-    val NUM_PARTICLES = 10
-    val DIST_VARIANCE = 2.0 // normally would be ~ 0.5, but higher to prevent overfitting
-    val ANGLE_VARIANCE = 1.0 // normally 0.01, but higher to prevent overfitting
-    val IDENTITY_VARIANCE = 0.0001
+    val NUM_PARTICLES = 20
+    val DIST_VARIANCE = 1.0
+    val ANGLE_VARIANCE = 0.01
+    val IDENTITY_VARIANCE = 0.2
 
     private val R = Matrix(arrayOf(
             doubleArrayOf(DIST_VARIANCE, 0.0, 0.0),
@@ -47,7 +47,7 @@ class FastSLAM(val startPose: RobotPose, private val carMotionModel: CarModel, p
         val newParticles = ArrayList<Particle>(particles.size)
 
         for (particle in particles) {
-            val newParticle = Particle(particle.pose, particle.weight)
+            val newParticle = Particle(Pose(particle.pose.x, particle.pose.y, particle.pose.heading), particle.weight, particle.landmarks)
             val featuresToLandmarks: Map<Feature, Landmark?> = dataAssoc.associate(particle.pose, features, particle.landmarks)
 
             for ((feat, land) in featuresToLandmarks) {
@@ -56,17 +56,17 @@ class FastSLAM(val startPose: RobotPose, private val carMotionModel: CarModel, p
                     //Using the distance and angle from the particle to the landmark...
                     val dX = land.x - particle.pose.x
                     val dY = land.y - particle.pose.y
-                    val particleDist = Math.sqrt(dX * dX + dY * dY)
+                    val particleDist = Math.sqrt((dX * dX) + (dY * dY))
                     val particleAngle = Math.atan2(dY, dX)
 
                     //...and the distance and angle from the sensor to the feature, find the residual:
                     val residual = Matrix(arrayOf(
-                            doubleArrayOf(particleDist - feat.distance),
-                            doubleArrayOf(particleAngle - (particle.pose.heading + feat.angle)),
+                            doubleArrayOf(feat.distance - particleDist),
+                            doubleArrayOf(feat.angle - particleAngle),
                             doubleArrayOf(0.0)
                     ))
 
-                    val G = feat.makeJacobian(particle.pose)
+                    val G = feat.makeJacobian()
                     val GPrime = G.transpose()
                     val E = land.covariance
 
@@ -94,7 +94,10 @@ class FastSLAM(val startPose: RobotPose, private val carMotionModel: CarModel, p
                     newParticle.landmarks.markForUpdateOnCopy(updatedLand, land)
                 } else {
                     //we have a new landmark!
-                    newParticle.landmarks.markForInsertOnCopy(Landmark(particle.pose, feat, R))
+                    val G = feat.makeJacobian()
+                    val GInverse = G.transpose()
+                    val variance = GInverse.times(R).times(GInverse.transpose())
+                    newParticle.landmarks.markForInsertOnCopy(Landmark(particle.pose, feat, variance))
                 }
             }
             newParticles += newParticle
