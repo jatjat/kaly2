@@ -6,8 +6,10 @@ import lejos.robotics.geometry.Point
 import java.util.*
 
 class LandmarksTree() : AssociatableLandmarks {
+    private val DIMENSIONS = 2
+    private val BUCKET_CAPACITY = 24
 
-    private var kdTree = KdTree<Landmark>(2)
+    private var kdTree = KdTree<Landmark>(DIMENSIONS, BUCKET_CAPACITY)
     private val landmarksForInsert = HashSet<Landmark>()
     private val landmarksForDelete = HashSet<Landmark>()
     private var kdTreeCopy: KdTree<Landmark>? = null
