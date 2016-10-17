@@ -37,6 +37,7 @@ dependencies {
     compile 'gov.nist.math:jama:1.0.3'
     compile files("lib/leJOS_EV3_0.9.1-beta/lib/ev3/ev3classes.jar")
     compile 'com.google.code.gson:gson:2.7'
+    compile 'com.github.salomonbrys.kotson:kotson:2.3.0'
 
     // Jetty versions 8+ are incompatible with Android, so use the last 7x release
     compile 'org.eclipse.jetty:jetty-server:7.6.19.v20160209'

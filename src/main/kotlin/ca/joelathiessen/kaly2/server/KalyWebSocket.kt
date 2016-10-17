@@ -1,10 +1,17 @@
 package ca.joelathiessen.kaly2.server
 
-import com.google.gson.GsonBuilder
+import ca.joelathiessen.kaly2.server.messages.FastSlamSettingsMsg
+import ca.joelathiessen.kaly2.server.messages.RTMsg
+import ca.joelathiessen.kaly2.server.messages.RobotSettingsMsg
 import org.eclipse.jetty.websocket.WebSocket
 import java.util.concurrent.Executors
+import com.github.salomonbrys.kotson.*
+import com.google.gson.GsonBuilder
+import com.google.gson.JsonParser
 
 class KalyWebSocket(private val robotsManager: RobotsManager, private val rid: Long) : WebSocket.OnTextMessage {
+    val MSG_TYPE = "msgType"
+    val MSG_LABEL = "msg"
     private val connectionExecutor = Executors.newSingleThreadExecutor()!!
     private lateinit var connection: WebSocket.Connection
     private lateinit var robotHandler: RobotHandler
@@ -22,6 +29,16 @@ class KalyWebSocket(private val robotsManager: RobotsManager, private val rid: L
 
     override fun onMessage(data: String) {
         println("Message received: $data")
+
+        val dataJson = JsonParser().parse(data).obj
+        val msgType = dataJson[MSG_TYPE].string
+        val msg = dataJson[MSG_LABEL]
+
+        if(msgType == RobotSettingsMsg.MSG_TYPE_NAME) {
+            this.robotHandler.applyRobotSettings(gson.fromJson<RobotSettingsMsg>(msg))
+        } else if(msgType == FastSlamSettingsMsg.MSG_TYPE_NAME){
+            this.robotHandler.applyFastSlamSettings(gson.fromJson<FastSlamSettingsMsg>(msg))
+        }
     }
 
     override fun onClose(closeCode: Int, message: String?) {
@@ -30,7 +47,8 @@ class KalyWebSocket(private val robotsManager: RobotsManager, private val rid: L
             robotsManager.removeHandler(rid)
         }
         synchronized(closedLock) {
-            closed = true;
+            closed = true
+            connectionExecutor.shutdownNow()
         }
     }
 

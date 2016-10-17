@@ -11,25 +11,68 @@ import java.util.*
 
 class FastSLAM(val startPose: RobotPose, private val carMotionModel: CarModel, private val dataAssoc: DataAssociator,
                private val partResamp: ParticleResampler, val sensorInfo: SensorInfo) : Slam {
-    val NUM_PARTICLES = 20
-    val DIST_VARIANCE = 1.0
-    val ANGLE_VARIANCE = 0.01
+    private val ADD_REMOVE_SEED = 1L
+    val DEFAULT_NUM_PARTICLES = 20
+    val DEFAULT_DIST_VARIANCE = 1.0
+    val DEFAULT_ANG_VARIANCE = 0.01
     val IDENTITY_VARIANCE = 0.2
 
-    private val R = Matrix(arrayOf(
-            doubleArrayOf(DIST_VARIANCE, 0.0, 0.0),
-            doubleArrayOf(0.0, ANGLE_VARIANCE, 0.0),
-            doubleArrayOf(0.0, 0.0, IDENTITY_VARIANCE)
-    ))
+    var numParticles = DEFAULT_NUM_PARTICLES
+    get() = particles.size
+    private set
+
+    var distVariance = DEFAULT_DIST_VARIANCE
+    private set
+
+    var angleVariance = DEFAULT_ANG_VARIANCE
+    private set
+
+    private var R = createR(distVariance, angleVariance, IDENTITY_VARIANCE)
 
     private var lastKnownPose = startPose
 
-    private var particles = ArrayList<Particle>(NUM_PARTICLES)
+    private var particles = ArrayList<Particle>(DEFAULT_NUM_PARTICLES)
 
     init {
-        for (i in 1..NUM_PARTICLES) {
-            particles.add(Particle(startPose, 1.0 / NUM_PARTICLES))
+        for (i in 1..DEFAULT_NUM_PARTICLES) {
+            particles.add(Particle(startPose, 1.0 / DEFAULT_NUM_PARTICLES))
         }
+    }
+
+    fun changeNumParticles(number: Int = DEFAULT_NUM_PARTICLES) {
+        var remCnt = 0
+        for (i in number..particles.size.toInt() - 1) {
+            particles.removeAt(Random(ADD_REMOVE_SEED).nextInt(particles.size))
+            remCnt++
+        }
+        var addCnt = 0
+        val newParticles = ArrayList<Particle>()
+        for (i in particles.size.toInt()..number - 1) {
+            newParticles += particles[Random(ADD_REMOVE_SEED).nextInt(particles.size)].copy()
+            addCnt++
+        }
+        particles.addAll(newParticles)
+
+        particles.forEach { it.weight = 1.0 / numParticles }
+        println("Removed: ${remCnt}, added: ${addCnt}, total num particles: ${numParticles}")
+    }
+
+    fun changeDistanceVariance(variance: Double = DEFAULT_DIST_VARIANCE ) {
+        distVariance = variance
+        R = createR(distVariance, angleVariance, IDENTITY_VARIANCE)
+    }
+
+    fun changeAngleVariance(variance: Double = DEFAULT_ANG_VARIANCE) {
+        angleVariance = variance
+        R = createR(distVariance, angleVariance, IDENTITY_VARIANCE)
+    }
+
+    private fun createR(distVar: Double, angVar: Double, identVar: Double): Matrix {
+        return Matrix(arrayOf(
+                doubleArrayOf(distVar, 0.0, 0.0),
+                doubleArrayOf(0.0, angVar, 0.0),
+                doubleArrayOf(0.0, 0.0, identVar)
+        ))
     }
 
     override fun getCurPos(): RobotPose {

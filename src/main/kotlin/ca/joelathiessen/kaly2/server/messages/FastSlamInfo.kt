@@ -1,6 +1,8 @@
-package ca.joelathiessen.kaly2.server
+package ca.joelathiessen.kaly2.server.messages
 
-class RTMsg(
+import com.google.gson.annotations.Expose
+
+class FastSlamInfo(
         val timestamp: Long,
         val particles: List<RTParticle>,
         val features: List<RTFeature>,
@@ -9,7 +11,10 @@ class RTMsg(
         val odoPose: RTPose,
         val truePose: RTPose,
         val trueLandmarks: List<RTLandmark>
-)
+) : RobotMsg {
+    @Expose(serialize = false, deserialize = false)
+    override var MSG_TYPE = "fastSlamInfo"
+}
 
 
 class RTPose(
