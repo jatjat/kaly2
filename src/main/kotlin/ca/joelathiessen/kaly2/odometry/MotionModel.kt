@@ -1,6 +1,5 @@
 package ca.joelathiessen.kaly2.odometry
 
-import ca.joelathiessen.kaly2.odometry.RobotPose
 import lejos.robotics.navigation.Pose
 
 interface MotionModel {

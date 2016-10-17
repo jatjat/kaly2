@@ -14,12 +14,12 @@ class LandmarksTree() : AssociatableLandmarks {
     private val landmarksForDelete = HashSet<Landmark>()
     private var kdTreeCopy: KdTree<Landmark>? = null
 
-    constructor(landmarksTree: KdTree<Landmark>): this() {
+    constructor(landmarksTree: KdTree<Landmark>) : this() {
         this.kdTree = landmarksTree
     }
 
     fun copy(): LandmarksTree {
-        if(kdTreeCopy == null) {
+        if (kdTreeCopy == null) {
             var newTree = kdTree
 
             landmarksForDelete.forEach { newTree = newTree.removePointAsCopy(doubleArrayOf(it.x, it.y), it) }
@@ -42,7 +42,7 @@ class LandmarksTree() : AssociatableLandmarks {
 
     override fun getNearestNeighbor(point: Point): Landmark? {
         var nearest: Landmark? = null
-        if(kdTree.size() > 0) {
+        if (kdTree.size() > 0) {
             nearest = kdTree.findNearestNeighbors(doubleArrayOf(point.x.toDouble(), point.y.toDouble()),
                     1, SquareEuclideanDistanceFunction()).max
         }

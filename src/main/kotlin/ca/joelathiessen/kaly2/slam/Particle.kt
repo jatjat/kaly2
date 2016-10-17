@@ -7,7 +7,7 @@ import lejos.robotics.navigation.Pose
 
 class Particle(pose: Pose, var weight: Double = 0.0, val landmarks: LandmarksTree = LandmarksTree()) {
     var pose: Pose = pose
-    private set
+        private set
 
     fun copy(): Particle {
         return Particle(Pose(pose.x, pose.y, pose.heading), weight, landmarks.copy())

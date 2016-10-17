@@ -1,8 +1,7 @@
 package ca.joelathiessen.kaly2.slam
 
-import ca.joelathiessen.kaly2.odometry.RobotPose
 import ca.joelathiessen.kaly2.featuredetector.Feature
-import lejos.robotics.navigation.Pose
+import ca.joelathiessen.kaly2.odometry.RobotPose
 
 interface Slam {
     fun resetTimeSteps()

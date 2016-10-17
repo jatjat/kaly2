@@ -18,8 +18,7 @@ class FastUnbiasedResampler : ParticleResampler {
         for (m in 1..numOldParticles) {
             val maxWeight = randomNum + (m - 1.0) * Math.pow(1.0 * numOldParticles, -1.0)
 
-            while (currWeight < maxWeight)
-            {
+            while (currWeight < maxWeight) {
                 count++
                 currWeight += oldParticles[count - 1].weight
             }

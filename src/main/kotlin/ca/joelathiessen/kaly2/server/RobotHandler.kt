@@ -60,72 +60,72 @@ class RobotHandler(val rid: Long) {
 
     private lateinit var simThread: Thread
 
-    fun makeSimThread(): Thread =  thread(start = false) {
+    fun makeSimThread(): Thread = thread(start = false) {
 
         // for now, instead of running an entire robot, run just its FastSLAM simulation
 
         synchronized(robotIsRunningLock) {
             println("Robot $rid started...")
-                slam = FastSLAM(startPos, motionModel, dataAssoc, partResamp, sensorInfo)
+            slam = FastSLAM(startPos, motionModel, dataAssoc, partResamp, sensorInfo)
 
-                var x = MIN_WIDTH / 2
-                var y = MIN_WIDTH / 2
-                var theta = 0.1
+            var x = MIN_WIDTH / 2
+            var y = MIN_WIDTH / 2
+            var theta = 0.1
 
-                var odoX = x
-                var odoY = y
-                var odoTheta = theta
+            var odoX = x
+            var odoY = y
+            var odoTheta = theta
 
-                var times = 0
-                val odoLocs = ArrayList<RobotPose>()
-                val realLocs = ArrayList<RobotPose>()
+            var times = 0
+            val odoLocs = ArrayList<RobotPose>()
+            val realLocs = ArrayList<RobotPose>()
 
-                while (shouldRun.get()) {
-                    val startTime = System.currentTimeMillis()
+            while (shouldRun.get()) {
+                val startTime = System.currentTimeMillis()
 
-                    // move the robot
-                    val dTheta = ROT_RATE + (STEP_ROT_STD_DEV * random.nextGaussian())
-                    theta += dTheta
-                    odoTheta += dTheta + (ODO_ANG_STD_DEV * random.nextGaussian())
+                // move the robot
+                val dTheta = ROT_RATE + (STEP_ROT_STD_DEV * random.nextGaussian())
+                theta += dTheta
+                odoTheta += dTheta + (ODO_ANG_STD_DEV * random.nextGaussian())
 
-                    val dXCommon = STEP_DIST + (STEP_DIST_STD_DEV * random.nextGaussian())
-                    x += Math.cos(theta) * dXCommon
-                    odoX += Math.cos(odoTheta) * dXCommon + (ODO_DIST_STD_DEV * random.nextGaussian())
+                val dXCommon = STEP_DIST + (STEP_DIST_STD_DEV * random.nextGaussian())
+                x += Math.cos(theta) * dXCommon
+                odoX += Math.cos(odoTheta) * dXCommon + (ODO_DIST_STD_DEV * random.nextGaussian())
 
-                    val dYCommon = STEP_DIST + (STEP_DIST_STD_DEV * random.nextGaussian())
-                    y += Math.sin(theta) * dYCommon
-                    odoY += Math.sin(odoTheta) * dYCommon + (ODO_DIST_STD_DEV * random.nextGaussian())
+                val dYCommon = STEP_DIST + (STEP_DIST_STD_DEV * random.nextGaussian())
+                y += Math.sin(theta) * dYCommon
+                odoY += Math.sin(odoTheta) * dYCommon + (ODO_DIST_STD_DEV * random.nextGaussian())
 
-                    val realPos = RobotPose(times, 0f, x.toFloat(), y.toFloat(), theta.toFloat())
-                    realLocs.add(realPos)
-                    val odoPos = RobotPose(times, 0f, odoX.toFloat(), odoY.toFloat(), odoTheta.toFloat())
-                    odoLocs.add(odoPos)
+                val realPos = RobotPose(times, 0f, x.toFloat(), y.toFloat(), theta.toFloat())
+                realLocs.add(realPos)
+                val odoPos = RobotPose(times, 0f, odoX.toFloat(), odoY.toFloat(), odoTheta.toFloat())
+                odoLocs.add(odoPos)
 
-                    // make features as the robot sees them
-                    val features = realObjectLocs.map { getFeatureForPosition(x, y, theta, it.x, it.y, SENSOR_ANG_STD_DEV, SENSOR_DIST_STD_DEV) }
+                // make features as the robot sees them
+                val features = realObjectLocs.map { getFeatureForPosition(x, y, theta, it.x, it.y, SENSOR_ANG_STD_DEV, SENSOR_DIST_STD_DEV) }
 
-                    // perform a FastSLAM timestep
-                    synchronized(slam) {
-                        slam.addTimeStep(features, odoPos)
-                    }
-                    sendUpdateEvent(realPos, odoPos, slam.particlePoses, features, realObjectLocs)
-
-                    if (shouldPause.get() == true) {
-                        println("Robot $rid attempting to pause")
-                        pauseSemaphore.acquire()
-                        pauseSemaphore.release()
-                        println("Robot $rid unpaused")
-                    }
-
-                    val endTime = System.currentTimeMillis()
-                    val timeToSleep = MIN_TIMESTEP - (endTime - startTime)
-                    if (timeToSleep > 0) {
-                        Thread.sleep(timeToSleep)
-                    }
+                // perform a FastSLAM timestep
+                synchronized(slam) {
+                    slam.addTimeStep(features, odoPos)
                 }
-                println("...Robot $rid stopped")
+                sendUpdateEvent(realPos, odoPos, slam.particlePoses, features, realObjectLocs)
+
+                if (shouldPause.get() == true) {
+                    println("Robot $rid attempting to pause")
+                    pauseSemaphore.acquire()
+                    pauseSemaphore.release()
+                    println("Robot $rid unpaused")
+                }
+
+                val endTime = System.currentTimeMillis()
+                val timeToSleep = MIN_TIMESTEP - (endTime - startTime)
+                if (timeToSleep > 0) {
+                    Thread.sleep(timeToSleep)
+                }
             }
+            println("...Robot $rid stopped")
         }
+    }
 
     /**
      * Send data that is never modified after being produced, using a helper thread
@@ -150,7 +150,7 @@ class RobotHandler(val rid: Long) {
                 sumY += it.y
                 sumHeading += it.heading
             }
-            val rtBestPose = RTPose(sumX/particlePoses.size, sumY/particlePoses.size, sumHeading/particlePoses.size)
+            val rtBestPose = RTPose(sumX / particlePoses.size, sumY / particlePoses.size, sumHeading / particlePoses.size)
 
             val rtMsg = RTMsg(FastSlamInfo(System.currentTimeMillis(), rtParticlePoses, rtFeatures, rtBestPose, rtOdoPos, rtTruePos, rtTrueLandmarks))
             rtUpdateEventCont(this, rtMsg)
@@ -218,7 +218,7 @@ class RobotHandler(val rid: Long) {
         }
 
         if (rSettings.running) {
-            if(rSettings.resetting == false) {
+            if (rSettings.resetting == false) {
                 unpauseRobot()
             }
             startRobot()

@@ -5,7 +5,7 @@ import com.google.gson.annotations.Expose
 class RobotSettingsMsg(
         val running: Boolean,
         val resetting: Boolean
-): RobotMsg {
+) : RobotMsg {
     @Expose(serialize = false, deserialize = false)
     override val MSG_TYPE = MSG_TYPE_NAME
 
@@ -18,7 +18,7 @@ class FastSlamSettingsMsg(
         val numParticles: Int,
         val sensorDistStdev: Double,
         val sensorAngStdev: Double
-): RobotMsg {
+) : RobotMsg {
     @Expose(serialize = false, deserialize = false)
     override val MSG_TYPE = MSG_TYPE_NAME
 

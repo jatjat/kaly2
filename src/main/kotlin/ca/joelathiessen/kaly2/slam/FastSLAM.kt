@@ -18,14 +18,14 @@ class FastSLAM(val startPose: RobotPose, private val carMotionModel: CarModel, p
     val IDENTITY_VARIANCE = 0.2
 
     var numParticles = DEFAULT_NUM_PARTICLES
-    get() = particles.size
-    private set
+        get() = particles.size
+        private set
 
     var distVariance = DEFAULT_DIST_VARIANCE
-    private set
+        private set
 
     var angleVariance = DEFAULT_ANG_VARIANCE
-    private set
+        private set
 
     private var R = createR(distVariance, angleVariance, IDENTITY_VARIANCE)
 
@@ -57,7 +57,7 @@ class FastSLAM(val startPose: RobotPose, private val carMotionModel: CarModel, p
         println("Removed: ${remCnt}, added: ${addCnt}, total num particles: ${numParticles}")
     }
 
-    fun changeDistanceVariance(variance: Double = DEFAULT_DIST_VARIANCE ) {
+    fun changeDistanceVariance(variance: Double = DEFAULT_DIST_VARIANCE) {
         distVariance = variance
         R = createR(distVariance, angleVariance, IDENTITY_VARIANCE)
     }
@@ -119,8 +119,8 @@ class FastSLAM(val startPose: RobotPose, private val carMotionModel: CarModel, p
 
                     //Mix the ideal and real sensor measurements to update landmark's position:
                     val dPos = K.times(residual)
-                    val updatedX = land.x + dPos[0,0]
-                    val updatedY = land.y + dPos[1,0]
+                    val updatedX = land.x + dPos[0, 0]
+                    val updatedY = land.y + dPos[1, 0]
 
                     //Update the landmark's covariance:
                     val I = Matrix.identity(K.rowDimension, K.columnDimension)

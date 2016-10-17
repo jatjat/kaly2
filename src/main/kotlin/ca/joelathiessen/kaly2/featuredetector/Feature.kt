@@ -1,7 +1,6 @@
 package ca.joelathiessen.kaly2.featuredetector
 
 import Jama.Matrix
-import lejos.robotics.navigation.Pose
 
 open class Feature(val sensorX: Double, val sensorY: Double, val distance: Double, val angle: Double,
                    val stdDev: Double) {

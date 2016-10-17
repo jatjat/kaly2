@@ -35,7 +35,7 @@ class Subconscious(private val sensor: Kaly2Sensor, private val pilot: Different
             try {
                 Thread.sleep(100)
             } catch (e: InterruptedException) {
-                synchronized (this) {
+                synchronized(this) {
                     Thread.currentThread().interrupt()
                 }
             }

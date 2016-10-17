@@ -2,9 +2,8 @@ package ca.joelathiessen.kaly2.tests.pc.acceptance.kdtree
 
 import ags.utils.dataStructures.trees.thirdGenKD.KdTree
 import ags.utils.dataStructures.trees.thirdGenKD.SquareEuclideanDistanceFunction
-import org.junit.Test
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
+import org.junit.Test
 
 /**
  * Tests a modified version of Rednaxela's k-d tree, that allows
@@ -91,7 +90,7 @@ class TestKdTree {
         val obj2 = Any()
         val obj3 = Any()
 
-        val tree = KdTree<Any>(2,1)
+        val tree = KdTree<Any>(2, 1)
         val tree2 = tree.addPointAsCopy(doubleArrayOf(1.0, 1.0), obj1)
         val tree3 = tree2.addPointAsCopy(doubleArrayOf(2.0, 2.0), obj2)
         val tree4 = tree3.addPointAsCopy(doubleArrayOf(-3.0, -3.0), obj3)
@@ -127,7 +126,7 @@ class TestKdTree {
         val obj2 = Any()
         val obj3 = Any()
 
-        val tree = KdTree<Any>(2,1)
+        val tree = KdTree<Any>(2, 1)
         val tree2 = tree.addPointAsCopy(doubleArrayOf(1.0, 1.0), obj1)
         val tree3 = tree2.addPointAsCopy(doubleArrayOf(2.0, 2.0), obj2)
         val tree4 = tree3.addPointAsCopy(doubleArrayOf(-3.0, -3.0), obj3)
@@ -163,7 +162,7 @@ class TestKdTree {
         val obj2 = Any()
         val obj3 = Any()
 
-        val tree = KdTree<Any>(2,1)
+        val tree = KdTree<Any>(2, 1)
         val tree2 = tree.addPointAsCopy(doubleArrayOf(1.0, 1.0), obj1)
         val tree3 = tree2.addPointAsCopy(doubleArrayOf(2.0, 2.0), obj2)
         val tree4 = tree3.addPointAsCopy(doubleArrayOf(-3.0, -3.0), obj3)

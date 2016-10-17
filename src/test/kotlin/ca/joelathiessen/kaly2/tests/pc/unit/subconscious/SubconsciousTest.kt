@@ -6,7 +6,6 @@ import ca.joelathiessen.kaly2.subconscious.sensor.Kaly2PulsedLightLidarLiteV2
 import ca.joelathiessen.kaly2.subconscious.sensor.Spinner
 import com.nhaarman.mockito_kotlin.any
 import com.nhaarman.mockito_kotlin.doAnswer
-import lejos.robotics.RegulatedMotor
 import lejos.robotics.localization.OdometryPoseProvider
 import lejos.robotics.navigation.DifferentialPilot
 import lejos.robotics.navigation.Pose
