@@ -13,10 +13,3 @@ fun getFeatureForPosition(robotX: Double, robotY: Double, robotTheta: Double, fe
 
     return Feature(robotX, robotY, distance, angle, distStdDev)
 }
-
-
-val EPSILON = 0.000001
-fun equals(a: Double, b: Double): Boolean {
-    if (a == b) return true
-    return Math.abs(a - b) < EPSILON * Math.max(Math.abs(a), Math.abs(b))
-}
