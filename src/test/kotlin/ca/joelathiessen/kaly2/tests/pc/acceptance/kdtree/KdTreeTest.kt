@@ -9,7 +9,7 @@ import org.junit.Test
  * Tests a modified version of Rednaxela's k-d tree, that allows
  * logarithmic copy-on-insert, and deletion
  */
-class TestKdTree {
+class KdTreeTest {
     val EPSILON = 0.001
 
     @Test
