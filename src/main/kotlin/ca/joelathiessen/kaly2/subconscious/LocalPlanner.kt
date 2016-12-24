@@ -24,18 +24,18 @@ class LocalPlanner(val robotSize: Double, val rotStep: Double, val distStep: Dou
             val xHalfGrid = it.first + halfGridSize
             val yHalfGrid = it.second + halfGridSize
 
-            val xStartOffset = ((xHalfGrid - checkDist) % gridStep).toInt()
+            val xStartOffset = ((xHalfGrid - checkDist) / gridStep).toInt()
             val xStart = Math.max(xStartOffset, 0)
-            val xEndOffset = ((xHalfGrid + checkDist) % gridStep).toInt()
+            val xEndOffset = ((xHalfGrid + checkDist) / gridStep).toInt()
             val xEnd = Math.min(xEndOffset, numSteps)
 
-            val yStartOffset = ((yHalfGrid - checkDist) % gridStep).toInt()
+            val yStartOffset = ((yHalfGrid - checkDist) / gridStep).toInt()
             val yStart = Math.max(yStartOffset, 0)
-            val yEndOffset = ((yHalfGrid + checkDist) % gridStep).toInt()
+            val yEndOffset = ((yHalfGrid + checkDist) / gridStep).toInt()
             val yEnd = Math.min(yEndOffset, numSteps)
 
-            for (x in xStart until xEnd) {
-                for (y in yStart until yEnd) {
+            for (x in xStart..xEnd) {
+                for (y in yStart..yEnd) {
                     searchGrid[x][y].add(GridPoint(it.first, it.second))
                 }
             }
@@ -99,8 +99,8 @@ class LocalPlanner(val robotSize: Double, val rotStep: Double, val distStep: Dou
     }
 
     private fun checkObstacles(searchGrid: Array<Array<ArrayList<GridPoint>>>, x: Double, y: Double): Boolean {
-        val gridX = ((x + halfGridSize) % gridStep).toInt()
-        val gridY = ((y + halfGridSize) % gridStep).toInt()
+        val gridX = ((x + halfGridSize) / gridStep).toInt()
+        val gridY = ((y + halfGridSize) / gridStep).toInt()
 
         val container = searchGrid[gridX][gridY]
         var found = false
