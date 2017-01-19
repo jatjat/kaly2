@@ -10,5 +10,11 @@ private fun within(a: Double, b: Double, epsilon: Double): Boolean {
     return Math.abs(a - b) < epsilon * Math.max(Math.abs(a), Math.abs(b))
 }
 
+inline fun distance(x1: Double, x2: Double, y1: Double, y2: Double): Double {
+    val dx = x1 - x2
+    val dy = y2 - y1
+    return Math.sqrt((dx * dx) + (dy * dy))
+}
+
 inline fun <reified INNER> array2d(sizeOuter: Int, sizeInner: Int, noinline innerInit: (Int)->INNER): Array<Array<INNER>>
         = Array(sizeOuter) { Array<INNER>(sizeInner, innerInit) }

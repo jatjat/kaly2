@@ -8,6 +8,7 @@ import java.util.*
 class LandmarksTree() : AssociatableLandmarks {
     private val DIMENSIONS = 2
     private val BUCKET_CAPACITY = 24
+    private val sqEucDistFunc = SquareEuclideanDistanceFunction()
 
     private var kdTree = KdTree<Landmark>(DIMENSIONS, BUCKET_CAPACITY)
     private val landmarksForInsert = HashSet<Landmark>()
@@ -44,7 +45,7 @@ class LandmarksTree() : AssociatableLandmarks {
         var nearest: Landmark? = null
         if (kdTree.size() > 0) {
             nearest = kdTree.findNearestNeighbors(doubleArrayOf(point.x.toDouble(), point.y.toDouble()),
-                    1, SquareEuclideanDistanceFunction()).max
+                    1, sqEucDistFunc).max
         }
         return nearest
     }
