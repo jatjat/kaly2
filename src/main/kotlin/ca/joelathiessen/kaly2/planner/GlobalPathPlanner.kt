@@ -6,28 +6,37 @@ import ca.joelathiessen.util.distance
 import lejos.robotics.geometry.Point
 import java.util.*
 
-// See:
-// Karaman, Sertac, and Emilio Frazzoli.
-// "Incremental sampling-based algorithms for optimal motion planning."
-// Robotics Science and Systems VI 104 (2010).
-class GlobalPathPlanner(val pathFactory: PathSegmentRootFactory) {
-    private val rand = Random()
+/**
+ * See:
+ * Karaman, Sertac, and Emilio Frazzoli.
+ * "Incremental sampling-based algorithms for optimal motion planning."
+ * Robotics Science and Systems VI 104 (2010).
+ **/
+class GlobalPathPlanner(private val pathFactory: PathSegmentRootFactory, private val obstacles: GenTree<Point>,
+                        private val obsSize: Double, private val searchDist: Double, private val stepDist: Double,
+                        private val startPose: RobotPose, private val endPose: RobotPose) {
+    val paths: ArrayList<PathSegmentInfo>
+        get() {
+            return ArrayList(pathList)
+        }
 
-    fun getPath(obstacles: GenTree<Point>, obsSize: Double, searchDist: Double, stepDist: Double,
-                startPose: RobotPose, endPose: RobotPose, numItrs: Int): List<RobotPose> {
-        val pathTree = GenTree<PathSegment>()
-        val rootNode = pathFactory.makePathSegmentRoot(startPose)
+    private val PROB_REWIRE_ROOT = 0.001
+    private val rand = Random(0)
+    private val pathTree = GenTree<PathSegment>()
+    private val rootNode = pathFactory.makePathSegmentRoot(startPose)
+    private val pathList = ArrayList<PathSegment>()
+    private val doubleSearchDist = 2 * searchDist
+    private val searchArea = doubleSearchDist * doubleSearchDist
+    private val searchXBase = startPose.x - searchDist
+    private val searchYBase = startPose.y - searchDist
+    private val gamma = 6 * searchArea // assume obstacles reduce the search area negligibly
+    private var nodeCount = 1
+
+    init {
         pathTree.add(rootNode.x, rootNode.y, rootNode)
+    }
 
-        val doubleSearchDist = 2 * searchDist
-        val searchArea = doubleSearchDist * doubleSearchDist
-        val searchXBase = startPose.x - searchDist
-        val searchYBase = startPose.y - searchDist
-
-        val gamma = 6 * searchArea // assume obstacles reduce the search area negligibly
-
-        var nodeCount = 1
-
+    fun iterate(numItrs: Int) {
         for (i in 0 until numItrs) {
             val xSearch = searchXBase + (rand.nextDouble() * doubleSearchDist)
             val ySearch = searchYBase + (rand.nextDouble() * doubleSearchDist)
@@ -35,20 +44,26 @@ class GlobalPathPlanner(val pathFactory: PathSegmentRootFactory) {
 
             if (nearestNeighbors.hasNext()) {
                 val nearest = nearestNeighbors.next()
-                val ang = Math.atan2(xSearch - nearest.x, ySearch - nearest.y)
-                val xInter = nearest.x + Math.cos(ang) * stepDist
-                val yInter = nearest.y + Math.sin(ang) * stepDist
+                val ang = Math.atan2(ySearch - nearest.y, xSearch - nearest.x)
+                val xInter = nearest.x + (Math.cos(ang) * stepDist)
+                val yInter = nearest.y + (Math.sin(ang) * stepDist)
 
                 val newNode = nearest.makeChild(xInter, yInter)
                 if (newNode != null) {
                     pathTree.add(xInter, yInter, newNode)
+                    pathList.add(newNode)
                     nodeCount++
                     val searchRadius = gamma * Math.pow(Math.log(nodeCount.toDouble()) / nodeCount, 0.5)
                     rewire(newNode, pathTree, searchRadius)
+
+                    // Make sure the root of the tree is optimal:
+                    if (rand.nextFloat() < PROB_REWIRE_ROOT) {
+                        rewire(rootNode, pathTree, searchRadius)
+                    }
+
                 }
             }
         }
-        return getManeuvers(startPose, endPose, pathTree, obsSize)
     }
 
     private fun rewire(newNode: PathSegment, pathTree: GenTree<PathSegment>, searchRadius: Double) {
@@ -67,20 +82,17 @@ class GlobalPathPlanner(val pathFactory: PathSegmentRootFactory) {
         }
     }
 
-    private fun getManeuvers(startPose: RobotPose, endPose: RobotPose, pathTree: GenTree<PathSegment>,
-                             obsSize: Double): List<RobotPose> {
+    fun getManeuvers(): List<RobotPose> {
         val poses = ArrayList<RobotPose>()
-        val endX = endPose.x.toDouble()
-        val endY = endPose.y.toDouble()
         var angle = startPose.heading
-        val nearestToLast = pathTree.getNearestNeighbors(endX, endY)
+        val nearestToLast = pathTree.getNearestNeighbors(endPose.x.toDouble(), endPose.y.toDouble())
         if (nearestToLast.hasNext()) {
             val nearest = nearestToLast.next()
             var cur: PathSegment? = nearest
             while (cur != null) {
                 val parent: PathSegment? = cur.parent
                 if (parent != null) {
-                    angle = Math.atan2(cur.x - parent.x, cur.x - parent.x).toFloat()
+                    angle = Math.atan2(cur.y - parent.y, cur.x - parent.x).toFloat()
                 }
                 val newPose = RobotPose(0, 0f, cur.x.toFloat(), cur.y.toFloat(), angle)
                 poses.add(0, newPose)

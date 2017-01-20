@@ -11,7 +11,7 @@ private fun within(a: Double, b: Double, epsilon: Double): Boolean {
 }
 
 inline fun distance(x1: Double, x2: Double, y1: Double, y2: Double): Double {
-    val dx = x1 - x2
+    val dx = x2 - x1
     val dy = y2 - y1
     return Math.sqrt((dx * dx) + (dy * dy))
 }
