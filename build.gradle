@@ -32,6 +32,14 @@ jar {
     exclude 'META-INF/*.RSA', 'META-INF/*.SF','META-INF/*.DSA'
 }
 
+sourceSets {
+    test {
+        resources {
+            srcDir 'images'
+        }
+    }
+}
+
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib:1.0.3"
     compile 'gov.nist.math:jama:1.0.3'
