@@ -94,6 +94,9 @@ class FastSLAM(val startPose: RobotPose, private val carMotionModel: CarModel, p
             val featuresToLandmarks: Map<Feature, Landmark?> = dataAssoc.associate(particle.pose, features, particle.landmarks)
 
             for ((feat, land) in featuresToLandmarks) {
+                val G = feat.makeJacobian()
+                val GPrime = G.transpose()
+
                 if (land != null) {
 
                     //Using the distance and angle from the particle to the landmark...
@@ -109,11 +112,8 @@ class FastSLAM(val startPose: RobotPose, private val carMotionModel: CarModel, p
                             doubleArrayOf(0.0)
                     ))
 
-                    val G = feat.makeJacobian()
-                    val GPrime = G.transpose()
-                    val E = land.covariance
-
                     //Find the Kalman gain:
+                    val E = land.covariance
                     val Q = GPrime.times(E).times(G).plus(R)
                     val K = E.times(G).times(Q.inverse())
 
@@ -137,9 +137,8 @@ class FastSLAM(val startPose: RobotPose, private val carMotionModel: CarModel, p
                     newParticle.landmarks.markForUpdateOnCopy(updatedLand, land)
                 } else {
                     //we have a new landmark!
-                    val G = feat.makeJacobian()
-                    val GInverse = G.transpose()
-                    val variance = GInverse.times(R).times(GInverse.transpose())
+                    val GInv = G.inverse()
+                    val variance = GInv.times(R).times(GInv.transpose())
                     newParticle.landmarks.markForInsertOnCopy(Landmark(particle.pose, feat, variance))
                 }
             }
