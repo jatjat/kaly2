@@ -4,7 +4,6 @@ import ca.joelathiessen.kaly2.Measurement
 import ca.joelathiessen.kaly2.featuredetector.SplitAndMerge
 import lejos.robotics.navigation.Pose
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.runners.MockitoJUnitRunner
@@ -13,23 +12,22 @@ import java.util.*
 @RunWith(MockitoJUnitRunner::class)
 class SplitAndMergeTest {
     private val MAX_ERROR = 0.001
+    private val LINE_THRESHOLD = 0.1
+    private val CHECK_WITHIN_ANGLE = 0.3
+    private val MAX_RATIO = 1.0
+    private val ROBOT_POS = 0.5
 
     private fun makeMeasFromXY(x: Double, y: Double): Measurement {
-        val dist = Math.sqrt((x * x + y * y))
-        val angle = Math.atan2(y, x)
-        return Measurement(dist, angle, Pose(0.0f, 0.0f, 0.0f), 0)
-    }
-
-    private fun makeMeasFromXYAndRobotPos(signalX: Double, signalY: Double,
-                                          robotX: Double, robotY: Double, robotTheta: Double): Measurement {
-        val dist = Math.sqrt((signalX * signalX + signalY * signalY))
-        val angle = Math.atan2(signalY, signalX)
-        return Measurement(dist, angle, Pose(robotX.toFloat(), robotY.toFloat(), robotTheta.toFloat()), 0)
+        val xOffset = x - ROBOT_POS
+        val yOffset = y - ROBOT_POS
+        val dist = Math.sqrt((xOffset * xOffset) + (yOffset * yOffset))
+        val angle = Math.atan2(yOffset, xOffset)
+        return Measurement(dist, angle, Pose(0.5f, ROBOT_POS.toFloat(), ROBOT_POS.toFloat()), 0)
     }
 
     @Test
     fun testFourPointSquare() {
-        val merge = SplitAndMerge()
+        val merge = SplitAndMerge(LINE_THRESHOLD, CHECK_WITHIN_ANGLE, MAX_RATIO)
 
         val measurements = ArrayList<Measurement>()
         measurements.add(makeMeasFromXY(0.0, 0.0))
@@ -39,7 +37,7 @@ class SplitAndMergeTest {
 
         val features = merge.getFeatures(measurements)
 
-        assertTrue(features.size == measurements.size)
+        assertEquals(features.size, measurements.size)
 
         assertEquals(features[0].x, 0.0, MAX_ERROR)
         assertEquals(features[0].y, 0.0, MAX_ERROR)
@@ -56,7 +54,7 @@ class SplitAndMergeTest {
 
     @Test
     fun testFourPointLine() {
-        val merge = SplitAndMerge()
+        val merge = SplitAndMerge(LINE_THRESHOLD, CHECK_WITHIN_ANGLE, MAX_RATIO)
 
         val measurements = ArrayList<Measurement>()
         measurements.add(makeMeasFromXY(0.0, 0.0))
@@ -73,7 +71,7 @@ class SplitAndMergeTest {
 
     @Test
     fun testInnerCorner() {
-        val merge = SplitAndMerge()
+        val merge = SplitAndMerge(LINE_THRESHOLD, CHECK_WITHIN_ANGLE, MAX_RATIO)
 
         val measurements = ArrayList<Measurement>()
         run {
@@ -96,7 +94,7 @@ class SplitAndMergeTest {
 
     @Test
     fun testOuterCorner() {
-        val merge = SplitAndMerge()
+        val merge = SplitAndMerge(LINE_THRESHOLD, CHECK_WITHIN_ANGLE, MAX_RATIO)
 
         val measurements = ArrayList<Measurement>()
         run {
