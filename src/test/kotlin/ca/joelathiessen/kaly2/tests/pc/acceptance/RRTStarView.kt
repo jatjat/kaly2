@@ -37,7 +37,7 @@ class RRTStarView : JPanel() {
     private val ITERATIONS = 100
     private val MAX_FRAME_TIME = 16L
     private val drawLock = Any()
-    private val printExec = Executors.newCachedThreadPool()!!
+    private val printExec = Executors.newFixedThreadPool(1)!!
 
     private var paths = ArrayList<PathSegmentInfo>()
     private var maneuvers: List<RobotPose> = ArrayList()
@@ -71,12 +71,15 @@ class RRTStarView : JPanel() {
         graphics.clearRect(0, 0, width, height)
 
         graphics.color = Color.blue
-        paths.forEach {
-            synchronized(drawLock) {
-                it.getLines().forEach {
-                    graphics.drawLine(it.x1.toInt() + HALF_SIZE, it.y1.toInt() + HALF_SIZE,
-                            it.x2.toInt() + HALF_SIZE, it.y2.toInt() + HALF_SIZE)
-                }
+        var curPaths: List<PathSegmentInfo>? = null
+        synchronized(drawLock) {
+            curPaths = paths
+        }
+        
+        curPaths!!.forEach {
+            it.getLines().forEach {
+                graphics.drawLine(it.x1.toInt() + HALF_SIZE, it.y1.toInt() + HALF_SIZE,
+                        it.x2.toInt() + HALF_SIZE, it.y2.toInt() + HALF_SIZE)
             }
         }
 
@@ -93,4 +96,3 @@ class RRTStarView : JPanel() {
         }
     }
 }
-
