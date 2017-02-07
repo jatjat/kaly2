@@ -115,42 +115,49 @@ class SplitAndMergeTest {
         assertEquals(features.size, 3)
     }
 
-    /*
-    //I expect this test will work once the full split-and-merge is implemented
     @Test
     fun testDenseSquare() {
-        val merge = SplitAndMerge()
-
+        val merge = SplitAndMerge(LINE_THRESHOLD, CHECK_WITHIN_ANGLE, MAX_RATIO)
         val measurements = ArrayList<Measurement>()
-        run {
-            var i = -1.0
-            while (i <= 1) {
-                measurements.add(makeMeasFromXY(-1.0, i))
-                i += 0.1.0
-            }
+
+        var left = -1.0
+        while (left < 1.0) {
+            measurements.add(makeMeasFromXY(-1.0, left))
+            left += 0.01
         }
-        run {
-            var i = -1.0
-            while (i <= 1) {
-                measurements.add(makeMeasFromXY(i, 1.0))
-                i += 0.1.0
-            }
+
+        var top = -1.0
+        while (top < 1.0) {
+            measurements.add(makeMeasFromXY(top, 1.0))
+            top += 0.01
         }
-        run {
-            var i = 1.0
-            while (i >= -1) {
-                measurements.add(makeMeasFromXY(1.0, i))
-                i -= 0.1.0
-            }
+
+        var right = 1.0
+        while (right > -1.0) {
+            measurements.add(makeMeasFromXY(1.0, right))
+            right -= 0.01
         }
-        var i = 1.0
-        while (i >= -1) {
-            measurements.add(makeMeasFromXY(i, -1.0))
-            i -= 0.1.0
+
+        var bottom = 1.0
+        while (bottom > -1.0) {
+            measurements.add(makeMeasFromXY(bottom, -1.0))
+            bottom -= 0.01
         }
 
         val features = merge.getFeatures(measurements)
 
         assertEquals(features.size, 4)
-    }*/
+
+        assertEquals(features[0].x, -1.0, MAX_ERROR)
+        assertEquals(features[0].y, -1.0, MAX_ERROR)
+
+        assertEquals(features[1].x, -1.0, MAX_ERROR)
+        assertEquals(features[1].y, 1.0, MAX_ERROR)
+
+        assertEquals(features[2].x, 1.0, MAX_ERROR)
+        assertEquals(features[2].y, 1.0, MAX_ERROR)
+
+        assertEquals(features[3].x, 1.0, MAX_ERROR)
+        assertEquals(features[3].y, -1.0, MAX_ERROR)
+    }
 }
