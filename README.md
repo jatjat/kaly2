@@ -12,6 +12,7 @@ Development is in-progress.
 - FastSLAM localization
 - websocket intermediated control
 - low-level object avoidance (algorithm & unit tests only)
+- Split-and-Merge feature detection (algorithm & unit tests only)
 
 #### Todo:
   - write a super simple IC2 "driver" for a laser distance sensor
