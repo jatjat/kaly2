@@ -204,8 +204,8 @@ class RobotHandler(val rid: Long) {
     fun applyFastSlamSettings(fSettingsMsg: FastSlamSettingsMsg) {
         synchronized(slam) {
             slam.changeNumParticles(fSettingsMsg.numParticles)
-            slam.changeAngleVariance(fSettingsMsg.sensorAngStdev)
-            slam.changeDistanceVariance(fSettingsMsg.sensorDistStdev)
+            slam.changeAngleVariance(fSettingsMsg.sensorAngVar)
+            slam.changeDistanceVariance(fSettingsMsg.sensorDistVar)
             rtUpdateEventCont(this, RTMsg(FastSlamSettingsMsg(slam.numParticles, slam.angleVariance, slam.distVariance)))
         }
     }
