@@ -11,21 +11,11 @@ class SplitAndMerge(val threshold: Double, val checkWithinAngle: Double, val max
             SplitAndMergeFeature(it.pose.x.toDouble(), it.pose.y.toDouble(), it.distance, it.angle)
         }
 
-        var smFeats = splitAndMerge(features, threshold)
+        var smFeats = splitAndMerge(features.sortedBy { it.angle }, threshold)
+
         val sepFeats = ArrayList<SplitAndMergeFeature>()
 
-        if (smFeats.size > 1) {
-            // trim the start and end features if they're within the threshold for lines between their adjacent features:
-            if (distanceFromLineToPoint(smFeats[smFeats.size - 1], smFeats[0],
-                    smFeats[smFeats.size - 2]) < threshold) {
-                smFeats = smFeats.subList(0, smFeats.size - 1)
-            }
-            if (distanceFromLineToPoint(smFeats[0], smFeats[1],
-                    smFeats[smFeats.size - 1]) < threshold) {
-                smFeats[smFeats.size - 1].incrDiscardedPointsCount(smFeats[0].discardedPoints)
-                smFeats = smFeats.subList(1, smFeats.size)
-            }
-
+        if (smFeats.size > 2) {
             val extendedFeats = arrayListOf(smFeats[smFeats.size - 1]) + smFeats + smFeats[0]
 
             // trim features that are much deeper than adjacent features:
@@ -60,6 +50,17 @@ class SplitAndMerge(val threshold: Double, val checkWithinAngle: Double, val max
                 }
                 k++
             }
+
+            // trim features that are still within the threshold:
+            val expSepFeats = arrayListOf(sepFeats[sepFeats.size - 1]) + sepFeats + sepFeats[0]
+            val innerFeats = ArrayList<Feature>()
+            for (i in 1 until expSepFeats.size - 1) {
+                if(distanceFromLineToPoint(expSepFeats[i], expSepFeats[i-1], expSepFeats[i+1]) > threshold) {
+                    innerFeats.add(expSepFeats[i])
+                }
+            }
+
+            return innerFeats
         }
         return sepFeats
     }

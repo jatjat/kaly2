@@ -42,14 +42,14 @@ class SplitAndMergeTest {
         assertEquals(features[0].x, 0.0, MAX_ERROR)
         assertEquals(features[0].y, 0.0, MAX_ERROR)
 
-        assertEquals(features[1].x, 0.0, MAX_ERROR)
-        assertEquals(features[1].y, 1.0, MAX_ERROR)
+        assertEquals(features[1].x, 1.0, MAX_ERROR)
+        assertEquals(features[1].y, 0.0, MAX_ERROR)
 
         assertEquals(features[2].x, 1.0, MAX_ERROR)
         assertEquals(features[2].y, 1.0, MAX_ERROR)
 
-        assertEquals(features[3].x, 1.0, MAX_ERROR)
-        assertEquals(features[3].y, 0.0, MAX_ERROR)
+        assertEquals(features[3].x, 0.0, MAX_ERROR)
+        assertEquals(features[3].y, 1.0, MAX_ERROR)
     }
 
     @Test
@@ -64,9 +64,7 @@ class SplitAndMergeTest {
 
         val features = merge.getFeatures(measurements)
 
-        assertEquals(features[0].y, 0.0, MAX_ERROR)
-        assertEquals(features[1].y, 3.0, MAX_ERROR)
-        assertEquals(features.size, 2)
+        assertEquals(features.size, 0) // all features within the threshold should are discarded
     }
 
     @Test
@@ -151,13 +149,13 @@ class SplitAndMergeTest {
         assertEquals(features[0].x, -1.0, MAX_ERROR)
         assertEquals(features[0].y, -1.0, MAX_ERROR)
 
-        assertEquals(features[1].x, -1.0, MAX_ERROR)
-        assertEquals(features[1].y, 1.0, MAX_ERROR)
+        assertEquals(features[1].x, 1.0, MAX_ERROR)
+        assertEquals(features[1].y, -1.0, MAX_ERROR)
 
         assertEquals(features[2].x, 1.0, MAX_ERROR)
         assertEquals(features[2].y, 1.0, MAX_ERROR)
 
-        assertEquals(features[3].x, 1.0, MAX_ERROR)
-        assertEquals(features[3].y, -1.0, MAX_ERROR)
+        assertEquals(features[3].x, -1.0, MAX_ERROR)
+        assertEquals(features[3].y, 1.0, MAX_ERROR)
     }
 }
