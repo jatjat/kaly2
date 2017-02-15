@@ -60,9 +60,11 @@ class MainLoopView : JPanel() {
     private val STEP_DIST_STD_DEV = 0.5
     private val MIN_WIDTH = 400.0
 
+    private val NN_THRESHOLD = 10.0
+
     private val startPos = RobotPose(0, 0f, MIN_WIDTH.toFloat() / 2f, MIN_WIDTH.toFloat() / 2f, 0f)
     private val motionModel = CarModel()
-    private val dataAssoc = NNDataAssociator()
+    private val dataAssoc = NNDataAssociator(NN_THRESHOLD)
     private val partResamp = FastUnbiasedResampler()
     private var realPos: RobotPose = startPos
     private val random = Random(1)
