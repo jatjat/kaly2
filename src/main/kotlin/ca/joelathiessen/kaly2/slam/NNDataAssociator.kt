@@ -13,8 +13,8 @@ class NNDataAssociator(val threshold: Double = 15.0) : DataAssociator {
         val featureLandmarks = HashMap<Feature, Landmark?>()
 
         for (feature in features) {
-            val xHyp = pose.x + Math.cos(feature.angle) * feature.distance
-            val yHyp = pose.y + Math.sin(feature.angle) * feature.distance
+            val xHyp = pose.x + (Math.cos(feature.angle) * feature.distance)
+            val yHyp = pose.y + (Math.sin(feature.angle) * feature.distance)
 
             val offsetPoint = Point(xHyp.toFloat(), yHyp.toFloat())
             val matchedLandmark = landmarks.getNearestNeighbor(offsetPoint)

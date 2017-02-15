@@ -16,8 +16,8 @@ class Landmark {
     }
 
     constructor(pose: Pose, feature: Feature, covariance: Matrix) {
-        this.x = pose.x + Math.cos(feature.angle) * feature.distance
-        this.y = pose.y + Math.sin(feature.angle) * feature.distance
+        this.x = pose.x + (Math.cos(feature.angle) * feature.distance)
+        this.y = pose.y + (Math.sin(feature.angle) * feature.distance)
         this.covariance = covariance
     }
 }
