@@ -151,7 +151,7 @@ class FastSLAM(val startPose: RobotPose, private val carMotionModel: CarModel, p
 
     var particlePoses: List<Pose> = ArrayList()
         get() {
-            return particles.map { it.pose }
+            return particles.map { Pose(it.pose.x, it.pose.y, it.pose.heading) }
         }
         private set
 
