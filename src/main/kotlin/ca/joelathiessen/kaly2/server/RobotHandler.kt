@@ -87,14 +87,12 @@ class RobotHandler(val rid: Long) {
                 val dTheta = ROT_RATE + (STEP_ROT_STD_DEV * random.nextGaussian())
                 theta += dTheta
                 odoTheta += dTheta + (ODO_ANG_STD_DEV * random.nextGaussian())
-
-                val dXCommon = STEP_DIST + (STEP_DIST_STD_DEV * random.nextGaussian())
-                x += Math.cos(theta) * dXCommon
-                odoX += Math.cos(odoTheta) * dXCommon + (ODO_DIST_STD_DEV * random.nextGaussian())
-
-                val dYCommon = STEP_DIST + (STEP_DIST_STD_DEV * random.nextGaussian())
-                y += Math.sin(theta) * dYCommon
-                odoY += Math.sin(odoTheta) * dYCommon + (ODO_DIST_STD_DEV * random.nextGaussian())
+                val distCommon = STEP_DIST + (STEP_DIST_STD_DEV * random.nextGaussian())
+                val odoOffsetCommon = distCommon + (ODO_DIST_STD_DEV * random.nextGaussian())
+                x += Math.cos(theta) * distCommon
+                odoX += Math.cos(odoTheta) * (odoOffsetCommon)
+                y += Math.sin(theta) * distCommon
+                odoY += Math.sin(odoTheta) * (odoOffsetCommon)
 
                 val realPos = RobotPose(times, 0f, x.toFloat(), y.toFloat(), theta.toFloat())
                 realLocs.add(realPos)
