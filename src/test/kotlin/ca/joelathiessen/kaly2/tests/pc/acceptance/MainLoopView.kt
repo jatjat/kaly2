@@ -126,9 +126,9 @@ class MainLoopView : JPanel() {
                 y += FloatMath.sin(theta) * distCommon
                 odoY += FloatMath.sin(odoTheta) * odoDist
 
-                val realPos = RobotPose(times, 0f, x.toFloat(), y.toFloat(), theta.toFloat())
+                val realPos = RobotPose(times, 0f, x, y, theta)
                 synchronized(realLock) { realLocs.add(realPos) }
-                val odoPos = RobotPose(times, 0f, odoX.toFloat(), odoY.toFloat(), odoTheta.toFloat())
+                val odoPos = RobotPose(times, 0f, odoX, odoY, odoTheta)
                 synchronized(odoLock) { odoLocs.add(odoPos) }
 
                 // get measurements as the robot sees them
