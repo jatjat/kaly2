@@ -49,5 +49,4 @@ Currently the codebase is split into two parts. In the first, a "subconscious" t
   - add tests for robot start/pause/unpause/reset/stop
   - add tests for setting FastSLAM settings
   - add tests for webserver and websocket communication
-  - get rid of all warnings
   - simplify messaging code

@@ -7,7 +7,7 @@ import ca.joelathiessen.kaly2.subconscious.sensor.Spinner
 import com.nhaarman.mockito_kotlin.any
 import com.nhaarman.mockito_kotlin.doAnswer
 import lejos.robotics.localization.OdometryPoseProvider
-import lejos.robotics.navigation.DifferentialPilot
+import lejos.robotics.navigation.MovePilot
 import lejos.robotics.navigation.Pose
 import org.junit.Assert.*
 import org.junit.Before
@@ -27,14 +27,14 @@ class SubconsciousTest {
 
     lateinit private var sensor: Kaly2PulsedLightLidarLiteV2
     lateinit private var spinner: Spinner
-    lateinit private var pilot: DifferentialPilot
+    lateinit private var pilot: MovePilot
     lateinit private var odometry: OdometryPoseProvider
     lateinit private var sweeps: ConcurrentLinkedQueue<ArrayList<Measurement>>
 
     @Before
     fun setUp() {
         sensor = PowerMockito.mock(Kaly2PulsedLightLidarLiteV2::class.java)
-        pilot = Mockito.mock(DifferentialPilot::class.java)
+        pilot = Mockito.mock(MovePilot::class.java)
         odometry = Mockito.mock(OdometryPoseProvider::class.java)
 
         spinner = PowerMockito.`mock`(Spinner::class.java)

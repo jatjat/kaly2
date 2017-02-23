@@ -128,7 +128,7 @@ class KdNode<T> {
             addChildToParent(newCursor, parentCursor);
             parentCursor = newCursor;
 
-            newCursor = new KdNode(cursor);
+            newCursor = new KdNode<>(cursor);
         }
 
         addChildToParent(newCursor, parentCursor);
@@ -272,6 +272,7 @@ class KdNode<T> {
         return true;
     }
 
+    @SuppressWarnings("unchecked")
     private void splitLeafNode() {
         right = new KdNode<T>(dimensions, bucketCapacity);
         left = new KdNode<T>(dimensions, bucketCapacity);

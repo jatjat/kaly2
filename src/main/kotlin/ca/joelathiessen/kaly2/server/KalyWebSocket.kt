@@ -17,7 +17,7 @@ class KalyWebSocket(private val robotsManager: RobotsManager, private val rid: L
     private val connectionExecutor = Executors.newSingleThreadExecutor()!!
     private lateinit var connection: WebSocket.Connection
     private lateinit var robotHandler: RobotHandler
-    private val handleRTMessageCaller = { sender: Any, msg: RTMsg -> HandleRTMessage(sender, msg) }
+    private val handleRTMessageCaller = { sender: Any, msg: RTMsg -> HandleRTMessage(sender, msg) } // can't pass HandleRTMessage directly
     private val gson = GsonBuilder().create()!!
     private var closed = false
     private var closedLock = Any()
@@ -56,7 +56,7 @@ class KalyWebSocket(private val robotsManager: RobotsManager, private val rid: L
 
     // Unlike Jetty 9, Jetty 7 does not support asynchronous message sending
     // See http://jetty.4.x6.nabble.com/jetty-dev-WebSocket-Async-Read-Write-td4466406.html
-    fun HandleRTMessage(sender: Any, message: RTMsg) {
+    fun HandleRTMessage(@Suppress("UNUSED_PARAMETER") sender: Any, message: RTMsg) {
         connectionExecutor.execute {
             synchronized(closedLock) {
                 if (!closed) {

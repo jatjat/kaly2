@@ -10,7 +10,7 @@ private fun within(a: Float, b: Float, epsilon: Float): Boolean {
     return FloatMath.abs(a - b) < epsilon * FloatMath.max(FloatMath.abs(a), FloatMath.abs(b))
 }
 
-inline fun distance(x1: Float, x2: Float, y1: Float, y2: Float): Float {
+fun distance(x1: Float, x2: Float, y1: Float, y2: Float): Float {
     val dx = x2 - x1
     val dy = y2 - y1
     return FloatMath.sqrt((dx * dx) + (dy * dy))

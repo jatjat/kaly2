@@ -2,6 +2,7 @@ package ca.joelathiessen.kaly2.tests.pc.unit.slam
 
 import Jama.Matrix
 import ca.joelathiessen.kaly2.featuredetector.Feature
+import ca.joelathiessen.kaly2.odometry.RobotPose
 import ca.joelathiessen.kaly2.slam.NNDataAssociator
 import ca.joelathiessen.kaly2.slam.landmarks.Landmark
 import ca.joelathiessen.kaly2.slam.landmarks.LandmarksTree
@@ -19,12 +20,15 @@ class NNDataAssociatorTest() {
     val DELTA = 0.0001f
 
     private fun makeFeatFromXY(pose: Pose, x: Float, y: Float): Feature {
-        val dist = FloatMath.sqrt((x * x + y * y))
-        val angle = FloatMath.atan2(y, x)
-        val sensorX = 1.0f
-        val sensorY = 1.0f
+        val sensorX = pose.x
+        val sensorY = pose.y
         val stDev = 0.0f
-        return Feature(sensorX, sensorY, 0.0f, 0.0f, stDev)
+
+        val dX = x - sensorX
+        val dY = y - sensorY
+        val dist = FloatMath.sqrt((dX * dX + dY * dY))
+        val angle = FloatMath.atan2(dY, dX)
+        return Feature(sensorX, sensorY, dist, angle, stDev)
     }
 
     @Test

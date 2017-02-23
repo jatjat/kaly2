@@ -84,7 +84,8 @@ class FastSLAM(val startPose: RobotPose, private val carMotionModel: CarModel, p
         throw UnsupportedOperationException()
     }
 
-    override fun addTimeStep(features: List<Feature>, curPose: RobotPose) {
+    override fun addTimeStep(features: List<Feature>, robotPose: RobotPose) {
+        val curPose = robotPose
 
         particles.forEach { it.moveRandom(lastKnownPose, curPose, carMotionModel) }
 

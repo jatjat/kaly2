@@ -25,7 +25,4 @@ class CarModel : MotionModel {
         val movedPose = Pose((inputPose.x + dX), (inputPose.y + dY), (inputPose.heading + dHeading))
         return movedPose
     }
-
-    fun applyControls(robotPose: RobotPose) {
-    }
 }

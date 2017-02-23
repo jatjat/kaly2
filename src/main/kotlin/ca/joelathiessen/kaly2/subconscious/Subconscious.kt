@@ -4,18 +4,18 @@ import ca.joelathiessen.kaly2.Measurement
 import ca.joelathiessen.kaly2.subconscious.sensor.Kaly2Sensor
 import ca.joelathiessen.kaly2.subconscious.sensor.Spinner
 import lejos.robotics.localization.OdometryPoseProvider
-import lejos.robotics.navigation.DifferentialPilot
+import lejos.robotics.navigation.MovePilot
 import lejos.robotics.navigation.Pose
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 
-class Subconscious(private val sensor: Kaly2Sensor, private val pilot: DifferentialPilot,
+class Subconscious(private val sensor: Kaly2Sensor, private val pilot: MovePilot,
                    private val odometry: OdometryPoseProvider, private val spinner: Spinner,
                    private val sweeps: ConcurrentLinkedQueue<ArrayList<Measurement>>) : Runnable {
 
     // probable maximum number of measurements we will get per
     // 360 degree spin of the distance detector:
-    final val PROBABLE_MAX_MEASUREMENTS_PER_SWEEP = 360
+    val PROBABLE_MAX_MEASUREMENTS_PER_SWEEP = 360
 
     override fun run() {
         println("Subconscious starting")
@@ -25,7 +25,7 @@ class Subconscious(private val sensor: Kaly2Sensor, private val pilot: Different
         var time: Long
         var pose: Pose
 
-        var sweep: ArrayList<Measurement>? = null
+        var sweep: ArrayList<Measurement>?
         var measurement: Measurement
         val sensorReading = FloatArray(1)
 

@@ -62,7 +62,7 @@ class FastSLAMView : JPanel() {
 
     lateinit var drawOdoLocs: List<Pair<Int, Int>>
     lateinit var drawParticlePoses: List<Pair<Int, Int>>
-    lateinit var drawRealObjectLocs: List<Pair<Int, Int>>
+    var drawRealObjectLocs: List<Pair<Int, Int>>
 
     init {
         this.setSize(MIN_WIDTH.toInt(), MIN_WIDTH.toInt())

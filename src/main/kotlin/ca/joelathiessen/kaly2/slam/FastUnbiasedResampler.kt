@@ -6,7 +6,8 @@ import ca.joelathiessen.util.sumByFloat
 
 class FastUnbiasedResampler : ParticleResampler {
 
-    override fun resample(oldParticles: ArrayList<Particle>): ArrayList<Particle> {
+    override fun resample(particles: ArrayList<Particle>): ArrayList<Particle> {
+        val oldParticles = particles
         val numOldParticles = oldParticles.size
         val newParticlesList = ArrayList<Particle>(numOldParticles)
 
