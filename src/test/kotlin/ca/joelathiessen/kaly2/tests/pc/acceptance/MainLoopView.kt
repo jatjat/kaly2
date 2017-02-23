@@ -9,6 +9,8 @@ import ca.joelathiessen.kaly2.slam.FastSLAM
 import ca.joelathiessen.kaly2.slam.FastUnbiasedResampler
 import ca.joelathiessen.kaly2.slam.NNDataAssociator
 import ca.joelathiessen.kaly2.subconscious.sensor.SimSensor
+import ca.joelathiessen.util.FloatMath
+import ca.joelathiessen.util.FloatRandom
 import ca.joelathiessen.util.array2d
 import lejos.robotics.geometry.Point
 import lejos.robotics.navigation.Pose
@@ -40,34 +42,34 @@ class MainLoopView : JPanel() {
 
     private val REFRESH_INTERVAL = 16L
 
-    private val LINE_THRESHOLD = 10.0
-    private val CHECK_WITHIN_ANGLE = 0.3
-    private val MAX_RATIO = 1.0
+    private val LINE_THRESHOLD = 10.0f
+    private val CHECK_WITHIN_ANGLE = 0.3f
+    private val MAX_RATIO = 1.0f
 
-    private val MAX_SENSOR_RANGE = 500.0
-    private val SENSOR_DIST_STDEV = 0.01
-    private val SENSOR_ANG_STDEV = 0.001
-    private val SENSOR_START_ANG = 0.0
-    private val SENSOR_END_ANG = 2 * Math.PI
-    private val SENSOR_ANG_INCR = 0.0174533
+    private val MAX_SENSOR_RANGE = 500.0f
+    private val SENSOR_DIST_STDEV = 0.01f
+    private val SENSOR_ANG_STDEV = 0.001f
+    private val SENSOR_START_ANG = 0.0f
+    private val SENSOR_END_ANG = 2 * FloatMath.PI
+    private val SENSOR_ANG_INCR = 0.0174533f
 
-    private val ODO_ANG_STD_DEV = 0.01
-    private val ODO_DIST_STD_DEV = 0.01
+    private val ODO_ANG_STD_DEV = 0.01f
+    private val ODO_DIST_STD_DEV = 0.01f
 
-    private val ROT_RATE = 0.035
-    private val STEP_DIST = 2
-    private val STEP_ROT_STD_DEV = 0.01
-    private val STEP_DIST_STD_DEV = 0.5
-    private val MIN_WIDTH = 400.0
+    private val ROT_RATE = 0.035f
+    private val STEP_DIST = 2f
+    private val STEP_ROT_STD_DEV = 0.01f
+    private val STEP_DIST_STD_DEV = 0.5f
+    private val MIN_WIDTH = 400.0f
 
-    private val NN_THRESHOLD = 10.0
+    private val NN_THRESHOLD = 10.0f
 
-    private val startPos = RobotPose(0, 0f, MIN_WIDTH.toFloat() / 2f, MIN_WIDTH.toFloat() / 2f, 0f)
+    private val startPos = RobotPose(0, 0f, MIN_WIDTH/ 2f, MIN_WIDTH / 2f, 0f)
     private val motionModel = CarModel()
     private val dataAssoc = NNDataAssociator(NN_THRESHOLD)
     private val partResamp = FastUnbiasedResampler()
     private var realPos: RobotPose = startPos
-    private val random = Random(1)
+    private val random = FloatRandom(1)
 
     private val drawFeatLock = Any()
     private val drawPartLock = Any()
@@ -89,9 +91,9 @@ class MainLoopView : JPanel() {
         this.setSize(MIN_WIDTH.toInt(), MIN_WIDTH.toInt())
 
         thread {
-            var x = MIN_WIDTH / 2
-            var y = MIN_WIDTH / 2
-            var theta = 0.1
+            var x = MIN_WIDTH / 2f
+            var y = MIN_WIDTH / 2f
+            var theta = 0.1f
             var times = 0
 
             for (xInc in 0 until image.width) {
@@ -99,8 +101,8 @@ class MainLoopView : JPanel() {
                     if (image.getRGB(xInc, yInc).equals(Color.BLACK.rgb)) {
                         obsGrid[xInc][yInc] = Point(xInc.toFloat(), yInc.toFloat())
                     } else if (image.getRGB(xInc, yInc).equals(Color.RED.rgb)) {
-                        x = xInc.toDouble()
-                        y = yInc.toDouble()
+                        x = xInc.toFloat()
+                        y = yInc.toFloat()
                     }
                 }
             }
@@ -118,11 +120,11 @@ class MainLoopView : JPanel() {
 
                 val distCommon = STEP_DIST + (STEP_DIST_STD_DEV * random.nextGaussian())
                 val odoDist = distCommon + ODO_DIST_STD_DEV * random.nextGaussian()
-                x += (Math.cos(theta) * distCommon)
-                odoX += Math.cos(odoTheta) * odoDist
+                x += (FloatMath.cos(theta) * distCommon)
+                odoX += FloatMath.cos(odoTheta) * odoDist
 
-                y += Math.sin(theta) * distCommon
-                odoY += Math.sin(odoTheta) * odoDist
+                y += FloatMath.sin(theta) * distCommon
+                odoY += FloatMath.sin(odoTheta) * odoDist
 
                 val realPos = RobotPose(times, 0f, x.toFloat(), y.toFloat(), theta.toFloat())
                 synchronized(realLock) { realLocs.add(realPos) }
@@ -135,15 +137,15 @@ class MainLoopView : JPanel() {
                 sensor.sensorAng = SENSOR_START_ANG
 
                 val avgPose = slam.avgPose
-                val mesX = avgPose.x + (Math.cos(avgPose.heading + dOdoTheta) * odoDist)
-                val mesY = avgPose.y + (Math.sin(avgPose.heading + dOdoTheta) * odoDist)
+                val mesX = avgPose.x + (FloatMath.cos(avgPose.heading + dOdoTheta) * odoDist)
+                val mesY = avgPose.y + (FloatMath.sin(avgPose.heading + dOdoTheta) * odoDist)
                 val mesTheta = avgPose.heading + dOdoTheta
-                val mesPose = RobotPose(times, 0f, mesX.toFloat(), mesY.toFloat(), mesTheta.toFloat())
+                val mesPose = RobotPose(times, 0f, mesX, mesY, mesTheta)
 
                 while (sensor.sensorAng < SENSOR_END_ANG) {
                     var sample = FloatArray(2)
                     sensor.fetchSample(sample, 0)
-                    measurements.add(Measurement(sample[0].toDouble(), sample[1].toDouble(), mesPose, System.nanoTime()))
+                    measurements.add(Measurement(sample[0], sample[1], mesPose, System.nanoTime()))
 
                     // move the sensor
                     sensor.sensorAng += SENSOR_ANG_INCR

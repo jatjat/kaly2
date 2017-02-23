@@ -4,6 +4,7 @@ import ca.joelathiessen.kaly2.Measurement
 import ca.joelathiessen.kaly2.featuredetector.Feature
 import ca.joelathiessen.kaly2.featuredetector.SplitAndMerge
 import ca.joelathiessen.kaly2.featuredetector.SplitAndMergeFeature
+import ca.joelathiessen.util.FloatMath
 import lejos.robotics.navigation.Pose
 import java.awt.BasicStroke
 import java.awt.Color
@@ -37,12 +38,12 @@ class FeatureDetectorView(val image: BufferedImage) : JPanel() {
     private val drawLock = Any()
     private val printExec = Executors.newFixedThreadPool(1)!!
 
-    private val ANG_STEP = 0.0174533 // ray-cast along steps of this angle
-    private val DIST_STEP = 0.5 // check for hits on steps of this distance along the ray
+    private val ANG_STEP = 0.0174533f // ray-cast along steps of this angle
+    private val DIST_STEP = 0.5f // check for hits on steps of this distance along the ray
 
-    private val LINE_THRESHOLD = 2.0
-    private val CHECK_WITHIN_ANGLE = 0.3
-    private val MAX_RATIO = 1.0
+    private val LINE_THRESHOLD = 2.0f
+    private val CHECK_WITHIN_ANGLE = 0.3f
+    private val MAX_RATIO = 1.0f
 
     private var drawFeatures: List<Feature> = ArrayList()
 
@@ -63,13 +64,13 @@ class FeatureDetectorView(val image: BufferedImage) : JPanel() {
         // Gather measurements by ray-casting from the sensor location to obstacles
         val sensorLoc = Pose(sensorX.toFloat(), sensorY.toFloat(), 0f)
         val measurements = ArrayList<Measurement>()
-        var ang = 0.0
-        while (ang < 2 * Math.PI) {
+        var ang = 0.0f
+        while (ang < 2 * FloatMath.PI) {
             var cont = true
-            var dist = 0.0
+            var dist = 0.0f
             while (cont) {
-                val checkX = sensorX + (Math.cos(ang) * dist).toInt()
-                val checkY = sensorY + (Math.sin(ang) * dist).toInt()
+                val checkX = sensorX + (FloatMath.cos(ang) * dist).toInt()
+                val checkY = sensorY + (FloatMath.sin(ang) * dist).toInt()
 
                 if (checkX >= 0 && checkX < image.width && checkY >= 0 && checkY < image.height) {
                     if (image.getRGB(checkX, checkY).equals(Color.BLACK.rgb)) {

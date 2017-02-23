@@ -31,9 +31,9 @@ object RRTStarDemo {
 class RRTStarView : JPanel() {
     private val WINDOW_SIZE = 500
     private val HALF_SIZE = WINDOW_SIZE / 2
-    private val OBS_SIZE = 1.0
-    private val SEARCH_DIST = HALF_SIZE.toDouble()
-    private val STEP_DIST = 20.0
+    private val OBS_SIZE = 1.0f
+    private val SEARCH_DIST = HALF_SIZE.toFloat()
+    private val STEP_DIST = 20.0f
     private val ITERATIONS = 100
     private val MAX_FRAME_TIME = 16L
     private val drawLock = Any()
