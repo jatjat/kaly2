@@ -38,8 +38,7 @@ To run the JUnit tests:
 
 ### General Information
 The code was architected to allow running it as a webserver on a PC, Android device, or on the EV3 programmable brick while only changing wrapper code.
-Different distance sensors are allowed (IR, IR laser, Ultrasound), and different feature gathering algorithms are permitted.
-(currently implementing Split and Merge for feature detection, since it is very fast and accurate, especially compared to RANSAC). I am indebted to SimpleSLAM for its matrix math and fast particle resampler.
+Different distance sensors are allowed (IR, IR laser, Ultrasound), and different feature gathering algorithms are permitted. I am indebted to SimpleSLAM for its matrix math and fast particle resampler.
 
 Currently the codebase is split into two parts. In the first, a "subconscious" thread gathers sensor information to be passed to the main thread, and the robot is given orders through a "commander" thread. In the second, FastSLAM simulations are run on a webserver in response to websocket clients, on interacting threads.
 
