@@ -1,6 +1,7 @@
 package ca.joelathiessen.kaly2.tests.pc.unit.sensor
 
 import ca.joelathiessen.kaly2.subconscious.sensor.Spinner
+import ca.joelathiessen.util.FloatMath
 import lejos.robotics.RegulatedMotor
 import org.junit.Assert.*
 import org.junit.Test
@@ -66,7 +67,7 @@ class SpinnerTest {
 
         `when`(motor.tachoCount).thenReturn(77)
 
-        assertEquals(spinner.angle, Math.toRadians(77.0), 0.0001)
+        assertEquals(spinner.angle, FloatMath.toRadians(77.0f), 0.0001f)
     }
 
 }

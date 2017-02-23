@@ -68,7 +68,7 @@ class SubconsciousTest {
         `when`(odometry.pose).thenReturn(Pose())
         // spin thrice:
         `when`(spinner.spinning()).thenReturn(true).thenReturn(true).thenReturn(true).thenReturn(false)
-        `when`(spinner.angle).thenReturn(2.0)
+        `when`(spinner.angle).thenReturn(2.0f)
         doAnswer { invocation ->
             val sample = invocation.arguments[0] as FloatArray
             sample[0] = 10f
@@ -87,8 +87,8 @@ class SubconsciousTest {
 
         for (sweep in sweeps) {
             for (mes in sweep) {
-                assertEquals("Measurement's distance should be correct", mes.distance, 10.0, 0.0)
-                assertEquals("Measurement's angle should be correct", mes.angle, 2.0, 0.0)
+                assertEquals("Measurement's distance should be correct", mes.distance, 10.0f, 0.0f)
+                assertEquals("Measurement's angle should be correct", mes.angle, 2.0f, 0.0f)
                 assertNotNull("Measurement's pose should not be null", mes.pose)
 
                 assertTrue("Measurement's time should be correct", mes.time <= timeout)

@@ -20,9 +20,9 @@ class GlobalPathPlannerTest {
         val factory = LinearPathSegmentRootFactory()
 
         val obsTree = GenTree<Point>()
-        val obsSize = 0.1
-        val searchDist = 1.2
-        val stepDist = 0.2
+        val obsSize = 0.1f
+        val searchDist = 1.2f
+        val stepDist = 0.2f
         val start = RobotPose(0, 0f, 0f, 0f, 0f)
         val end = RobotPose(0, 0f, 1f, 1f, 0f)
         val itrs = 100

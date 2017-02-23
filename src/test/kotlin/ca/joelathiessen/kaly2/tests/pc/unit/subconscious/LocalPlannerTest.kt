@@ -10,117 +10,117 @@ import java.util.*
 
 @RunWith(MockitoJUnitRunner::class)
 class LocalPlannerTest {
-    val EPSILON = 0.001
+    val EPSILON = 0.001f
 
     @Test
     fun testZeroAng() {
-        val staticObstacles = ArrayList<Pair<Double, Double>>()
+        val staticObstacles = ArrayList<Pair<Float, Float>>()
         val startPose = RobotPose(0, 0f, 0f, 0f, 0f)
 
-        val maxAng = 1.0
-        val maxDist = 10.0
-        val distStep = 0.1
+        val maxAng = 1.0f
+        val maxDist = 10.0f
+        val distStep = 0.1f
 
         val desiredPath = ArrayList<RobotPose>()
         val desDist = 3.5f
         val desAng = 0f
         desiredPath.add(RobotPose(1, 0f, desDist, 0f, desAng))
 
-        val planner = LocalPlanner(0.25, 0.1, distStep, 5.0, 100.0, 1.0)
+        val planner = LocalPlanner(0.25f, 0.1f, distStep, 5.0f, 100.0f, 1.0f)
         val plan = planner.makePlan(staticObstacles, startPose, maxAng, maxDist, desiredPath)
 
-        assertEquals(plan.angle, 0.0, EPSILON)
-        assertEquals(plan.distance, 3.5, EPSILON)
+        assertEquals(plan.angle, 0.0f, EPSILON)
+        assertEquals(plan.distance, 3.5f, EPSILON)
     }
 
     @Test
     fun testZeroDist() {
-        val staticObstacles = ArrayList<Pair<Double, Double>>()
+        val staticObstacles = ArrayList<Pair<Float, Float>>()
         val startPose = RobotPose(0, 0f, 0f, 0f, 0f)
 
-        val maxAng = 1.0
-        val maxDist = 10.0
-        val distStep = 0.1
+        val maxAng = 1.1f
+        val maxDist = 10.0f
+        val distStep = 0.1f
 
         val desiredPath = ArrayList<RobotPose>()
         val desDist = 0.0f
         val desAng = 1.0f
         desiredPath.add(RobotPose(1, 0f, desDist, 0f, desAng))
 
-        val planner = LocalPlanner(0.25, 0.1, distStep, 5.0, 100.0, 1.0)
+        val planner = LocalPlanner(0.25f, 0.1f, distStep, 5.0f, 100.0f, 1.0f)
         val plan = planner.makePlan(staticObstacles, startPose, maxAng, maxDist, desiredPath)
 
-        assertEquals(plan.angle, 1.0, EPSILON)
-        assertEquals(plan.distance, 0.0, EPSILON)
+        assertEquals(plan.angle, 1.0f, EPSILON)
+        assertEquals(plan.distance, 0.0f, EPSILON)
     }
 
     @Test
     fun testAngAndDist() {
-        val staticObstacles = ArrayList<Pair<Double, Double>>()
+        val staticObstacles = ArrayList<Pair<Float, Float>>()
         val startPose = RobotPose(0, 0f, 0f, 0f, 0f)
 
-        val maxAng = 1.0
-        val maxDist = 10.0
-        val distStep = 0.1
+        val maxAng = 1.1f
+        val maxDist = 10.0f
+        val distStep = 0.1f
 
         val desiredPath = ArrayList<RobotPose>()
         val desAng = 1.0f
         desiredPath.add(RobotPose(1, 0f, 7f, 7f, desAng))
 
-        val planner = LocalPlanner(0.25, 0.1, distStep, 5.0, 100.0, 1.0)
+        val planner = LocalPlanner(0.25f, 0.1f, distStep, 5.0f, 100.0f, 1.0f)
         val plan = planner.makePlan(staticObstacles, startPose, maxAng, maxDist, desiredPath)
 
-        assertEquals(plan.angle, 1.0, EPSILON)
-        assertEquals(plan.distance, 9.9, EPSILON)
+        assertEquals(plan.angle, 1.0f, EPSILON)
+        assertEquals(plan.distance, 9.9f, EPSILON)
     }
 
     @Test
     fun testBlockedByVertLine() {
-        val staticObstacles = ArrayList<Pair<Double, Double>>()
+        val staticObstacles = ArrayList<Pair<Float, Float>>()
         for(y in -10 until 10 step 1) {
-            staticObstacles.add(Pair(1.9, y.toDouble()))
+            staticObstacles.add(Pair(1.9f, y.toFloat()))
         }
 
         val startPose = RobotPose(0, 0f, 0f, 0f, 0f)
 
-        val maxAng = 1.0
-        val maxDist = 10.0
-        val distStep = 0.1
+        val maxAng = 1.0f
+        val maxDist = 10.0f
+        val distStep = 0.1f
 
         val desiredPath = ArrayList<RobotPose>()
         val desDist = 5.0f
         val desAng = 0.0f
         desiredPath.add(RobotPose(1, 0f, desDist, 0f, desAng))
 
-        val planner = LocalPlanner(0.25, 0.1, distStep, 5.0, 100.0, 1.0)
+        val planner = LocalPlanner(0.25f, 0.1f, distStep, 5.0f, 100.0f, 1.0f)
         val plan = planner.makePlan(staticObstacles, startPose, maxAng, maxDist, desiredPath)
 
-        assertEquals(plan.angle, 0.0, EPSILON)
-        assertEquals(plan.distance, 0.6, EPSILON)
+        assertEquals(plan.angle, 0.0f, EPSILON)
+        assertEquals(plan.distance, 0.6f, EPSILON)
     }
 
     @Test
     fun testGoAroundVertLine() {
-        val staticObstacles = ArrayList<Pair<Double, Double>>()
+        val staticObstacles = ArrayList<Pair<Float, Float>>()
         for(y in -10 until 1 step 1) {
-            staticObstacles.add(Pair(4.9, y.toDouble() - 0.6))
+            staticObstacles.add(Pair(4.9f, y - 0.6f))
         }
 
         val startPose = RobotPose(0, 0f, 0f, 0f, 0f)
 
-        val maxAng = 1.0
-        val maxDist = 10.0
-        val distStep = 0.1
+        val maxAng = 1.0f
+        val maxDist = 10.0f
+        val distStep = 0.1f
 
         val desiredPath = ArrayList<RobotPose>()
         val desDist = 5.0f
         val desAng = 0.0f
         desiredPath.add(RobotPose(1, 0f, desDist, 0f, desAng))
 
-        val planner = LocalPlanner(0.25, 0.1, distStep, 5.0, 100.0, 1.0)
+        val planner = LocalPlanner(0.25f, 0.1f, distStep, 5.0f, 100.0f, 1.0f)
         val plan = planner.makePlan(staticObstacles, startPose, maxAng, maxDist, desiredPath)
 
-        assertEquals(plan.angle, 0.4, EPSILON)
-        assertEquals(plan.distance, 4.9, EPSILON)
+        assertEquals(plan.angle, 0.4f, EPSILON)
+        assertEquals(plan.distance, 4.9f, EPSILON)
     }
 }
