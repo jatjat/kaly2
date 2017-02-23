@@ -1,5 +1,6 @@
 package ca.joelathiessen.kaly2.subconscious.sensor
 
+import ca.joelathiessen.util.FloatMath
 import lejos.robotics.RegulatedMotor
 
 class Spinner {
@@ -42,10 +43,10 @@ class Spinner {
         return motor.isMoving
     }
 
-    val angle: Double
+    val angle: Float
         get() {
             val tachoCount: Int = motor.tachoCount.toInt()
-            return Math.toRadians(tachoCount.toDouble())
+            return FloatMath.toRadians(tachoCount)
         }
 
     fun turningClockwise(): Boolean {

@@ -1,14 +1,15 @@
 package ca.joelathiessen.kaly2.featuredetector
 
 import ca.joelathiessen.kaly2.Measurement
+import ca.joelathiessen.util.FloatMath
 import java.util.*
 
-class SplitAndMerge(val threshold: Double, val checkWithinAngle: Double, val maxRatio: Double) : FeatureDetector {
-    private val TWO_PI = 2 * Math.PI
+class SplitAndMerge(val threshold: Float, val checkWithinAngle: Float, val maxRatio: Float) : FeatureDetector {
+    private val TWO_PI = 2 * FloatMath.PI
 
     override fun getFeatures(measurements: List<Measurement>): List<Feature> {
         val features = measurements.map {
-            SplitAndMergeFeature(it.pose.x.toDouble(), it.pose.y.toDouble(), it.distance, it.angle)
+            SplitAndMergeFeature(it.pose.x, it.pose.y, it.distance, it.angle)
         }
 
         var smFeats = splitAndMerge(features.sortedBy { it.angle }, threshold)
@@ -25,7 +26,7 @@ class SplitAndMerge(val threshold: Double, val checkWithinAngle: Double, val max
                 var canAddRight = true
                 var withinAng = false
 
-                val dAngLeft = Math.abs(extendedFeats[k].angle - extendedFeats[k - 1].angle) % TWO_PI
+                val dAngLeft = FloatMath.abs(extendedFeats[k].angle - extendedFeats[k - 1].angle) % TWO_PI
                 if (dAngLeft < checkWithinAngle) {
                     val arcDist = extendedFeats[k - 1].distance * dAngLeft
                     val dDist = extendedFeats[k].distance - extendedFeats[k - 1].distance
@@ -35,7 +36,7 @@ class SplitAndMerge(val threshold: Double, val checkWithinAngle: Double, val max
                     }
                 }
 
-                val dAngRight = Math.abs(extendedFeats[k + 1].angle - extendedFeats[k].angle) % TWO_PI
+                val dAngRight = FloatMath.abs(extendedFeats[k + 1].angle - extendedFeats[k].angle) % TWO_PI
                 if (dAngRight < checkWithinAngle) {
                     val arcDist = extendedFeats[k + 1].distance * dAngRight
                     val dDist = extendedFeats[k].distance - extendedFeats[k + 1].distance
@@ -65,8 +66,8 @@ class SplitAndMerge(val threshold: Double, val checkWithinAngle: Double, val max
         return sepFeats
     }
 
-    private fun splitAndMerge(inputPoints: List<SplitAndMergeFeature>, epsilon: Double): List<SplitAndMergeFeature> {
-        var distMax = 0.0
+    private fun splitAndMerge(inputPoints: List<SplitAndMergeFeature>, epsilon: Float): List<SplitAndMergeFeature> {
+        var distMax = 0.0f
         var distMaxIndex = 0
         val results = ArrayList<SplitAndMergeFeature>(2)
 
@@ -98,12 +99,12 @@ class SplitAndMerge(val threshold: Double, val checkWithinAngle: Double, val max
         return results
     }
 
-    private fun distanceFromLineToPoint(point: Feature, lineStart: Feature, lineEnd: Feature): Double {
+    private fun distanceFromLineToPoint(point: Feature, lineStart: Feature, lineEnd: Feature): Float {
         val dX = lineEnd.x - lineStart.x
         val dY = lineEnd.y - lineStart.y
 
-        val numerator = Math.abs((dY * point.x) - (dX * point.y) + (lineEnd.x * lineStart.y) - (lineEnd.y * lineStart.x))
-        val denominator = Math.sqrt((dY * dY) + (dX * dX))
+        val numerator = FloatMath.abs((dY * point.x) - (dX * point.y) + (lineEnd.x * lineStart.y) - (lineEnd.y * lineStart.x))
+        val denominator = FloatMath.sqrt((dY * dY) + (dX * dX))
 
         return numerator / denominator
     }

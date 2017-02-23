@@ -2,20 +2,21 @@ package ca.joelathiessen.kaly2.subconscious
 
 import ca.joelathiessen.kaly2.odometry.RobotPose
 import ca.joelathiessen.util.EPSILON
+import ca.joelathiessen.util.FloatMath
 import ca.joelathiessen.util.array2d
 import java.util.*
 
 
-data class LocalPlan(val angle: Double, val distance: Double)
-class LocalPlanner(val robotSize: Double, val rotStep: Double, val distStep: Double, val gridStep: Double,
-                   val gridSize: Double, val staticObstacleSize: Double) {
+data class LocalPlan(val angle: Float, val distance: Float)
+class LocalPlanner(val robotSize: Float, val rotStep: Float, val distStep: Float, val gridStep: Float,
+                   val gridSize: Float, val staticObstacleSize: Float) {
     private val halfGridSize = gridSize / 2
     private val numSteps = (gridSize / gridStep).toInt()
 
-    private data class GridPoint(val x: Double, val y: Double)
+    private data class GridPoint(val x: Float, val y: Float)
 
-    fun makePlan(staticObstacles: ArrayList<Pair<Double, Double>>, startPose: RobotPose, maxRot: Double,
-                 maxDist: Double, desiredPath: List<RobotPose>): LocalPlan {
+    fun makePlan(staticObstacles: ArrayList<Pair<Float, Float>>, startPose: RobotPose, maxRot: Float,
+                 maxDist: Float, desiredPath: List<RobotPose>): LocalPlan {
         val searchGrid = array2d<ArrayList<GridPoint>>(numSteps, numSteps, { ArrayList() })
         val checkDist = robotSize + staticObstacleSize
 
@@ -42,17 +43,17 @@ class LocalPlanner(val robotSize: Double, val rotStep: Double, val distStep: Dou
         }
 
         // find the cheapest non-colliding path:
-        val heading = startPose.heading.toDouble()
+        val heading = startPose.heading
         var curRot = -1 * maxRot
-        var minCost = Double.MAX_VALUE
-        var bestRot = 0.0
-        var bestDist = 0.0
+        var minCost = Float.MAX_VALUE
+        var bestRot = 0.0f
+        var bestDist = 0.0f
         while (curRot < maxRot) {
-            var curDist = 0.0
+            var curDist = 0.0f
             var collided = false
             while (curDist < maxDist && collided == false) {
 
-                val result = RotateResult(0.0, 0.0)
+                val result = RotateResult(0.0f, 0.0f)
                 rotate(curRot, curDist, heading, result)
 
                 val x = startPose.x + result.dx
@@ -71,34 +72,34 @@ class LocalPlanner(val robotSize: Double, val rotStep: Double, val distStep: Dou
             curRot += rotStep
         }
 
-        if (minCost < Double.MAX_VALUE) {
+        if (minCost < Float.MAX_VALUE) {
             return LocalPlan(bestRot, bestDist)
         }
-        return LocalPlan(0.0, 0.0)
+        return LocalPlan(0.0f, 0.0f)
     }
 
-    data class RotateResult(var dx: Double, var dy: Double)
+    data class RotateResult(var dx: Float, var dy: Float)
 
-    private fun rotate(turnAngle: Double, distance: Double, heading: Double, result: RotateResult) {
+    private fun rotate(turnAngle: Float, distance: Float, heading: Float, result: RotateResult) {
         val radius = distance / turnAngle
-        var dy = 0.0
-        var dx = 0.0
-        if (Math.abs(turnAngle) > EPSILON) {
-            dy = radius * (Math.cos(heading) - Math.cos(heading + turnAngle))
-            dx = radius * (Math.sin(heading + turnAngle) - Math.sin(heading))
-        } else if (Math.abs(distance) > EPSILON) {
-            dx = distance * Math.cos(heading)
-            dy = distance * Math.sin(heading)
+        var dy = 0.0f
+        var dx = 0.0f
+        if (FloatMath.abs(turnAngle) > EPSILON) {
+            dy = radius * (FloatMath.cos(heading) - FloatMath.cos(heading + turnAngle))
+            dx = radius * (FloatMath.sin(heading + turnAngle) - FloatMath.sin(heading))
+        } else if (FloatMath.abs(distance) > EPSILON) {
+            dx = distance * FloatMath.cos(heading)
+            dy = distance * FloatMath.sin(heading)
         }
         result.dx = dx
         result.dy = dy
     }
 
-    private fun within(one: Double, two: Double, epsilon: Double): Boolean {
-        return Math.abs(two - one) < epsilon
+    private fun within(one: Float, two: Float, epsilon: Float): Boolean {
+        return FloatMath.abs(two - one) < epsilon
     }
 
-    private fun checkObstacles(searchGrid: Array<Array<ArrayList<GridPoint>>>, x: Double, y: Double): Boolean {
+    private fun checkObstacles(searchGrid: Array<Array<ArrayList<GridPoint>>>, x: Float, y: Float): Boolean {
         val gridX = ((x + halfGridSize) / gridStep).toInt()
         val gridY = ((y + halfGridSize) / gridStep).toInt()
 
@@ -116,13 +117,13 @@ class LocalPlanner(val robotSize: Double, val rotStep: Double, val distStep: Dou
     }
 
     // TODO: Calculate cost using more of desired path, efficiently
-    private fun getCost(x: Double, y: Double, heading: Double, desiredPath: List<RobotPose>): Double {
+    private fun getCost(x: Float, y: Float, heading: Float, desiredPath: List<RobotPose>): Float {
         val pose = desiredPath.firstOrNull()
         if (pose != null) {
             val dXpos = pose.x - x
             val dYpos = pose.y - y
-            return (dXpos * dXpos) + (dYpos * dYpos) + Math.abs(pose.heading - heading)
+            return (dXpos * dXpos) + (dYpos * dYpos) + FloatMath.abs(pose.heading - heading)
         }
-        return Double.MAX_VALUE
+        return Float.MAX_VALUE
     }
 }

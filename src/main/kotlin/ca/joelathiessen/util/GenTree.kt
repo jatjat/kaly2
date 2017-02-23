@@ -12,18 +12,19 @@ class GenTree<T> {
     private val sqEucDistFunc = SquareEuclideanDistanceFunction()
 
     fun add(point: Point, value: T) {
-        add(point.x.toDouble(), point.y.toDouble(), value)
+        add(point.x, point.y, value)
     }
 
-    fun add(x: Double, y: Double, value: T) {
-        kdTree.addPoint(doubleArrayOf(x, y), value)
+    fun add(x: Float, y: Float, value: T) {
+        kdTree.addPoint(doubleArrayOf(x.toDouble(), y.toDouble()), value)
     }
 
     fun getNearestNeighbors(point: Point): Iterator<T> {
-        return getNearestNeighbors(point.x.toDouble(), point.y.toDouble())
+        return getNearestNeighbors(point.x, point.y)
     }
 
-    fun getNearestNeighbors(x: Double, y: Double): Iterator<T> {
-        return kdTree.getNearestNeighborIterator(doubleArrayOf(x, y), Int.MAX_VALUE, sqEucDistFunc).iterator<T>()
+    fun getNearestNeighbors(x: Float, y: Float): Iterator<T> {
+        return kdTree.getNearestNeighborIterator(doubleArrayOf(x.toDouble(), y.toDouble()),
+                Int.MAX_VALUE, sqEucDistFunc).iterator<T>()
     }
 }

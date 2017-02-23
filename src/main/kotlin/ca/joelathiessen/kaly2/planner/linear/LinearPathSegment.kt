@@ -5,8 +5,8 @@ import ca.joelathiessen.util.distance
 import lejos.robotics.geometry.Line
 import java.util.*
 
-class LinearPathSegment(x: Double, y: Double, parent: PathSegment?, cost: Double) : PathSegment(x, y, parent, cost) {
-    override fun makeChild(xChild: Double, yChild: Double): LinearPathSegment {
+class LinearPathSegment(x: Float, y: Float, parent: PathSegment?, cost: Float) : PathSegment(x, y, parent, cost) {
+    override fun makeChild(xChild: Float, yChild: Float): LinearPathSegment {
         val childCost = cost + distance(x, xChild, y, yChild)
         return LinearPathSegment(xChild, yChild, this, childCost)
     }
@@ -23,7 +23,7 @@ class LinearPathSegment(x: Double, y: Double, parent: PathSegment?, cost: Double
         val lines = ArrayList<Line>()
         val oldX = parent?.x ?: x
         val oldY = parent?.y ?: y
-        lines.add(Line(oldX.toFloat(), oldY.toFloat(), x.toFloat(), y.toFloat()))
+        lines.add(Line(oldX, oldY, x, y))
         return lines
     }
 }

@@ -1,19 +1,19 @@
 package ca.joelathiessen.util
 
-val EPSILON = 0.000001
-fun equals(a: Double, b: Double): Boolean {
+val EPSILON = 0.000001f
+fun equals(a: Float, b: Float): Boolean {
     return within(a, b, EPSILON)
 }
 
-private fun within(a: Double, b: Double, epsilon: Double): Boolean {
+private fun within(a: Float, b: Float, epsilon: Float): Boolean {
     if (a == b) return true
-    return Math.abs(a - b) < epsilon * Math.max(Math.abs(a), Math.abs(b))
+    return FloatMath.abs(a - b) < epsilon * FloatMath.max(FloatMath.abs(a), FloatMath.abs(b))
 }
 
-inline fun distance(x1: Double, x2: Double, y1: Double, y2: Double): Double {
+inline fun distance(x1: Float, x2: Float, y1: Float, y2: Float): Float {
     val dx = x2 - x1
     val dy = y2 - y1
-    return Math.sqrt((dx * dx) + (dy * dy))
+    return FloatMath.sqrt((dx * dx) + (dy * dy))
 }
 
 inline fun <reified INNER> array2d(sizeOuter: Int, sizeInner: Int, noinline innerInit: (Int)->INNER): Array<Array<INNER>>

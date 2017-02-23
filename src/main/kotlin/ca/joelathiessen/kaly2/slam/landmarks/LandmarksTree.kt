@@ -23,8 +23,12 @@ class LandmarksTree() : AssociatableLandmarks {
         if (kdTreeCopy == null) {
             var newTree = kdTree
 
-            landmarksForDelete.forEach { newTree = newTree.removePointAsCopy(doubleArrayOf(it.x, it.y), it) }
-            landmarksForInsert.forEach { newTree = newTree.addPointAsCopy(doubleArrayOf(it.x, it.y), it) }
+            landmarksForDelete.forEach {
+                newTree = newTree.removePointAsCopy(doubleArrayOf(it.x.toDouble(), it.y.toDouble()), it)
+            }
+            landmarksForInsert.forEach {
+                newTree = newTree.addPointAsCopy(doubleArrayOf(it.x.toDouble(), it.y.toDouble()), it)
+            }
             landmarksForInsert.clear()
             landmarksForDelete.clear()
             kdTreeCopy = newTree

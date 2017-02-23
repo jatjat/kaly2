@@ -1,6 +1,7 @@
 package ca.joelathiessen.kaly2.planner
 
 import ca.joelathiessen.kaly2.odometry.RobotPose
+import ca.joelathiessen.util.FloatMath
 import ca.joelathiessen.util.GenTree
 import ca.joelathiessen.util.distance
 import lejos.robotics.geometry.Point
@@ -13,7 +14,7 @@ import java.util.*
  * Robotics Science and Systems VI 104 (2010).
  **/
 class GlobalPathPlanner(private val pathFactory: PathSegmentRootFactory, private val obstacles: GenTree<Point>,
-                        private val obsSize: Double, private val searchDist: Double, private val stepDist: Double,
+                        private val obsSize: Float, private val searchDist: Float, private val stepDist: Float,
                         private val startPose: RobotPose, private val endPose: RobotPose) {
     val paths: ArrayList<PathSegmentInfo>
         get() {
@@ -25,12 +26,12 @@ class GlobalPathPlanner(private val pathFactory: PathSegmentRootFactory, private
     private val pathTree = GenTree<PathSegment>()
     private val rootNode = pathFactory.makePathSegmentRoot(startPose)
     private val pathList = ArrayList<PathSegment>()
-    private val doubleSearchDist = 2 * searchDist
-    private val searchArea = doubleSearchDist * doubleSearchDist
+    private val FloatSearchDist = 2 * searchDist
+    private val searchArea = FloatSearchDist * FloatSearchDist
     private val searchXBase = startPose.x - searchDist
     private val searchYBase = startPose.y - searchDist
     private val gamma = 6 * searchArea // assume obstacles reduce the search area negligibly
-    private var nodeCount = 1
+    private var nodeCount = 1f
 
     init {
         pathTree.add(rootNode.x, rootNode.y, rootNode)
@@ -38,22 +39,22 @@ class GlobalPathPlanner(private val pathFactory: PathSegmentRootFactory, private
 
     fun iterate(numItrs: Int) {
         for (i in 0 until numItrs) {
-            val xSearch = searchXBase + (rand.nextDouble() * doubleSearchDist)
-            val ySearch = searchYBase + (rand.nextDouble() * doubleSearchDist)
+            val xSearch = searchXBase + (rand.nextFloat() * FloatSearchDist)
+            val ySearch = searchYBase + (rand.nextFloat() * FloatSearchDist)
             val nearestNeighbors = pathTree.getNearestNeighbors(xSearch, ySearch)
 
             if (nearestNeighbors.hasNext()) {
                 val nearest = nearestNeighbors.next()
-                val ang = Math.atan2(ySearch - nearest.y, xSearch - nearest.x)
-                val xInter = nearest.x + (Math.cos(ang) * stepDist)
-                val yInter = nearest.y + (Math.sin(ang) * stepDist)
+                val ang = FloatMath.atan2(ySearch - nearest.y, xSearch - nearest.x)
+                val xInter = nearest.x + (FloatMath.cos(ang) * stepDist)
+                val yInter = nearest.y + (FloatMath.sin(ang) * stepDist)
 
                 val newNode = nearest.makeChild(xInter, yInter)
                 if (newNode != null) {
                     pathTree.add(xInter, yInter, newNode)
                     pathList.add(newNode)
                     nodeCount++
-                    val searchRadius = gamma * Math.pow(Math.log(nodeCount.toDouble()) / nodeCount, 0.5)
+                    val searchRadius = gamma * FloatMath.pow(FloatMath.log(nodeCount) / nodeCount, 0.5f)
                     rewire(newNode, pathTree, searchRadius)
 
                     // Make sure the root of the tree is optimal:
@@ -66,7 +67,7 @@ class GlobalPathPlanner(private val pathFactory: PathSegmentRootFactory, private
         }
     }
 
-    private fun rewire(newNode: PathSegment, pathTree: GenTree<PathSegment>, searchRadius: Double) {
+    private fun rewire(newNode: PathSegment, pathTree: GenTree<PathSegment>, searchRadius: Float) {
         val nearby = pathTree.getNearestNeighbors(newNode.x, newNode.y)
         var cont = true
         while (cont && nearby.hasNext()) {
@@ -85,16 +86,16 @@ class GlobalPathPlanner(private val pathFactory: PathSegmentRootFactory, private
     fun getManeuvers(): List<RobotPose> {
         val poses = ArrayList<RobotPose>()
         var angle = startPose.heading
-        val nearestToLast = pathTree.getNearestNeighbors(endPose.x.toDouble(), endPose.y.toDouble())
+        val nearestToLast = pathTree.getNearestNeighbors(endPose.x, endPose.y)
         if (nearestToLast.hasNext()) {
             val nearest = nearestToLast.next()
             var cur: PathSegment? = nearest
             while (cur != null) {
                 val parent: PathSegment? = cur.parent
                 if (parent != null) {
-                    angle = Math.atan2(cur.y - parent.y, cur.x - parent.x).toFloat()
+                    angle = FloatMath.atan2(cur.y - parent.y, cur.x - parent.x)
                 }
-                val newPose = RobotPose(0, 0f, cur.x.toFloat(), cur.y.toFloat(), angle)
+                val newPose = RobotPose(0, 0f, cur.x, cur.y, angle)
                 poses.add(0, newPose)
                 cur = cur.parent
             }

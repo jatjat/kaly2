@@ -9,6 +9,8 @@ import ca.joelathiessen.kaly2.slam.FastUnbiasedResampler
 import ca.joelathiessen.kaly2.slam.NNDataAssociator
 import ca.joelathiessen.kaly2.subconscious.sensor.SensorInfo
 import ca.joelathiessen.util.EventContainer
+import ca.joelathiessen.util.FloatMath
+import ca.joelathiessen.util.FloatRandom
 import ca.joelathiessen.util.getFeatureForPosition
 import lejos.robotics.navigation.Pose
 import java.util.*
@@ -20,17 +22,17 @@ import kotlin.concurrent.thread
 class RobotHandler(val rid: Long) {
     val NUM_LANDMARKS = 11
     val MIN_TIMESTEP = 33 // Don't wait for shorter than this (in ms) before starting the next simulation timestep
-    val ROT_RATE = 0.03
-    val STEP_DIST = 2
-    val STEP_ROT_STD_DEV = 0.01
-    val STEP_DIST_STD_DEV = 0.5
-    val MIN_WIDTH = 400.0
-    val SENSOR_DIST_STD_DEV = 0.001
-    val SENSOR_ANG_STD_DEV = 0.001
-    val ODO_DIST_STD_DEV = 0.01
-    val ODO_ANG_STD_DEV = 0.01
+    val ROT_RATE = 0.03f
+    val STEP_DIST = 2f
+    val STEP_ROT_STD_DEV = 0.01f
+    val STEP_DIST_STD_DEV = 0.5f
+    val MIN_WIDTH = 400.0f
+    val SENSOR_DIST_STD_DEV = 0.001f
+    val SENSOR_ANG_STD_DEV = 0.001f
+    val ODO_DIST_STD_DEV = 0.01f
+    val ODO_ANG_STD_DEV = 0.01f
 
-    val startPos = RobotPose(0, 0f, MIN_WIDTH.toFloat() / 2f, MIN_WIDTH.toFloat() / 2f, 0f)
+    val startPos = RobotPose(0, 0f, MIN_WIDTH / 2f, MIN_WIDTH / 2f, 0f)
 
     private val rtUpdateEventCont = EventContainer<RTMsg>()
     val rtUpdateEvent = rtUpdateEventCont.event
@@ -46,15 +48,15 @@ class RobotHandler(val rid: Long) {
     private val dataAssoc = NNDataAssociator()
     private val partResamp = FastUnbiasedResampler()
     private val sensorInfo = object : SensorInfo {}
-    private val random = Random(1)
+    private val random = FloatRandom(1)
 
-    private data class xyPnt(val x: Double, val y: Double)
+    private data class xyPnt(val x: Float, val y: Float)
 
     private val realObjectLocs = ArrayList<xyPnt>()
 
     init {
         for (i in 1..NUM_LANDMARKS) {
-            realObjectLocs += xyPnt(random.nextDouble() * MIN_WIDTH, random.nextDouble() * MIN_WIDTH)
+            realObjectLocs += xyPnt(random.nextFloat() * MIN_WIDTH, random.nextFloat() * MIN_WIDTH)
         }
     }
 
@@ -70,7 +72,7 @@ class RobotHandler(val rid: Long) {
 
             var x = MIN_WIDTH / 2
             var y = MIN_WIDTH / 2
-            var theta = 0.1
+            var theta = 0.1f
 
             var odoX = x
             var odoY = y
@@ -89,14 +91,14 @@ class RobotHandler(val rid: Long) {
                 odoTheta += dTheta + (ODO_ANG_STD_DEV * random.nextGaussian())
                 val distCommon = STEP_DIST + (STEP_DIST_STD_DEV * random.nextGaussian())
                 val odoOffsetCommon = distCommon + (ODO_DIST_STD_DEV * random.nextGaussian())
-                x += Math.cos(theta) * distCommon
-                odoX += Math.cos(odoTheta) * (odoOffsetCommon)
-                y += Math.sin(theta) * distCommon
-                odoY += Math.sin(odoTheta) * (odoOffsetCommon)
+                x += FloatMath.cos(theta) * distCommon
+                odoX += FloatMath.cos(odoTheta) * (odoOffsetCommon)
+                y += FloatMath.sin(theta) * distCommon
+                odoY += FloatMath.sin(odoTheta) * (odoOffsetCommon)
 
-                val realPos = RobotPose(times, 0f, x.toFloat(), y.toFloat(), theta.toFloat())
+                val realPos = RobotPose(times, 0f, x, y, theta)
                 realLocs.add(realPos)
-                val odoPos = RobotPose(times, 0f, odoX.toFloat(), odoY.toFloat(), odoTheta.toFloat())
+                val odoPos = RobotPose(times, 0f, odoX, odoY, odoTheta)
                 odoLocs.add(odoPos)
 
                 // make features as the robot sees them
@@ -138,7 +140,7 @@ class RobotHandler(val rid: Long) {
             val rtFeatures = featuresForRT.map { RTFeature(it.distance, it.angle, it.stdDev) }
             val rtOdoPos = RTPose(odoPos.x, odoPos.y, odoPos.heading)
             val rtTruePos = RTPose(truePos.x, truePos.y, truePos.heading)
-            val rtTrueLandmarks = realLandmarks.map { RTLandmark(it.x, it.y, 0.0) }
+            val rtTrueLandmarks = realLandmarks.map { RTLandmark(it.x, it.y, 0.0f) }
 
             var sumX = 0.0f
             var sumY = 0.0f

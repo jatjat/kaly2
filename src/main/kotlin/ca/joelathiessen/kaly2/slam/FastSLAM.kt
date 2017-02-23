@@ -6,6 +6,7 @@ import ca.joelathiessen.kaly2.odometry.CarModel
 import ca.joelathiessen.kaly2.odometry.RobotPose
 import ca.joelathiessen.kaly2.slam.landmarks.Landmark
 import ca.joelathiessen.kaly2.subconscious.sensor.SensorInfo
+import ca.joelathiessen.util.FloatMath
 import lejos.robotics.navigation.Pose
 import java.util.*
 
@@ -13,9 +14,9 @@ class FastSLAM(val startPose: RobotPose, private val carMotionModel: CarModel, p
                private val partResamp: ParticleResampler, val sensorInfo: SensorInfo) : Slam {
     private val ADD_REMOVE_SEED = 1L
     val DEFAULT_NUM_PARTICLES = 20
-    val DEFAULT_DIST_VARIANCE = 1.0
-    val DEFAULT_ANG_VARIANCE = 0.01
-    val IDENTITY_VARIANCE = 0.2
+    val DEFAULT_DIST_VARIANCE = 1.0f
+    val DEFAULT_ANG_VARIANCE = 0.01f
+    val IDENTITY_VARIANCE = 0.2f
 
     var numParticles = DEFAULT_NUM_PARTICLES
         get() = particles.size
@@ -35,7 +36,7 @@ class FastSLAM(val startPose: RobotPose, private val carMotionModel: CarModel, p
 
     init {
         for (i in 1..DEFAULT_NUM_PARTICLES) {
-            particles.add(Particle(startPose, 1.0 / DEFAULT_NUM_PARTICLES))
+            particles.add(Particle(startPose, 1.0f / DEFAULT_NUM_PARTICLES))
         }
     }
 
@@ -53,25 +54,25 @@ class FastSLAM(val startPose: RobotPose, private val carMotionModel: CarModel, p
         }
         particles.addAll(newParticles)
 
-        particles.forEach { it.weight = 1.0 / numParticles }
+        particles.forEach { it.weight = 1.0f / numParticles }
         println("Removed: ${remCnt}, added: ${addCnt}, total num particles: ${numParticles}")
     }
 
-    fun changeDistanceVariance(variance: Double = DEFAULT_DIST_VARIANCE) {
+    fun changeDistanceVariance(variance: Float = DEFAULT_DIST_VARIANCE) {
         distVariance = variance
         R = createR(distVariance, angleVariance, IDENTITY_VARIANCE)
     }
 
-    fun changeAngleVariance(variance: Double = DEFAULT_ANG_VARIANCE) {
+    fun changeAngleVariance(variance: Float = DEFAULT_ANG_VARIANCE) {
         angleVariance = variance
         R = createR(distVariance, angleVariance, IDENTITY_VARIANCE)
     }
 
-    private fun createR(distVar: Double, angVar: Double, identVar: Double): Matrix {
+    private fun createR(distVar: Float, angVar: Float, identVar: Float): Matrix {
         return Matrix(arrayOf(
-                doubleArrayOf(distVar, 0.0, 0.0),
-                doubleArrayOf(0.0, angVar, 0.0),
-                doubleArrayOf(0.0, 0.0, identVar)
+                doubleArrayOf(distVar.toDouble(), 0.0, 0.0),
+                doubleArrayOf(0.0, angVar.toDouble(), 0.0),
+                doubleArrayOf(0.0, 0.0, identVar.toDouble())
         ))
     }
 
@@ -102,13 +103,13 @@ class FastSLAM(val startPose: RobotPose, private val carMotionModel: CarModel, p
                     //Using the distance and angle from the particle to the landmark...
                     val dX = land.x - particle.pose.x
                     val dY = land.y - particle.pose.y
-                    val particleDist = Math.sqrt((dX * dX) + (dY * dY))
-                    val particleAngle = Math.atan2(dY, dX)
+                    val particleDist = FloatMath.sqrt((dX * dX) + (dY * dY))
+                    val particleAngle = FloatMath.atan2(dY, dX)
 
                     //...and the distance and angle from the sensor to the feature, find the residual:
                     val residual = Matrix(arrayOf(
-                            doubleArrayOf(feat.distance - particleDist),
-                            doubleArrayOf(feat.angle - particleAngle),
+                            doubleArrayOf(feat.distance - particleDist.toDouble()),
+                            doubleArrayOf(feat.angle - particleAngle.toDouble()),
                             doubleArrayOf(0.0)
                     ))
 
@@ -119,8 +120,8 @@ class FastSLAM(val startPose: RobotPose, private val carMotionModel: CarModel, p
 
                     //Mix the ideal and real sensor measurements to update landmark's position:
                     val dPos = K.times(residual)
-                    val updatedX = land.x + dPos[0, 0]
-                    val updatedY = land.y + dPos[1, 0]
+                    val updatedX = land.x + dPos[0, 0].toFloat()
+                    val updatedY = land.y + dPos[1, 0].toFloat()
 
                     //Update the landmark's covariance:
                     val I = Matrix.identity(K.rowDimension, K.columnDimension)
@@ -129,9 +130,9 @@ class FastSLAM(val startPose: RobotPose, private val carMotionModel: CarModel, p
                     val updatedLand = Landmark(updatedX, updatedY, updatedCovar)
 
                     //Update particle's weight:
-                    val firstPart = Math.pow(Q.times(2 * Math.PI).norm2(), -0.5)
-                    val secondPart = Math.exp((residual.transpose().times(-0.5)
-                            .times(Q.inverse()).times(residual))[0, 0])
+                    val firstPart = FloatMath.pow(Q.times(2 * Math.PI).norm2().toFloat(), -0.5f)
+                    val secondPart = FloatMath.exp((residual.transpose().times(-0.5)
+                            .times(Q.inverse()).times(residual))[0, 0].toFloat())
                     newParticle.weight = newParticle.weight * firstPart * secondPart
 
                     newParticle.landmarks.markForUpdateOnCopy(updatedLand, land)

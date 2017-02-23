@@ -9,4 +9,8 @@ class FloatRandom(seed: Long) {
     fun nextGaussian(): Float {
         return random.nextGaussian().toFloat()
     }
+
+    fun nextFloat(): Float {
+        return random.nextFloat()
+    }
 }

@@ -5,7 +5,7 @@ import ca.joelathiessen.kaly2.odometry.RobotPose
 import ca.joelathiessen.kaly2.slam.landmarks.LandmarksTree
 import lejos.robotics.navigation.Pose
 
-class Particle(pose: Pose, var weight: Double = 0.0, val landmarks: LandmarksTree = LandmarksTree()) {
+class Particle(pose: Pose, var weight: Float = 0.0f, val landmarks: LandmarksTree = LandmarksTree()) {
     var pose: Pose = pose
         private set
 

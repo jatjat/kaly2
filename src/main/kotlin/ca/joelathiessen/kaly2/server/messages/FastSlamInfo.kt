@@ -24,15 +24,15 @@ class RTPose(
 )
 
 class RTFeature(
-        val distance: Double,
-        val angle: Double,
-        val stdDev: Double
+        val distance: Float,
+        val angle: Float,
+        val stdDev: Float
 )
 
 class RTLandmark(
-        val x: Double,
-        val y: Double,
-        val stdDev: Double
+        val x: Float,
+        val y: Float,
+        val stdDev: Float
 )
 
 class RTParticle(

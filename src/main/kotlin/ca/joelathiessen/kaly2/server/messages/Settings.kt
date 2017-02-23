@@ -16,8 +16,8 @@ class RobotSettingsMsg(
 
 class FastSlamSettingsMsg(
         val numParticles: Int,
-        val sensorDistVar: Double,
-        val sensorAngVar: Double
+        val sensorDistVar: Float,
+        val sensorAngVar: Float
 ) : RobotMsg {
     @Expose(serialize = false, deserialize = false)
     override val MSG_TYPE = MSG_TYPE_NAME
