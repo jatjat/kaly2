@@ -5,13 +5,18 @@ import ca.joelathiessen.kaly2.featuredetector.Feature
 import ca.joelathiessen.kaly2.featuredetector.SplitAndMerge
 import ca.joelathiessen.kaly2.odometry.CarModel
 import ca.joelathiessen.kaly2.odometry.RobotPose
+import ca.joelathiessen.kaly2.planner.GlobalPathPlanner
+import ca.joelathiessen.kaly2.planner.PathSegmentInfo
+import ca.joelathiessen.kaly2.planner.linear.LinearPathSegmentRootFactory
 import ca.joelathiessen.kaly2.slam.FastSLAM
 import ca.joelathiessen.kaly2.slam.FastUnbiasedResampler
 import ca.joelathiessen.kaly2.slam.NNDataAssociator
 import ca.joelathiessen.kaly2.subconscious.sensor.SimSensor
 import ca.joelathiessen.util.FloatMath
 import ca.joelathiessen.util.FloatRandom
+import ca.joelathiessen.util.GenTree
 import ca.joelathiessen.util.array2d
+import lejos.robotics.geometry.Line
 import lejos.robotics.geometry.Point
 import lejos.robotics.navigation.Pose
 import java.awt.Color
@@ -64,7 +69,7 @@ class MainLoopView : JPanel() {
 
     private val NN_THRESHOLD = 10.0f
 
-    private val startPos = RobotPose(0, 0f, MIN_WIDTH/ 2f, MIN_WIDTH / 2f, 0f)
+    private val startPos = RobotPose(0, 0f, MIN_WIDTH / 2f, MIN_WIDTH / 2f, 0f)
     private val motionModel = CarModel()
     private val dataAssoc = NNDataAssociator(NN_THRESHOLD)
     private val partResamp = FastUnbiasedResampler()
@@ -79,6 +84,7 @@ class MainLoopView : JPanel() {
     private val realLocs = ArrayList<RobotPose>()
     private var odoLocs: ArrayList<Pose> = ArrayList()
 
+    private val obstacles = GenTree<Point>()
     private val obsGrid = array2d<Point?>(image.width, image.height, { null })
     private val sensor = SimSensor(realPos, SENSOR_START_ANG, obsGrid, image.width, image.height,
             MAX_SENSOR_RANGE, SENSOR_DIST_STDEV, SENSOR_ANG_STDEV)
@@ -87,25 +93,48 @@ class MainLoopView : JPanel() {
     private var drawParticlePoses: List<Pose> = ArrayList()
     private var drawFeatures: List<Feature> = ArrayList()
 
+    private var drawPaths = ArrayList<PathSegmentInfo>()
+    private var drawManeuvers: List<RobotPose> = ArrayList()
+
+    private val drawPathLock = Any()
+    private val drawManeuversLock = Any()
+
+    private val factory = LinearPathSegmentRootFactory()
+
+    private val OBS_SIZE = 2f
+    private val SEARCH_DIST = MIN_WIDTH
+    private val GBL_PTH_PLN_STEP_DIST = 20f
+    private val GBL_PTH_PLN_ITRS = 1000
+
     init {
         this.setSize(MIN_WIDTH.toInt(), MIN_WIDTH.toInt())
 
         thread {
             var x = MIN_WIDTH / 2f
             var y = MIN_WIDTH / 2f
+            var xEnd = MIN_WIDTH
+            var yEnd = MIN_WIDTH
             var theta = 0.1f
             var times = 0
 
+            val points = ArrayList<Point>()
             for (xInc in 0 until image.width) {
                 for (yInc in 0 until image.height) {
                     if (image.getRGB(xInc, yInc).equals(Color.BLACK.rgb)) {
+                        points.add(Point(xInc.toFloat(), yInc.toFloat()))
                         obsGrid[xInc][yInc] = Point(xInc.toFloat(), yInc.toFloat())
                     } else if (image.getRGB(xInc, yInc).equals(Color.RED.rgb)) {
                         x = xInc.toFloat()
                         y = yInc.toFloat()
+                    } else if (image.getRGB(xInc, yInc) == Color.GREEN.rgb) {
+                        xEnd = xInc.toFloat()
+                        yEnd = yInc.toFloat()
                     }
                 }
             }
+            Collections.shuffle(points)
+            points.forEach { obstacles.add(it.x, it.y, it) }
+            val end = RobotPose(0, 0f, xEnd, yEnd, 0f)
 
             var odoX = x
             var odoY = y
@@ -157,6 +186,17 @@ class MainLoopView : JPanel() {
 
                 slam.addTimeStep(features, odoPos)
 
+                val glbPthPln = GlobalPathPlanner(factory, obstacles, OBS_SIZE, SEARCH_DIST, GBL_PTH_PLN_STEP_DIST,
+                        slam.avgPose, end)
+                glbPthPln.iterate(GBL_PTH_PLN_ITRS)
+
+                synchronized(drawPathLock) {
+                    drawPaths = glbPthPln.paths
+                }
+                synchronized(drawManeuversLock) {
+                    drawManeuvers = glbPthPln.getManeuvers()
+                }
+
                 synchronized(drawFeatLock) {
                     drawFeatures = features
                 }
@@ -177,6 +217,15 @@ class MainLoopView : JPanel() {
     override fun paint(graphics: Graphics) {
         val graphics2d = graphics as Graphics2D
         graphics2d.drawImage(image, 0, 0, null)
+
+        // draw the drawPaths
+        graphics.color = Color.LIGHT_GRAY
+        val paintDrawPaths = synchronized(drawPathLock) { drawPaths }
+        paintDrawPaths.forEach {
+            it.getLines().forEach {
+                graphics.drawLine(it.x1.toInt(), it.y1.toInt(), it.x2.toInt(), it.y2.toInt())
+            }
+        }
 
         // track the robot's odometric position
         graphics.color = Color.RED
@@ -202,6 +251,18 @@ class MainLoopView : JPanel() {
         val paintDrawParticlePoses = synchronized(drawPartLock) { drawParticlePoses }
         paintDrawParticlePoses.forEach {
             graphics.drawRect(it.x.toInt(), it.y.toInt(), 2, 2)
+        }
+
+        val paintDrawManeuvers = synchronized(drawManeuversLock) { drawManeuvers }
+        val manPoints = paintDrawManeuvers.map { Point(it.x, it.y) }
+        val manLines = ArrayList<Line>(paintDrawManeuvers.size)
+        for (i in 1 until manPoints.size) {
+            manLines.add(Line(manPoints[i - 1].x, manPoints[i - 1].y,
+                    manPoints[i].x, manPoints[i].y))
+        }
+        graphics.color = Color.GREEN
+        manLines.forEach {
+            graphics.drawLine(it.x1.toInt(), it.y1.toInt(), it.x2.toInt(), it.y2.toInt())
         }
     }
 }
