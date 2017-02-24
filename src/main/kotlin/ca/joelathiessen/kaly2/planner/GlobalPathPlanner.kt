@@ -26,8 +26,8 @@ class GlobalPathPlanner(private val pathFactory: PathSegmentRootFactory, private
     private val pathTree = GenTree<PathSegment>()
     private val rootNode = pathFactory.makePathSegmentRoot(startPose)
     private val pathList = ArrayList<PathSegment>()
-    private val FloatSearchDist = 2 * searchDist
-    private val searchArea = FloatSearchDist * FloatSearchDist
+    private val doubleSearchDist = 2 * searchDist
+    private val searchArea = doubleSearchDist * doubleSearchDist
     private val searchXBase = startPose.x - searchDist
     private val searchYBase = startPose.y - searchDist
     private val gamma = 6 * searchArea // assume obstacles reduce the search area negligibly
@@ -39,8 +39,8 @@ class GlobalPathPlanner(private val pathFactory: PathSegmentRootFactory, private
 
     fun iterate(numItrs: Int) {
         for (i in 0 until numItrs) {
-            val xSearch = searchXBase + (rand.nextFloat() * FloatSearchDist)
-            val ySearch = searchYBase + (rand.nextFloat() * FloatSearchDist)
+            val xSearch = searchXBase + (rand.nextFloat() * doubleSearchDist)
+            val ySearch = searchYBase + (rand.nextFloat() * doubleSearchDist)
             val nearestNeighbors = pathTree.getNearestNeighbors(xSearch, ySearch)
 
             if (nearestNeighbors.hasNext()) {
@@ -91,7 +91,7 @@ class GlobalPathPlanner(private val pathFactory: PathSegmentRootFactory, private
             val nearest = nearestToLast.next()
             var cur: PathSegment? = nearest
             while (cur != null) {
-                val parent: PathSegment? = cur.parent
+                val parent = cur.parent
                 if (parent != null) {
                     angle = FloatMath.atan2(cur.y - parent.y, cur.x - parent.x)
                 }
