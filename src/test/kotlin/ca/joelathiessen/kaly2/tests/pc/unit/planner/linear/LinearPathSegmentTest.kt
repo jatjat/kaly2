@@ -27,40 +27,37 @@ class LinearPathSegmentTest {
     @Test
     fun testCreateChild() {
         val linPathSeg1 = LinearPathSegment(1.0f, 4.0f, null, 3.0f)
-        val linPathSeg2 = linPathSeg1.makeChild(1.0f, 7.0f)
+        val linPathSeg2 = linPathSeg1.makeChild(1.0f, 7.0f)!!
 
         assertEquals(linPathSeg2.x, 1.0f, EPSILON)
         assertEquals(linPathSeg2.y, 7.0f, EPSILON)
         assertEquals(linPathSeg2.parent, linPathSeg1)
-        assertEquals(linPathSeg2.cost, 6.0f, EPSILON)
+        assertEquals(linPathSeg2.cost, 3f, EPSILON)
     }
 
     @Test
     fun testKeepParent() {
         val linPathSeg1 = LinearPathSegment(0.0f, 0.0f, null, 3.0f)
         val linPathSeg2 = linPathSeg1.makeChild(10.0f, 0.0f)
-        val linPathSeg3 = linPathSeg2.makeChild(10.0f, 15.0f)
+        val linPathSeg3 = linPathSeg2!!.makeChild(10.0f, 15.0f)!!
 
-        val linPathSeg4 = linPathSeg1.makeChild(1.0f, 50.0f)
+        val linPathSeg4 = linPathSeg1.makeChild(1.0f, 50.0f)!!
 
         linPathSeg3.changeParentIfCheaper(linPathSeg4)
 
         assertEquals(linPathSeg3.parent, linPathSeg2)
-        assertEquals(linPathSeg3.cost, 28.0f, EPSILON)
     }
 
     @Test
     fun testNewParent() {
         val linPathSeg1 = LinearPathSegment(0.0f, 0.0f, null, 3.0f)
-        val linPathSeg2 = linPathSeg1.makeChild(1.5f, 50.0f)
-        val linPathSeg3 = linPathSeg2.makeChild(10.0f, 15.0f)
-        val oldCost = linPathSeg3.cost
+        val linPathSeg2 = linPathSeg1.makeChild(1.5f, 50.0f)!!
+        val linPathSeg3 = linPathSeg2.makeChild(10.0f, 15.0f)!!
 
-        val linPathSeg4 = linPathSeg1.makeChild(1.01f, 1.01f)
+        val linPathSeg4 = linPathSeg1.makeChild(1.01f, 1.01f)!!
 
         linPathSeg3.changeParentIfCheaper(linPathSeg4)
 
         assertEquals(linPathSeg3.parent, linPathSeg4)
-        assert(linPathSeg3.cost < oldCost)
     }
 }

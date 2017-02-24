@@ -21,7 +21,7 @@ class GlobalPathPlanner(private val pathFactory: PathSegmentRootFactory, private
             return ArrayList(pathList)
         }
 
-    private val PROB_REWIRE_ROOT = 0.001
+    private val PROB_REWIRE_ROOT = 0.01
     private val rand = Random(0)
     private val pathTree = GenTree<PathSegment>()
     private val rootNode = pathFactory.makePathSegmentRoot(startPose)
@@ -49,7 +49,7 @@ class GlobalPathPlanner(private val pathFactory: PathSegmentRootFactory, private
                 val xInter = nearest.x + (FloatMath.cos(ang) * stepDist)
                 val yInter = nearest.y + (FloatMath.sin(ang) * stepDist)
 
-                val newNode = nearest.makeChild(xInter, yInter)
+                val newNode = nearest.makeChild(xInter, yInter, obstacles, obsSize)
                 if (newNode != null) {
                     pathTree.add(xInter, yInter, newNode)
                     pathList.add(newNode)
@@ -72,10 +72,10 @@ class GlobalPathPlanner(private val pathFactory: PathSegmentRootFactory, private
         var cont = true
         while (cont && nearby.hasNext()) {
             val nextNearest = nearby.next()
-            if (newNode != nextNearest && nextNearest.parent != null) {
+            if (newNode != nextNearest && nextNearest != rootNode) {
                 val dist = distance(newNode.x, nextNearest.x, newNode.y, nextNearest.y)
                 if (dist < searchRadius) {
-                    nextNearest.changeParentIfCheaper(newNode)
+                    nextNearest.changeParentIfCheaper(newNode, obstacles, obsSize)
                 } else {
                     cont = false
                 }
