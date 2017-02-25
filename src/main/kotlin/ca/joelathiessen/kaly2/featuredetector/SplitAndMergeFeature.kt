@@ -1,7 +1,12 @@
 package ca.joelathiessen.kaly2.featuredetector
 
-class SplitAndMergeFeature(sensorX: Float, sensorY: Float, distance: Float, angle: Float, stdDev: Float = 0.0f) :
-        Feature(sensorX, sensorY, distance, angle, stdDev) {
+import ca.joelathiessen.kaly2.Measurement
+
+class SplitAndMergeFeature(sensorX: Float, sensorY: Float, distance: Float, angle: Float, dX: Float, dY: Float,
+                           stdDev: Float = 0.0f) : Feature(sensorX, sensorY, distance, angle, dX, dY, stdDev) {
+
+    constructor(measurement: Measurement): this(measurement.pose.x, measurement.pose.y, measurement.distance,
+            measurement.angle, measurement.dX, measurement.dY)
 
     var discardedPoints: Int = 0// the number of points along the line starting at this point that were discarded during the split and merge
         private set

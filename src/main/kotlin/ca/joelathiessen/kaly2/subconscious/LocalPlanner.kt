@@ -1,5 +1,6 @@
 package ca.joelathiessen.kaly2.subconscious
 
+import ca.joelathiessen.kaly2.Measurement
 import ca.joelathiessen.kaly2.odometry.RobotPose
 import ca.joelathiessen.util.EPSILON
 import ca.joelathiessen.util.FloatMath
@@ -15,15 +16,15 @@ class LocalPlanner(val robotSize: Float, val rotStep: Float, val distStep: Float
 
     private data class GridPoint(val x: Float, val y: Float)
 
-    fun makePlan(staticObstacles: ArrayList<Pair<Float, Float>>, startPose: RobotPose, maxRot: Float,
+    fun makePlan(staticObstacles: List<Measurement>, startPose: RobotPose, maxRot: Float,
                  maxDist: Float, desiredPath: List<RobotPose>): LocalPlan {
         val searchGrid = array2d<ArrayList<GridPoint>>(numSteps, numSteps, { ArrayList() })
         val checkDist = robotSize + staticObstacleSize
 
         // fill the search grid with obstacles:
         staticObstacles.forEach {
-            val xHalfGrid = it.first + halfGridSize
-            val yHalfGrid = it.second + halfGridSize
+            val xHalfGrid = it.x + halfGridSize
+            val yHalfGrid = it.y + halfGridSize
 
             val xStartOffset = ((xHalfGrid - checkDist) / gridStep).toInt()
             val xStart = Math.max(xStartOffset, 0)
@@ -37,7 +38,7 @@ class LocalPlanner(val robotSize: Float, val rotStep: Float, val distStep: Float
 
             for (x in xStart..xEnd) {
                 for (y in yStart..yEnd) {
-                    searchGrid[x][y].add(GridPoint(it.first, it.second))
+                    searchGrid[x][y].add(GridPoint(it.x, it.y))
                 }
             }
         }

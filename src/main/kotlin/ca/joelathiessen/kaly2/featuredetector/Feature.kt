@@ -4,9 +4,8 @@ import Jama.Matrix
 import ca.joelathiessen.util.FloatMath
 
 open class Feature(val sensorX: Float, val sensorY: Float, val distance: Float, val angle: Float,
+                   val dX: Float = FloatMath.cos(angle) * distance, val dY: Float = FloatMath.sin(angle) * distance,
                    val stdDev: Float) {
-    val dX = FloatMath.cos(angle) * distance
-    val dY = FloatMath.sin(angle) * distance
 
     val x = dX + sensorX
     val y = dY + sensorY

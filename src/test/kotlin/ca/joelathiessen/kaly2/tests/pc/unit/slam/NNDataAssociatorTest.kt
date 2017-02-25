@@ -28,7 +28,7 @@ class NNDataAssociatorTest() {
         val dY = y - sensorY
         val dist = FloatMath.sqrt((dX * dX + dY * dY))
         val angle = FloatMath.atan2(dY, dX)
-        return Feature(sensorX, sensorY, dist, angle, stDev)
+        return Feature(sensorX, sensorY, dist, angle, dX, dY, stDev)
     }
 
     @Test

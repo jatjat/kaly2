@@ -1,7 +1,9 @@
 package ca.joelathiessen.kaly2.tests.pc.unit.subconscious
 
+import ca.joelathiessen.kaly2.Measurement
 import ca.joelathiessen.kaly2.odometry.RobotPose
 import ca.joelathiessen.kaly2.subconscious.LocalPlanner
+import ca.joelathiessen.util.FloatMath
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -11,10 +13,21 @@ import java.util.*
 @RunWith(MockitoJUnitRunner::class)
 class LocalPlannerTest {
     val EPSILON = 0.001f
+    val DEFAULT_SENSOR_X = 0f
+    val DEFAULT_SENSOR_Y = 0f
+
+    fun makeMeasurement(x: Float, y: Float,
+                        sensorPos: RobotPose = RobotPose(0, 0f, DEFAULT_SENSOR_X, DEFAULT_SENSOR_Y, 0f)): Measurement {
+        val dX = x - sensorPos.x
+        val dY = y - sensorPos.y
+        val dist = FloatMath.sqrt((dX * dX) + (dY * dY))
+        val ang = FloatMath.atan2(dY, dX)
+        return Measurement(dist, ang, sensorPos, 0L)
+    }
 
     @Test
     fun testZeroAng() {
-        val staticObstacles = ArrayList<Pair<Float, Float>>()
+        val staticObstacles = ArrayList<Measurement>()
         val startPose = RobotPose(0, 0f, 0f, 0f, 0f)
 
         val maxAng = 1.0f
@@ -35,7 +48,7 @@ class LocalPlannerTest {
 
     @Test
     fun testZeroDist() {
-        val staticObstacles = ArrayList<Pair<Float, Float>>()
+        val staticObstacles = ArrayList<Measurement>()
         val startPose = RobotPose(0, 0f, 0f, 0f, 0f)
 
         val maxAng = 1.1f
@@ -56,7 +69,7 @@ class LocalPlannerTest {
 
     @Test
     fun testAngAndDist() {
-        val staticObstacles = ArrayList<Pair<Float, Float>>()
+        val staticObstacles = ArrayList<Measurement>()
         val startPose = RobotPose(0, 0f, 0f, 0f, 0f)
 
         val maxAng = 1.1f
@@ -76,9 +89,9 @@ class LocalPlannerTest {
 
     @Test
     fun testBlockedByVertLine() {
-        val staticObstacles = ArrayList<Pair<Float, Float>>()
+        val staticObstacles = ArrayList<Measurement>()
         for(y in -10 until 10 step 1) {
-            staticObstacles.add(Pair(1.9f, y.toFloat()))
+            staticObstacles += makeMeasurement(1.9f, y.toFloat())
         }
 
         val startPose = RobotPose(0, 0f, 0f, 0f, 0f)
@@ -101,9 +114,9 @@ class LocalPlannerTest {
 
     @Test
     fun testGoAroundVertLine() {
-        val staticObstacles = ArrayList<Pair<Float, Float>>()
+        val staticObstacles = ArrayList<Measurement>()
         for(y in -10 until 1 step 1) {
-            staticObstacles.add(Pair(4.9f, y - 0.6f))
+            staticObstacles += makeMeasurement(4.9f, y - 0.6f)
         }
 
         val startPose = RobotPose(0, 0f, 0f, 0f, 0f)

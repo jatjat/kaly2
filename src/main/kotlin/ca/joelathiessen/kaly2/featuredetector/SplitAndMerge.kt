@@ -8,11 +8,9 @@ class SplitAndMerge(val threshold: Float, val checkWithinAngle: Float, val maxRa
     private val TWO_PI = 2 * FloatMath.PI
 
     override fun getFeatures(measurements: List<Measurement>): List<Feature> {
-        val features = measurements.map {
-            SplitAndMergeFeature(it.pose.x, it.pose.y, it.distance, it.angle)
-        }
+        val features = measurements.map(::SplitAndMergeFeature)
 
-        var smFeats = splitAndMerge(features.sortedBy { it.angle }, threshold)
+        val smFeats = splitAndMerge(features.sortedBy { it.angle }, threshold)
 
         val sepFeats = ArrayList<SplitAndMergeFeature>()
 
