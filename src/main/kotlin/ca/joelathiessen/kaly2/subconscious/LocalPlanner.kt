@@ -8,7 +8,8 @@ import ca.joelathiessen.util.array2d
 import java.util.*
 
 
-data class LocalPlan(val angle: Float, val distance: Float)
+data class LocalPlan(val angle: Float, val distance: Float, val startX: Float, val startY: Float, val startAngle: Float,
+                     val endX: Float, val endY: Float)
 class LocalPlanner(val robotSize: Float, val rotStep: Float, val distStep: Float, val gridStep: Float,
                    val gridSize: Float, val staticObstacleSize: Float) {
     private val halfGridSize = gridSize / 2
@@ -49,6 +50,8 @@ class LocalPlanner(val robotSize: Float, val rotStep: Float, val distStep: Float
         var minCost = Float.MAX_VALUE
         var bestRot = 0.0f
         var bestDist = 0.0f
+        var bestX = 0.0f
+        var bestY = 0.0f
         while (curRot < maxRot) {
             var curDist = 0.0f
             var collided = false
@@ -65,6 +68,8 @@ class LocalPlanner(val robotSize: Float, val rotStep: Float, val distStep: Float
                     if (cost < minCost) {
                         bestRot = curRot
                         bestDist = curDist
+                        bestX = x
+                        bestY = y
                         minCost = cost
                     }
                 }
@@ -74,9 +79,9 @@ class LocalPlanner(val robotSize: Float, val rotStep: Float, val distStep: Float
         }
 
         if (minCost < Float.MAX_VALUE) {
-            return LocalPlan(bestRot, bestDist)
+            return LocalPlan(bestRot, bestDist, startPose.x, startPose.y, startPose.heading, bestX, bestY)
         }
-        return LocalPlan(0.0f, 0.0f)
+        return LocalPlan(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f)
     }
 
     data class RotateResult(var dx: Float, var dy: Float)
@@ -119,7 +124,7 @@ class LocalPlanner(val robotSize: Float, val rotStep: Float, val distStep: Float
 
     // TODO: Calculate cost using more of desired path, efficiently
     private fun getCost(x: Float, y: Float, heading: Float, desiredPath: List<RobotPose>): Float {
-        val pose = desiredPath.firstOrNull()
+        val pose = desiredPath.elementAtOrNull(1)
         if (pose != null) {
             val dXpos = pose.x - x
             val dYpos = pose.y - y

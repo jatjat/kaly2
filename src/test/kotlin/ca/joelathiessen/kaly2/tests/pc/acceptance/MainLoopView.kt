@@ -11,6 +11,8 @@ import ca.joelathiessen.kaly2.planner.linear.LinearPathSegmentRootFactory
 import ca.joelathiessen.kaly2.slam.FastSLAM
 import ca.joelathiessen.kaly2.slam.FastUnbiasedResampler
 import ca.joelathiessen.kaly2.slam.NNDataAssociator
+import ca.joelathiessen.kaly2.subconscious.LocalPlan
+import ca.joelathiessen.kaly2.subconscious.LocalPlanner
 import ca.joelathiessen.kaly2.subconscious.sensor.SimSensor
 import ca.joelathiessen.util.FloatMath
 import ca.joelathiessen.util.FloatRandom
@@ -69,6 +71,18 @@ class MainLoopView : JPanel() {
 
     private val NN_THRESHOLD = 10.0f
 
+    private val OBS_SIZE = 2f
+    private val SEARCH_DIST = MIN_WIDTH
+    private val GBL_PTH_PLN_STEP_DIST = 20f
+    private val GBL_PTH_PLN_ITRS = 1000
+
+    private val LCL_PLN_ROT_STEP = 0.017f
+    private val LCL_PLN_DIST_STEP = 1f
+    private val LCL_PLN_GRID_STEP = 5f
+    private val LCL_PLN_GRID_SIZE = 2 * MAX_SENSOR_RANGE
+    private val LCL_PLN_MAX_ROT = 1f
+    private val LCL_PLN_MAX_DIST = 20f
+
     private val startPos = RobotPose(0, 0f, MIN_WIDTH / 2f, MIN_WIDTH / 2f, 0f)
     private val motionModel = CarModel()
     private val dataAssoc = NNDataAssociator(NN_THRESHOLD)
@@ -95,16 +109,13 @@ class MainLoopView : JPanel() {
 
     private var drawPaths = ArrayList<PathSegmentInfo>()
     private var drawManeuvers: List<RobotPose> = ArrayList()
+    private var drawPlan = LocalPlan(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0f)
 
     private val drawPathLock = Any()
     private val drawManeuversLock = Any()
+    private val drawPlanLock = Any()
 
     private val factory = LinearPathSegmentRootFactory()
-
-    private val OBS_SIZE = 2f
-    private val SEARCH_DIST = MIN_WIDTH
-    private val GBL_PTH_PLN_STEP_DIST = 20f
-    private val GBL_PTH_PLN_ITRS = 1000
 
     init {
         this.setSize(MIN_WIDTH.toInt(), MIN_WIDTH.toInt())
@@ -120,10 +131,10 @@ class MainLoopView : JPanel() {
             val points = ArrayList<Point>()
             for (xInc in 0 until image.width) {
                 for (yInc in 0 until image.height) {
-                    if (image.getRGB(xInc, yInc).equals(Color.BLACK.rgb)) {
+                    if (image.getRGB(xInc, yInc) == Color.BLACK.rgb) {
                         points.add(Point(xInc.toFloat(), yInc.toFloat()))
                         obsGrid[xInc][yInc] = Point(xInc.toFloat(), yInc.toFloat())
-                    } else if (image.getRGB(xInc, yInc).equals(Color.RED.rgb)) {
+                    } else if (image.getRGB(xInc, yInc) == Color.RED.rgb) {
                         x = xInc.toFloat()
                         y = yInc.toFloat()
                     } else if (image.getRGB(xInc, yInc) == Color.GREEN.rgb) {
@@ -144,12 +155,12 @@ class MainLoopView : JPanel() {
                 // move the robot
                 val dTheta = ROT_RATE + (STEP_ROT_STD_DEV * random.nextGaussian())
                 theta += dTheta
-                val dOdoTheta = dTheta + ODO_ANG_STD_DEV * random.nextGaussian()
+                val dOdoTheta = dTheta + (ODO_ANG_STD_DEV * random.nextGaussian())
                 odoTheta += dOdoTheta
 
                 val distCommon = STEP_DIST + (STEP_DIST_STD_DEV * random.nextGaussian())
-                val odoDist = distCommon + ODO_DIST_STD_DEV * random.nextGaussian()
-                x += (FloatMath.cos(theta) * distCommon)
+                val odoDist = distCommon + (ODO_DIST_STD_DEV * random.nextGaussian())
+                x += FloatMath.cos(theta) * distCommon
                 odoX += FloatMath.cos(odoTheta) * odoDist
 
                 y += FloatMath.sin(theta) * distCommon
@@ -172,7 +183,7 @@ class MainLoopView : JPanel() {
                 val mesPose = RobotPose(times, 0f, mesX, mesY, mesTheta)
 
                 while (sensor.sensorAng < SENSOR_END_ANG) {
-                    var sample = FloatArray(2)
+                    val sample = FloatArray(2)
                     sensor.fetchSample(sample, 0)
                     measurements.add(Measurement(sample[0], sample[1], mesPose, System.nanoTime()))
 
@@ -185,16 +196,26 @@ class MainLoopView : JPanel() {
                 val features = featureDetector.getFeatures(measurements)
 
                 slam.addTimeStep(features, odoPos)
+                val avgPoseAfter = slam.avgPose
 
-                val glbPthPln = GlobalPathPlanner(factory, obstacles, OBS_SIZE, SEARCH_DIST, GBL_PTH_PLN_STEP_DIST,
-                        slam.avgPose, end)
-                glbPthPln.iterate(GBL_PTH_PLN_ITRS)
+                val gblPthPln = GlobalPathPlanner(factory, obstacles, OBS_SIZE, SEARCH_DIST, GBL_PTH_PLN_STEP_DIST,
+                        avgPoseAfter, end)
+                gblPthPln.iterate(GBL_PTH_PLN_ITRS)
+                val gblmaneuvers = gblPthPln.getManeuvers()
+
+                val localPlanner = LocalPlanner(0f, LCL_PLN_ROT_STEP, LCL_PLN_DIST_STEP, LCL_PLN_GRID_STEP,
+                        LCL_PLN_GRID_SIZE, OBS_SIZE)
+                val plan = localPlanner.makePlan(measurements, mesPose, LCL_PLN_MAX_ROT, LCL_PLN_MAX_DIST, gblmaneuvers)
+
+                synchronized(drawPlanLock) {
+                    drawPlan = plan
+                }
 
                 synchronized(drawPathLock) {
-                    drawPaths = glbPthPln.paths
+                    drawPaths = gblPthPln.paths
                 }
                 synchronized(drawManeuversLock) {
-                    drawManeuvers = glbPthPln.getManeuvers()
+                    drawManeuvers = gblPthPln.getManeuvers()
                 }
 
                 synchronized(drawFeatLock) {
@@ -253,6 +274,7 @@ class MainLoopView : JPanel() {
             graphics.drawRect(it.x.toInt(), it.y.toInt(), 2, 2)
         }
 
+        // draw the maneuvers
         val paintDrawManeuvers = synchronized(drawManeuversLock) { drawManeuvers }
         val manPoints = paintDrawManeuvers.map { Point(it.x, it.y) }
         val manLines = ArrayList<Line>(paintDrawManeuvers.size)
@@ -264,5 +286,10 @@ class MainLoopView : JPanel() {
         manLines.forEach {
             graphics.drawLine(it.x1.toInt(), it.y1.toInt(), it.x2.toInt(), it.y2.toInt())
         }
+
+        // draw the aim of the local plan
+        graphics.color = Color.MAGENTA
+        val paintDrawPlan = synchronized(drawPlanLock) { drawPlan }
+        graphics.drawRect(paintDrawPlan.endX.toInt(), paintDrawPlan.endY.toInt(), 3, 3)
     }
 }

@@ -84,7 +84,7 @@ class GlobalPathPlanner(private val pathFactory: PathSegmentRootFactory, private
     }
 
     fun getManeuvers(): List<RobotPose> {
-        val poses = ArrayList<RobotPose>()
+        val poses = LinkedList<RobotPose>()
         var angle = startPose.heading
         val nearestToLast = pathTree.getNearestNeighbors(endPose.x, endPose.y)
         if (nearestToLast.hasNext()) {
