@@ -11,7 +11,7 @@ You can explore its currently exposed functionality [on my website](http://www.j
 
 #### Completed:
 - FastSLAM localization
-- websocket intermediated control
+- websocket intermediated control using Jetty
 - low-level object avoidance (algorithm & unit tests only)
 - Split-and-Merge feature detection (algorithm & unit tests only)
 - Linear RRT\* global planner (algorithm & some unit tests only)
