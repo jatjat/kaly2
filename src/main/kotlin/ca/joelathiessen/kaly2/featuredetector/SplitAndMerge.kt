@@ -98,11 +98,11 @@ class SplitAndMerge(val threshold: Float, val checkWithinAngle: Float, val maxRa
     }
 
     private fun distanceFromLineToPoint(point: Feature, lineStart: Feature, lineEnd: Feature): Float {
-        val dX = lineEnd.x - lineStart.x
-        val dY = lineEnd.y - lineStart.y
+        val deltaX = lineEnd.x - lineStart.x
+        val deltaY = lineEnd.y - lineStart.y
 
-        val numerator = FloatMath.abs((dY * point.x) - (dX * point.y) + (lineEnd.x * lineStart.y) - (lineEnd.y * lineStart.x))
-        val denominator = FloatMath.sqrt((dY * dY) + (dX * dX))
+        val numerator = FloatMath.abs((deltaY * point.x) - (deltaX * point.y) + (lineEnd.x * lineStart.y) - (lineEnd.y * lineStart.x))
+        val denominator = FloatMath.sqrt((deltaY * deltaY) + (deltaX * deltaX))
 
         return numerator / denominator
     }

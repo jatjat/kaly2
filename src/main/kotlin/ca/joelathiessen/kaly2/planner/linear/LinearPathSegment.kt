@@ -56,17 +56,17 @@ class LinearPathSegment(x: Float, y: Float, parent: PathSegment?, cost: Float) :
 
     private fun collides(obstacles: GenTree<Point>, obsSize: Float, xChild: Float, yChild: Float,
                          xParent: Float, yParent: Float): Boolean {
-        val dX = xChild - xParent
-        val dY = yChild - yParent
-        val mag = FloatMath.sqrt((dX * dX) + (dY * dY))
-        val dXUnit = dX / mag
-        val dYUnit = dY / mag
+        val deltaX = xChild - xParent
+        val deltaY = yChild - yParent
+        val mag = FloatMath.sqrt((deltaX * deltaX) + (deltaY * deltaY))
+        val deltaXUnit = deltaX / mag
+        val deltaYUnit = deltaY / mag
 
         var collided = false
         var distIncr = 0f
         while (distIncr < mag && !collided) {
-            val xIncr = xParent + dXUnit * distIncr
-            val yIncr = yParent + dYUnit * distIncr
+            val xIncr = xParent + deltaXUnit * distIncr
+            val yIncr = yParent + deltaYUnit * distIncr
             val nearest = obstacles.getNearestNeighbors(xIncr, yIncr)
             if (nearest.hasNext()) {
                 val next = nearest.next()

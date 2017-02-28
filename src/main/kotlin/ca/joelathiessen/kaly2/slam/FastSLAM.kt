@@ -102,10 +102,10 @@ class FastSLAM(val startPose: RobotPose, private val carMotionModel: CarModel, p
                 if (land != null) {
 
                     //Using the distance and angle from the particle to the landmark...
-                    val dX = land.x - particle.pose.x
-                    val dY = land.y - particle.pose.y
-                    val particleDist = FloatMath.sqrt((dX * dX) + (dY * dY))
-                    val particleAngle = FloatMath.atan2(dY, dX)
+                    val deltaX = land.x - particle.pose.x
+                    val deltaY = land.y - particle.pose.y
+                    val particleDist = FloatMath.sqrt((deltaX * deltaX) + (deltaY * deltaY))
+                    val particleAngle = FloatMath.atan2(deltaY, deltaX)
 
                     //...and the distance and angle from the sensor to the feature, find the residual:
                     val residual = Matrix(arrayOf(

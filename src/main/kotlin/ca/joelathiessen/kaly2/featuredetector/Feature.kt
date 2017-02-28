@@ -4,20 +4,20 @@ import Jama.Matrix
 import ca.joelathiessen.util.FloatMath
 
 open class Feature(val sensorX: Float, val sensorY: Float, val distance: Float, val angle: Float,
-                   val dX: Float = FloatMath.cos(angle) * distance, val dY: Float = FloatMath.sin(angle) * distance,
+                   val deltaX: Float = FloatMath.cos(angle) * distance, val deltaY: Float = FloatMath.sin(angle) * distance,
                    val stdDev: Float) {
 
-    val x = dX + sensorX
-    val y = dY + sensorY
+    val x = deltaX + sensorX
+    val y = deltaY + sensorY
 
     fun makeJacobian(): Matrix {
         val distanceAbs = FloatMath.abs(distance)
         val distSq = distanceAbs * distanceAbs
-        val dX = x - sensorX
-        val dY = y - sensorY
+        val deltaX = x - sensorX
+        val deltaY = y - sensorY
         return Matrix(arrayOf(
-                doubleArrayOf(-1.0 * dX / distanceAbs, -1.0 * dY / distanceAbs, 0.0),
-                doubleArrayOf((dY / distSq).toDouble(), -1.0 * dX / distSq, -1.0),
+                doubleArrayOf(-1.0 * deltaX / distanceAbs, -1.0 * deltaY / distanceAbs, 0.0),
+                doubleArrayOf((deltaY / distSq).toDouble(), -1.0 * deltaX / distSq, -1.0),
                 doubleArrayOf(0.0, 0.0, 1.0)
         ))
     }

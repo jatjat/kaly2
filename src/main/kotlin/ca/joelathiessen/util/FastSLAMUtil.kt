@@ -8,9 +8,9 @@ fun getFeatureForPosition(robotX: Float, robotY: Float, @Suppress("UNUSED_PARAME
     val random = FloatRandom(2)
 
     // assume that the angle from the sensor is obtained accurately (e.g. with compass and or average particle pose)
-    val dX = featureX - robotX
-    val dY = featureY - robotY
-    val angle = FloatMath.atan2(dY, dX) + (random.nextGaussian() * angStdDev)
-    val distance = FloatMath.sqrt((dX * dX) + (dY * dY)) + (random.nextGaussian() * distStdDev)
-    return Feature(robotX, robotY, distance, angle, dX, dY, distStdDev)
+    val deltaX = featureX - robotX
+    val deltaY = featureY - robotY
+    val angle = FloatMath.atan2(deltaY, deltaX) + (random.nextGaussian() * angStdDev)
+    val distance = FloatMath.sqrt((deltaX * deltaX) + (deltaY * deltaY)) + (random.nextGaussian() * distStdDev)
+    return Feature(robotX, robotY, distance, angle, deltaX, deltaY, distStdDev)
 }

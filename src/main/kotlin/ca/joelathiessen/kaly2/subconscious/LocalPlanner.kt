@@ -126,9 +126,9 @@ class LocalPlanner(val robotSize: Float, val rotStep: Float, val distStep: Float
     private fun getCost(x: Float, y: Float, heading: Float, desiredPath: List<RobotPose>): Float {
         val pose = desiredPath.firstOrNull()
         if (pose != null) {
-            val dXpos = pose.x - x
-            val dYpos = pose.y - y
-            return (dXpos * dXpos) + (dYpos * dYpos) + FloatMath.abs(pose.heading - heading)
+            val deltaXpos = pose.x - x
+            val deltaYpos = pose.y - y
+            return (deltaXpos * deltaXpos) + (deltaYpos * deltaYpos) + FloatMath.abs(pose.heading - heading)
         }
         return Float.MAX_VALUE
     }

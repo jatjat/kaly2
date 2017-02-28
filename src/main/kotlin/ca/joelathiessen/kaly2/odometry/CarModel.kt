@@ -18,11 +18,11 @@ class CarModel : MotionModel {
         val moveAngle = (inputPose.heading + dMoveAngStartPoseHead) + angleAdjust
         val moveDist = startReadPose.distanceTo(endReadPose.location) + (random.nextGaussian() * DIST_ERROR)
 
-        val dX = FloatMath.cos(moveAngle) * moveDist
-        val dY = FloatMath.sin(moveAngle) * moveDist
+        val deltaX = FloatMath.cos(moveAngle) * moveDist
+        val deltaY = FloatMath.sin(moveAngle) * moveDist
         val dHeading = endReadPose.heading - startReadPose.heading + angleAdjust
 
-        val movedPose = Pose((inputPose.x + dX), (inputPose.y + dY), (inputPose.heading + dHeading))
+        val movedPose = Pose((inputPose.x + deltaX), (inputPose.y + deltaY), (inputPose.heading + dHeading))
         return movedPose
     }
 }
