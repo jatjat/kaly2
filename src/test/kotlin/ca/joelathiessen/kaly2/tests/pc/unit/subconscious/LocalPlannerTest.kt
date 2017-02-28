@@ -22,7 +22,7 @@ class LocalPlannerTest {
         val dY = y - sensorPos.y
         val dist = FloatMath.sqrt((dX * dX) + (dY * dY))
         val ang = FloatMath.atan2(dY, dX)
-        return Measurement(dist, ang, sensorPos, 0L)
+        return Measurement(dist, ang, sensorPos, sensorPos, 0L)
     }
 
     @Test

@@ -124,7 +124,7 @@ class LocalPlanner(val robotSize: Float, val rotStep: Float, val distStep: Float
 
     // TODO: Calculate cost using more of desired path, efficiently
     private fun getCost(x: Float, y: Float, heading: Float, desiredPath: List<RobotPose>): Float {
-        val pose = desiredPath.elementAtOrNull(1)
+        val pose = desiredPath.firstOrNull()
         if (pose != null) {
             val dXpos = pose.x - x
             val dYpos = pose.y - y

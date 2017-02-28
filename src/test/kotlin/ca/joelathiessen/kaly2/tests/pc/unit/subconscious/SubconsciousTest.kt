@@ -88,8 +88,8 @@ class SubconsciousTest {
         for (sweep in sweeps) {
             for (mes in sweep) {
                 assertEquals("Measurement's distance should be correct", mes.distance, 10.0f, 0.0f)
-                assertEquals("Measurement's angle should be correct", mes.angle, 2.0f, 0.0f)
-                assertNotNull("Measurement's pose should not be null", mes.pose)
+                assertEquals("Measurement's probable angle should be correct", mes.probAngle, 2.0f, 0.0f)
+                assertNotNull("Measurement's probable pose should not be null", mes.probPose)
 
                 assertTrue("Measurement's time should be correct", mes.time <= timeout)
                 // well it works on my computer!

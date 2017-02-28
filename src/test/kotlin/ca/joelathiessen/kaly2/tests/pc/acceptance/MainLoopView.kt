@@ -3,6 +3,7 @@ package ca.joelathiessen.kaly2.tests.pc.acceptance
 import ca.joelathiessen.kaly2.Measurement
 import ca.joelathiessen.kaly2.featuredetector.Feature
 import ca.joelathiessen.kaly2.featuredetector.SplitAndMerge
+import ca.joelathiessen.kaly2.odometry.AccurateSlamOdometry
 import ca.joelathiessen.kaly2.odometry.CarModel
 import ca.joelathiessen.kaly2.odometry.RobotPose
 import ca.joelathiessen.kaly2.planner.GlobalPathPlanner
@@ -25,6 +26,7 @@ import java.awt.Color
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.util.*
+import java.util.concurrent.ArrayBlockingQueue
 import javax.imageio.ImageIO
 import javax.swing.JFrame
 import javax.swing.JPanel
@@ -83,6 +85,9 @@ class MainLoopView : JPanel() {
     private val LCL_PLN_MAX_ROT = 1f
     private val LCL_PLN_MAX_DIST = 20f
 
+    private val MAX_MES_TIME = 16
+    private val MEASUREMENT_QUEUE_SIZE = 100
+
     private val startPos = RobotPose(0, 0f, MIN_WIDTH / 2f, MIN_WIDTH / 2f, 0f)
     private val motionModel = CarModel()
     private val dataAssoc = NNDataAssociator(NN_THRESHOLD)
@@ -117,41 +122,51 @@ class MainLoopView : JPanel() {
 
     private val factory = LinearPathSegmentRootFactory()
 
+    private val accurateOdo = AccurateSlamOdometry(startPos, { RobotPose(0, 0f, odoX, odoY, odoTheta) })
+    var odoX = 0f
+    var odoY = 0f
+    var odoTheta = 0f
+
     init {
         this.setSize(MIN_WIDTH.toInt(), MIN_WIDTH.toInt())
 
-        thread {
-            var x = MIN_WIDTH / 2f
-            var y = MIN_WIDTH / 2f
-            var xEnd = MIN_WIDTH
-            var yEnd = MIN_WIDTH
-            var theta = 0.1f
-            var times = 0
+        var x = MIN_WIDTH / 2f
+        var y = MIN_WIDTH / 2f
+        var xEnd = MIN_WIDTH
+        var yEnd = MIN_WIDTH
+        var theta = 0.1f
+        var times = 0
 
-            val points = ArrayList<Point>()
-            for (xInc in 0 until image.width) {
-                for (yInc in 0 until image.height) {
-                    if (image.getRGB(xInc, yInc) == Color.BLACK.rgb) {
-                        points.add(Point(xInc.toFloat(), yInc.toFloat()))
-                        obsGrid[xInc][yInc] = Point(xInc.toFloat(), yInc.toFloat())
-                    } else if (image.getRGB(xInc, yInc) == Color.RED.rgb) {
-                        x = xInc.toFloat()
-                        y = yInc.toFloat()
-                    } else if (image.getRGB(xInc, yInc) == Color.GREEN.rgb) {
-                        xEnd = xInc.toFloat()
-                        yEnd = yInc.toFloat()
-                    }
+        val points = ArrayList<Point>()
+        for (xInc in 0 until image.width) {
+            for (yInc in 0 until image.height) {
+                if (image.getRGB(xInc, yInc) == Color.BLACK.rgb) {
+                    points.add(Point(xInc.toFloat(), yInc.toFloat()))
+                    obsGrid[xInc][yInc] = Point(xInc.toFloat(), yInc.toFloat())
+                } else if (image.getRGB(xInc, yInc) == Color.RED.rgb) {
+                    x = xInc.toFloat()
+                    y = yInc.toFloat()
+                } else if (image.getRGB(xInc, yInc) == Color.GREEN.rgb) {
+                    xEnd = xInc.toFloat()
+                    yEnd = yInc.toFloat()
                 }
             }
-            Collections.shuffle(points)
-            points.forEach { obstacles.add(it.x, it.y, it) }
-            val end = RobotPose(0, 0f, xEnd, yEnd, 0f)
+        }
+        Collections.shuffle(points)
+        points.forEach { obstacles.add(it.x, it.y, it) }
+        val end = RobotPose(0, 0f, xEnd, yEnd, 0f)
 
-            var odoX = x
-            var odoY = y
-            var odoTheta = theta
+        var gblManeuvers: List<RobotPose> = ArrayList()
+        val measurementsQueue = ArrayBlockingQueue<ArrayList<Measurement>>(MEASUREMENT_QUEUE_SIZE)
+        val subConcCont = true
+        thread {
+            odoX = x
+            odoY = y
+            odoTheta = theta
 
-            while (true) {
+            while (subConcCont) {
+                val startTime = System.currentTimeMillis()
+
                 // move the robot
                 val dTheta = ROT_RATE + (STEP_ROT_STD_DEV * random.nextGaussian())
                 theta += dTheta
@@ -166,6 +181,8 @@ class MainLoopView : JPanel() {
                 y += FloatMath.sin(theta) * distCommon
                 odoY += FloatMath.sin(odoTheta) * odoDist
 
+                val odoPose = RobotPose(0, 0f, odoX, odoY, odoTheta)
+
                 val realPos = RobotPose(times, 0f, x, y, theta)
                 synchronized(realLock) { realLocs.add(realPos) }
                 val odoPos = RobotPose(times, 0f, odoX, odoY, odoTheta)
@@ -176,57 +193,82 @@ class MainLoopView : JPanel() {
                 sensor.robotPose = realPos
                 sensor.sensorAng = SENSOR_START_ANG
 
-                val avgPose = slam.avgPose
-                val mesX = avgPose.x + (FloatMath.cos(avgPose.heading + dOdoTheta) * odoDist)
-                val mesY = avgPose.y + (FloatMath.sin(avgPose.heading + dOdoTheta) * odoDist)
-                val mesTheta = avgPose.heading + dOdoTheta
-                val mesPose = RobotPose(times, 0f, mesX, mesY, mesTheta)
+                val mesPose = accurateOdo.getOutputPose()
 
                 while (sensor.sensorAng < SENSOR_END_ANG) {
                     val sample = FloatArray(2)
                     sensor.fetchSample(sample, 0)
-                    measurements.add(Measurement(sample[0], sample[1], mesPose, System.nanoTime()))
+                    measurements.add(Measurement(sample[0], sample[1], mesPose, odoPose, System.nanoTime()))
 
                     // move the sensor
                     sensor.sensorAng += SENSOR_ANG_INCR
                 }
-
-                // make features
-                val featureDetector = SplitAndMerge(LINE_THRESHOLD, CHECK_WITHIN_ANGLE, MAX_RATIO)
-                val features = featureDetector.getFeatures(measurements)
-
-                slam.addTimeStep(features, odoPos)
-                val avgPoseAfter = slam.avgPose
-
-                val gblPthPln = GlobalPathPlanner(factory, obstacles, OBS_SIZE, SEARCH_DIST, GBL_PTH_PLN_STEP_DIST,
-                        avgPoseAfter, end)
-                gblPthPln.iterate(GBL_PTH_PLN_ITRS)
-                val gblmaneuvers = gblPthPln.getManeuvers()
+                times++
 
                 val localPlanner = LocalPlanner(0f, LCL_PLN_ROT_STEP, LCL_PLN_DIST_STEP, LCL_PLN_GRID_STEP,
                         LCL_PLN_GRID_SIZE, OBS_SIZE)
-                val plan = localPlanner.makePlan(measurements, mesPose, LCL_PLN_MAX_ROT, LCL_PLN_MAX_DIST, gblmaneuvers)
+
+                // TODO: make this unnecessary by improving LocalPlanner:
+                var gblManeuversToUse = synchronized(gblManeuvers) { gblManeuvers }
+                if (gblManeuversToUse.isNotEmpty()) {
+                    gblManeuversToUse = gblManeuversToUse.subList(1, gblManeuversToUse.size)
+                }
+
+                val plan = localPlanner.makePlan(measurements, mesPose, LCL_PLN_MAX_ROT, LCL_PLN_MAX_DIST,
+                        gblManeuversToUse)
 
                 synchronized(drawPlanLock) {
                     drawPlan = plan
                 }
 
-                synchronized(drawPathLock) {
-                    drawPaths = gblPthPln.paths
-                }
-                synchronized(drawManeuversLock) {
-                    drawManeuvers = gblPthPln.getManeuvers()
-                }
+                measurementsQueue.offer(measurements)
 
-                synchronized(drawFeatLock) {
-                    drawFeatures = features
+                val endTime = System.currentTimeMillis()
+                val timeToSleep = MAX_MES_TIME - (endTime - startTime)
+                if (timeToSleep > 0) {
+                    Thread.sleep(timeToSleep)
                 }
-                val particlePoses = slam.particlePoses
-                synchronized(drawPartLock) {
-                    drawParticlePoses = particlePoses
-                }
+            }
+        }
 
-                times++
+        thread {
+            while (true) {
+                val measurements = measurementsQueue.take()
+                if (measurements.size > 0) {
+                    val odoPose = measurements.first().odoPose as RobotPose
+
+                    // make features
+                    val featureDetector = SplitAndMerge(LINE_THRESHOLD, CHECK_WITHIN_ANGLE, MAX_RATIO)
+                    val features = featureDetector.getFeatures(measurements)
+
+                    slam.addTimeStep(features, odoPose)
+                    val avgPoseAfter = slam.avgPose
+
+                    accurateOdo.setInputPoses(avgPoseAfter, odoPose)
+
+                    val gblPthPln = GlobalPathPlanner(factory, obstacles, OBS_SIZE, SEARCH_DIST, GBL_PTH_PLN_STEP_DIST,
+                            avgPoseAfter, end)
+                    gblPthPln.iterate(GBL_PTH_PLN_ITRS)
+
+                    synchronized(gblManeuvers) {
+                        gblManeuvers = gblPthPln.getManeuvers()
+                    }
+
+                    synchronized(drawPathLock) {
+                        drawPaths = gblPthPln.paths
+                    }
+                    synchronized(drawManeuversLock) {
+                        drawManeuvers = gblPthPln.getManeuvers()
+                    }
+
+                    synchronized(drawFeatLock) {
+                        drawFeatures = features
+                    }
+                    val particlePoses = slam.particlePoses
+                    synchronized(drawPartLock) {
+                        drawParticlePoses = particlePoses
+                    }
+                }
             }
         }
 

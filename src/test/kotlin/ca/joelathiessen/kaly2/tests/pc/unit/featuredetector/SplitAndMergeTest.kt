@@ -23,7 +23,8 @@ class SplitAndMergeTest {
         val yOffset = y - ROBOT_POS
         val dist = FloatMath.sqrt((xOffset * xOffset) + (yOffset * yOffset))
         val angle = FloatMath.atan2(yOffset, xOffset)
-        return Measurement(dist, angle, Pose(0.5f, ROBOT_POS, ROBOT_POS), 0)
+        val pose = Pose(0.5f, ROBOT_POS, ROBOT_POS)
+        return Measurement(dist, angle, pose, pose, 0)
     }
 
     @Test

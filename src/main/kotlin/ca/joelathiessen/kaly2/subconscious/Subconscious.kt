@@ -56,7 +56,7 @@ class Subconscious(private val sensor: Kaly2Sensor, private val pilot: MovePilot
                 pose = odometry.pose
                 time = System.currentTimeMillis()
 
-                measurement = Measurement(distance, angle, pose, time)
+                measurement = Measurement(distance, angle, pose, pose, time)
                 sweep.add(measurement)
             }
 

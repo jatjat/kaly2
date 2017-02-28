@@ -74,7 +74,7 @@ class FeatureDetectorView(val image: BufferedImage) : JPanel() {
 
                 if (checkX >= 0 && checkX < image.width && checkY >= 0 && checkY < image.height) {
                     if (image.getRGB(checkX, checkY).equals(Color.BLACK.rgb)) {
-                        measurements.add(Measurement(dist, ang, sensorLoc, 0L))
+                        measurements.add(Measurement(dist, ang, sensorLoc, sensorLoc, 0L))
                         cont = false
                     }
                 } else {
