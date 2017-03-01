@@ -2,8 +2,8 @@ package ca.joelathiessen.kaly2.subconscious
 
 import ca.joelathiessen.kaly2.Measurement
 import ca.joelathiessen.kaly2.odometry.RobotPose
-import ca.joelathiessen.util.EPSILON
 import ca.joelathiessen.util.FloatMath
+import ca.joelathiessen.util.rotate
 import ca.joelathiessen.util.array2d
 import java.util.*
 
@@ -57,11 +57,10 @@ class LocalPlanner(val robotSize: Float, val rotStep: Float, val distStep: Float
             var collided = false
             while (curDist < maxDist && collided == false) {
 
-                val result = RotateResult(0.0f, 0.0f)
-                rotate(curRot, curDist, heading, result)
+                val result = rotate(curRot, curDist, heading)
 
-                val x = startPose.x + result.dx
-                val y = startPose.y + result.dy
+                val x = startPose.x + result.deltaX
+                val y = startPose.y + result.deltaY
                 collided = checkObstacles(searchGrid, x, y)
                 if (!collided) {
                     val cost = getCost(x, y, heading + curRot, desiredPath)
@@ -83,25 +82,8 @@ class LocalPlanner(val robotSize: Float, val rotStep: Float, val distStep: Float
         }
         return LocalPlan(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f)
     }
-
-    data class RotateResult(var dx: Float, var dy: Float)
-
-    private fun rotate(turnAngle: Float, distance: Float, heading: Float, result: RotateResult) {
-        val radius = distance / turnAngle
-        var dy = 0.0f
-        var dx = 0.0f
-        if (FloatMath.abs(turnAngle) > EPSILON) {
-            dy = radius * (FloatMath.cos(heading) - FloatMath.cos(heading + turnAngle))
-            dx = radius * (FloatMath.sin(heading + turnAngle) - FloatMath.sin(heading))
-        } else if (FloatMath.abs(distance) > EPSILON) {
-            dx = distance * FloatMath.cos(heading)
-            dy = distance * FloatMath.sin(heading)
-        }
-        result.dx = dx
-        result.dy = dy
-    }
-
-    private fun within(one: Float, two: Float, epsilon: Float): Boolean {
+    
+    private fun withinFast(one: Float, two: Float, epsilon: Float): Boolean {
         return FloatMath.abs(two - one) < epsilon
     }
 
@@ -114,7 +96,7 @@ class LocalPlanner(val robotSize: Float, val rotStep: Float, val distStep: Float
         var count = 0
         while (found == false && count < container.size) {
             val checkDist = robotSize + staticObstacleSize
-            if (within(container[count].x, x, checkDist) && within(container[count].y, y, checkDist)) {
+            if (withinFast(container[count].x, x, checkDist) && withinFast(container[count].y, y, checkDist)) {
                 found = true
             }
             count++

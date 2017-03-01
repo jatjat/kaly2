@@ -14,11 +14,10 @@ import ca.joelathiessen.kaly2.slam.FastUnbiasedResampler
 import ca.joelathiessen.kaly2.slam.NNDataAssociator
 import ca.joelathiessen.kaly2.subconscious.LocalPlan
 import ca.joelathiessen.kaly2.subconscious.LocalPlanner
+import ca.joelathiessen.kaly2.subconscious.RobotPilot
+import ca.joelathiessen.kaly2.subconscious.SimulatedPilot
 import ca.joelathiessen.kaly2.subconscious.sensor.SimSensor
-import ca.joelathiessen.util.FloatMath
-import ca.joelathiessen.util.FloatRandom
-import ca.joelathiessen.util.GenTree
-import ca.joelathiessen.util.array2d
+import ca.joelathiessen.util.*
 import lejos.robotics.geometry.Line
 import lejos.robotics.geometry.Point
 import lejos.robotics.navigation.Pose
@@ -64,11 +63,8 @@ class MainLoopView : JPanel() {
 
     private val ODO_ANG_STD_DEV = 0.01f
     private val ODO_DIST_STD_DEV = 0.01f
-
-    private val ROT_RATE = 0.035f
     private val STEP_DIST = 2f
-    private val STEP_ROT_STD_DEV = 0.01f
-    private val STEP_DIST_STD_DEV = 0.5f
+
     private val MIN_WIDTH = 400.0f
 
     private val NN_THRESHOLD = 10.0f
@@ -85,15 +81,13 @@ class MainLoopView : JPanel() {
     private val LCL_PLN_MAX_ROT = 1f
     private val LCL_PLN_MAX_DIST = 20f
 
-    private val MAX_MES_TIME = 16
+    private val MAX_MES_TIME = 160
     private val MEASUREMENT_QUEUE_SIZE = 100
 
     private val startPos = RobotPose(0, 0f, MIN_WIDTH / 2f, MIN_WIDTH / 2f, 0f)
     private val motionModel = CarModel()
     private val dataAssoc = NNDataAssociator(NN_THRESHOLD)
     private val partResamp = FastUnbiasedResampler()
-    private var realPos: RobotPose = startPos
-    private val random = FloatRandom(1)
 
     private val drawFeatLock = Any()
     private val drawPartLock = Any()
@@ -105,9 +99,6 @@ class MainLoopView : JPanel() {
 
     private val obstacles = GenTree<Point>()
     private val obsGrid = array2d<Point?>(image.width, image.height, { null })
-    private val sensor = SimSensor(realPos, SENSOR_START_ANG, obsGrid, image.width, image.height,
-            MAX_SENSOR_RANGE, SENSOR_DIST_STDEV, SENSOR_ANG_STDEV)
-    private val slam = FastSLAM(startPos, motionModel, dataAssoc, partResamp, sensor)
 
     private var drawParticlePoses: List<Pose> = ArrayList()
     private var drawFeatures: List<Feature> = ArrayList()
@@ -122,11 +113,6 @@ class MainLoopView : JPanel() {
 
     private val factory = LinearPathSegmentRootFactory()
 
-    private val accurateOdo = AccurateSlamOdometry(startPos, { RobotPose(0, 0f, odoX, odoY, odoTheta) })
-    var odoX = 0f
-    var odoY = 0f
-    var odoTheta = 0f
-
     init {
         this.setSize(MIN_WIDTH.toInt(), MIN_WIDTH.toInt())
 
@@ -134,7 +120,6 @@ class MainLoopView : JPanel() {
         var y = MIN_WIDTH / 2f
         var xEnd = MIN_WIDTH
         var yEnd = MIN_WIDTH
-        var theta = 0.1f
         var times = 0
 
         val points = ArrayList<Point>()
@@ -152,45 +137,35 @@ class MainLoopView : JPanel() {
                 }
             }
         }
-        Collections.shuffle(points)
-        points.forEach { obstacles.add(it.x, it.y, it) }
+        val startPose = RobotPose(0, 0f, x, y, 0f)
         val end = RobotPose(0, 0f, xEnd, yEnd, 0f)
 
+        Collections.shuffle(points)
+        points.forEach { obstacles.add(it.x, it.y, it) }
+
+
+        val simPilot = SimulatedPilot(ODO_ANG_STD_DEV, ODO_DIST_STD_DEV, STEP_DIST, startPose,
+                { synchronized(realLock) { realLocs.add(it) } })
+
+        val sensor = SimSensor(SENSOR_START_ANG, obsGrid, image.width, image.height,
+                MAX_SENSOR_RANGE, SENSOR_DIST_STDEV, SENSOR_ANG_STDEV, { simPilot.realPose })
+
+        val slam = FastSLAM(startPos, motionModel, dataAssoc, partResamp, sensor)
+
+
+        val robotPilot: RobotPilot = simPilot
         var gblManeuvers: List<RobotPose> = ArrayList()
         val measurementsQueue = ArrayBlockingQueue<ArrayList<Measurement>>(MEASUREMENT_QUEUE_SIZE)
         val subConcCont = true
+        val accurateOdo = AccurateSlamOdometry(startPos, { robotPilot.odoPose })
         thread {
-            odoX = x
-            odoY = y
-            odoTheta = theta
-
             while (subConcCont) {
                 val startTime = System.currentTimeMillis()
 
-                // move the robot
-                val dTheta = ROT_RATE + (STEP_ROT_STD_DEV * random.nextGaussian())
-                theta += dTheta
-                val dOdoTheta = dTheta + (ODO_ANG_STD_DEV * random.nextGaussian())
-                odoTheta += dOdoTheta
-
-                val distCommon = STEP_DIST + (STEP_DIST_STD_DEV * random.nextGaussian())
-                val odoDist = distCommon + (ODO_DIST_STD_DEV * random.nextGaussian())
-                x += FloatMath.cos(theta) * distCommon
-                odoX += FloatMath.cos(odoTheta) * odoDist
-
-                y += FloatMath.sin(theta) * distCommon
-                odoY += FloatMath.sin(odoTheta) * odoDist
-
-                val odoPose = RobotPose(0, 0f, odoX, odoY, odoTheta)
-
-                val realPos = RobotPose(times, 0f, x, y, theta)
-                synchronized(realLock) { realLocs.add(realPos) }
-                val odoPos = RobotPose(times, 0f, odoX, odoY, odoTheta)
-                synchronized(odoLock) { odoLocs.add(odoPos) }
+                synchronized(odoLock) { odoLocs.add(robotPilot.odoPose) }
 
                 // get measurements as the robot sees them
                 val measurements = ArrayList<Measurement>()
-                sensor.robotPose = realPos
                 sensor.sensorAng = SENSOR_START_ANG
 
                 val mesPose = accurateOdo.getOutputPose()
@@ -198,9 +173,8 @@ class MainLoopView : JPanel() {
                 while (sensor.sensorAng < SENSOR_END_ANG) {
                     val sample = FloatArray(2)
                     sensor.fetchSample(sample, 0)
-                    measurements.add(Measurement(sample[0], sample[1], mesPose, odoPose, System.nanoTime()))
+                    measurements.add(Measurement(sample[0], sample[1], mesPose, robotPilot.odoPose, System.nanoTime()))
 
-                    // move the sensor
                     sensor.sensorAng += SENSOR_ANG_INCR
                 }
                 times++
@@ -220,6 +194,8 @@ class MainLoopView : JPanel() {
                 synchronized(drawPlanLock) {
                     drawPlan = plan
                 }
+
+                robotPilot.execLocalPlan(plan)
 
                 measurementsQueue.offer(measurements)
 

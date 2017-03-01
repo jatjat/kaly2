@@ -6,9 +6,10 @@ import ca.joelathiessen.util.FloatRandom
 import lejos.robotics.geometry.Point
 import java.util.*
 
-class SimSensor(var robotPose: RobotPose, var sensorAng: Float = 0.0f, val osGrid: Array<Array<Point?>>,
+class SimSensor(var sensorAng: Float = 0.0f, val osGrid: Array<Array<Point?>>,
                 val gridWidth: Int, val gridHeight: Int, val maxSensorRange: Float,
-                val sensorDistStdev: Float = 0.0f, val sensorAngStdev: Float = 0.0f): Kaly2Sensor {
+                val sensorDistStdev: Float = 0.0f, val sensorAngStdev: Float = 0.0f,
+                val getRealRobotPose: () -> RobotPose): Kaly2Sensor {
     val DIST_INCR = 0.5f
     private val random = FloatRandom(0)
 
@@ -17,6 +18,7 @@ class SimSensor(var robotPose: RobotPose, var sensorAng: Float = 0.0f, val osGri
         val sinConst = FloatMath.sin(sensorAng)
         val cosConst = FloatMath.cos(sensorAng)
         var dist = 0.0f
+        val robotPose = getRealRobotPose()
 
         while (dist < maxSensorRange && cont) {
             val y = (robotPose.y + (sinConst * dist)).toInt()
