@@ -12,11 +12,8 @@ import ca.joelathiessen.kaly2.planner.linear.LinearPathSegmentRootFactory
 import ca.joelathiessen.kaly2.slam.FastSLAM
 import ca.joelathiessen.kaly2.slam.FastUnbiasedResampler
 import ca.joelathiessen.kaly2.slam.NNDataAssociator
-import ca.joelathiessen.kaly2.subconscious.LocalPlan
-import ca.joelathiessen.kaly2.subconscious.LocalPlanner
-import ca.joelathiessen.kaly2.subconscious.RobotPilot
-import ca.joelathiessen.kaly2.subconscious.SimulatedPilot
-import ca.joelathiessen.kaly2.subconscious.sensor.SimSensor
+import ca.joelathiessen.kaly2.subconscious.*
+import ca.joelathiessen.kaly2.subconscious.sensor.*
 import ca.joelathiessen.util.*
 import lejos.robotics.geometry.Line
 import lejos.robotics.geometry.Point
@@ -36,7 +33,7 @@ import kotlin.concurrent.thread
 object MainLoopDemo {
     @JvmStatic fun main(args: Array<String>) {
         val frame = JFrame()
-        var panel = MainLoopView()
+        val panel = MainLoopView()
         frame.add(panel)
         frame.setSize(500, 500)
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE)
@@ -146,14 +143,17 @@ class MainLoopView : JPanel() {
 
         val simPilot = SimulatedPilot(ODO_ANG_STD_DEV, ODO_DIST_STD_DEV, STEP_DIST, startPose,
                 { synchronized(realLock) { realLocs.add(it) } })
+        val simSpinner = SimSpinner(SENSOR_START_ANG, SENSOR_END_ANG, SENSOR_ANG_INCR)
+        val simSensor = SimSensor(obsGrid, image.width, image.height,
+                MAX_SENSOR_RANGE, SENSOR_DIST_STDEV, SENSOR_ANG_STDEV, simSpinner, { simPilot.realPose })
 
-        val sensor = SimSensor(SENSOR_START_ANG, obsGrid, image.width, image.height,
-                MAX_SENSOR_RANGE, SENSOR_DIST_STDEV, SENSOR_ANG_STDEV, { simPilot.realPose })
+        val robotPilot: RobotPilot = simPilot
+        val sensor: Kaly2Sensor = simSensor
+        val spinner: Spinnable = simSpinner
+
 
         val slam = FastSLAM(startPos, motionModel, dataAssoc, partResamp, sensor)
 
-
-        val robotPilot: RobotPilot = simPilot
         var gblManeuvers: List<RobotPose> = ArrayList()
         val measurementsQueue = ArrayBlockingQueue<ArrayList<Measurement>>(MEASUREMENT_QUEUE_SIZE)
         val subConcCont = true
@@ -166,16 +166,13 @@ class MainLoopView : JPanel() {
 
                 // get measurements as the robot sees them
                 val measurements = ArrayList<Measurement>()
-                sensor.sensorAng = SENSOR_START_ANG
-
                 val mesPose = accurateOdo.getOutputPose()
 
-                while (sensor.sensorAng < SENSOR_END_ANG) {
+                spinner.spin()
+                while (spinner.spinning) {
                     val sample = FloatArray(2)
                     sensor.fetchSample(sample, 0)
                     measurements.add(Measurement(sample[0], sample[1], mesPose, robotPilot.odoPose, System.nanoTime()))
-
-                    sensor.sensorAng += SENSOR_ANG_INCR
                 }
                 times++
 
