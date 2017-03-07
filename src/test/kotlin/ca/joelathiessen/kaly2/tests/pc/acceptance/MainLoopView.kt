@@ -78,7 +78,7 @@ class MainLoopView : JPanel() {
     private val LCL_PLN_MAX_ROT = 1f
     private val LCL_PLN_MAX_DIST = 20f
 
-    private val MAX_MES_TIME = 160
+    private val MIN_MES_TIME = 160
     private val MEASUREMENT_QUEUE_SIZE = 100
 
     private val startPos = RobotPose(0, 0f, MIN_WIDTH / 2f, MIN_WIDTH / 2f, 0f)
@@ -141,28 +141,35 @@ class MainLoopView : JPanel() {
         points.forEach { obstacles.add(it.x, it.y, it) }
 
 
-        val simPilot = SimulatedPilot(ODO_ANG_STD_DEV, ODO_DIST_STD_DEV, STEP_DIST, startPose,
-                { synchronized(realLock) { realLocs.add(it) } })
+        val simPilot = SimulatedPilot(ODO_ANG_STD_DEV, ODO_DIST_STD_DEV, STEP_DIST, startPose)
         val simSpinner = SimSpinner(SENSOR_START_ANG, SENSOR_END_ANG, SENSOR_ANG_INCR)
         val simSensor = SimSensor(obsGrid, image.width, image.height,
-                MAX_SENSOR_RANGE, SENSOR_DIST_STDEV, SENSOR_ANG_STDEV, simSpinner, { simPilot.realPose })
+                MAX_SENSOR_RANGE, SENSOR_DIST_STDEV, SENSOR_ANG_STDEV, simSpinner, simPilot)
 
         val robotPilot: RobotPilot = simPilot
         val sensor: Kaly2Sensor = simSensor
         val spinner: Spinnable = simSpinner
 
-
+        
         val slam = FastSLAM(startPos, motionModel, dataAssoc, partResamp, sensor)
 
         var gblManeuvers: List<RobotPose> = ArrayList()
         val measurementsQueue = ArrayBlockingQueue<ArrayList<Measurement>>(MEASUREMENT_QUEUE_SIZE)
         val subConcCont = true
-        val accurateOdo = AccurateSlamOdometry(startPos, { robotPilot.odoPose })
+        val accurateOdo = AccurateSlamOdometry(startPos, { robotPilot.poses.odoPose })
+
         thread {
             while (subConcCont) {
                 val startTime = System.currentTimeMillis()
 
-                synchronized(odoLock) { odoLocs.add(robotPilot.odoPose) }
+                synchronized(odoLock) { odoLocs.add(robotPilot.poses.odoPose) }
+
+                synchronized(realLock) {
+                    val pilotPoses = robotPilot.poses
+                    if(pilotPoses is SimPilotPoses) {
+                        realLocs.add(pilotPoses.realPose)
+                    }
+                }
 
                 // get measurements as the robot sees them
                 val measurements = ArrayList<Measurement>()
@@ -172,7 +179,8 @@ class MainLoopView : JPanel() {
                 while (spinner.spinning) {
                     val sample = FloatArray(2)
                     sensor.fetchSample(sample, 0)
-                    measurements.add(Measurement(sample[0], sample[1], mesPose, robotPilot.odoPose, System.nanoTime()))
+                    measurements.add(Measurement(sample[0], sample[1], mesPose, robotPilot.poses.odoPose,
+                            System.currentTimeMillis()))
                 }
                 times++
 
@@ -197,7 +205,7 @@ class MainLoopView : JPanel() {
                 measurementsQueue.offer(measurements)
 
                 val endTime = System.currentTimeMillis()
-                val timeToSleep = MAX_MES_TIME - (endTime - startTime)
+                val timeToSleep = MIN_MES_TIME - (endTime - startTime)
                 if (timeToSleep > 0) {
                     Thread.sleep(timeToSleep)
                 }

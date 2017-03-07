@@ -5,27 +5,25 @@ import ca.joelathiessen.util.FloatRandom
 import ca.joelathiessen.util.rotate
 
 class SimulatedPilot(private val odoAngStdDev: Float, private val odoDistStdDev: Float, private val stepDist: Float,
-                     startPose: RobotPose, private val madeRealPose: (realPose: RobotPose) -> Unit) :
-        RobotPilot(startPose) {
+                     startPose: RobotPose): RobotPilot {
 
     private val random = FloatRandom(1)
 
-    var realPose = startPose
+    override var poses: SimPilotPoses = SimPilotPoses(startPose, startPose)
         private set
 
     override fun execLocalPlan(plan: LocalPlan) {
         val realDist = Math.min(stepDist, plan.distance)
 
-        val realRot = rotate(plan.angle, realDist, realPose.heading)
-        realPose = RobotPose(0, 0f, realPose.x + realRot.deltaX, realPose.y + realRot.deltaY,
-                realPose.heading + plan.angle)
+        val realRot = rotate(plan.angle, realDist, poses.realPose.heading)
+        val realPose = RobotPose(0, 0f, poses.realPose.x + realRot.deltaX, poses.realPose.y + realRot.deltaY,
+                poses.realPose.heading + plan.angle)
 
         val odoAng = plan.angle + (odoAngStdDev * random.nextGaussian())
         val odoDistOffset = odoDistStdDev * random.nextGaussian()
-        val odoRotRes = rotate(odoAng, realDist + odoDistOffset, odoPose.heading)
-        odoPose = RobotPose(0, 0f, odoPose.x + odoRotRes.deltaX, odoPose.y + odoRotRes.deltaY,
-                odoPose.heading + odoAng)
-
-        madeRealPose(realPose)
+        val odoRotRes = rotate(odoAng, realDist + odoDistOffset, poses.odoPose.heading)
+        val odoPose = RobotPose(0, 0f, poses.odoPose.x + odoRotRes.deltaX, poses.odoPose.y + odoRotRes.deltaY,
+                poses.odoPose.heading + odoAng)
+        poses = SimPilotPoses(realPose, odoPose)
     }
 }

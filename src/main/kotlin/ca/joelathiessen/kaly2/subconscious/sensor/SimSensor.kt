@@ -1,6 +1,6 @@
 package ca.joelathiessen.kaly2.subconscious.sensor
 
-import ca.joelathiessen.kaly2.odometry.RobotPose
+import ca.joelathiessen.kaly2.subconscious.SimulatedPilot
 import ca.joelathiessen.util.FloatMath
 import ca.joelathiessen.util.FloatRandom
 import lejos.robotics.geometry.Point
@@ -8,7 +8,7 @@ import lejos.robotics.geometry.Point
 class SimSensor(private val osGrid: Array<Array<Point?>>,
                 private val gridWidth: Int, private val gridHeight: Int, private val maxSensorRange: Float,
                 private val sensorDistStdev: Float = 0.0f, private val sensorAngStdev: Float = 0.0f,
-                private val spinner: SimSpinner, private val getRealRobotPose: () -> RobotPose): Kaly2Sensor {
+                private val spinner: SimSpinner, private val simPilot: SimulatedPilot): Kaly2Sensor {
     val DIST_INCR = 0.5f
     private val random = FloatRandom(0)
 
@@ -17,7 +17,7 @@ class SimSensor(private val osGrid: Array<Array<Point?>>,
         val sinConst = FloatMath.sin(spinner.angle)
         val cosConst = FloatMath.cos(spinner.angle)
         var dist = 0.0f
-        val robotPose = getRealRobotPose()
+        val robotPose = simPilot.poses.realPose
 
         while (dist < maxSensorRange && cont) {
             val y = (robotPose.y + (sinConst * dist)).toInt()
