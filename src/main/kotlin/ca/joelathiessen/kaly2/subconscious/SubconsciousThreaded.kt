@@ -16,9 +16,7 @@ class SubconsciousThreaded(private val robotPilot: RobotPilot, private val accur
                            private val localPlannerMaxDist: Float, private val sensor: Kaly2Sensor,
                            private val spinner: Spinnable, var globalManeuvers: AtomicReference<List<RobotPose>>,
                            val resultsQueue: ArrayBlockingQueue<SubconsciousThreadedResults>, private val minMeasTime: Long) {
-
-    private val getGlobalManeuversLock = Any()
-
+    @Volatile
     private var subConcCont = true
 
     fun start() {
@@ -27,10 +25,8 @@ class SubconsciousThreaded(private val robotPilot: RobotPilot, private val accur
                 val startTime = System.currentTimeMillis()
                 val pilotPoses = robotPilot.poses
 
-                // get measurements as the robot sees them
                 val measurements = ArrayList<Measurement>()
                 val mesPose = accurateOdo.getOutputPose()
-
                 spinner.spin()
                 while (spinner.spinning) {
                     val sample = FloatArray(2)
@@ -40,12 +36,9 @@ class SubconsciousThreaded(private val robotPilot: RobotPilot, private val accur
                 }
 
                 // TODO: make this unnecessary by improving LocalPlanner:
-                //var gblManeuversToUse = synchronized(gblManeuvers) { gblManeuvers }
                 var gblManeuversToUse = globalManeuvers.get()
-                synchronized(getGlobalManeuversLock) {
-                    if (gblManeuversToUse.isNotEmpty()) {
-                        gblManeuversToUse = gblManeuversToUse.subList(1, gblManeuversToUse.size)
-                    }
+                if (gblManeuversToUse.isNotEmpty()) {
+                    gblManeuversToUse = gblManeuversToUse.subList(1, gblManeuversToUse.size)
                 }
 
                 val plan = localPlanner.makePlan(measurements, mesPose, localPlannerMaxRot, localPlannerMaxDist,
