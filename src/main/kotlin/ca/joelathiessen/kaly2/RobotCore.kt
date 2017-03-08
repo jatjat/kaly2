@@ -47,7 +47,7 @@ class RobotCore(private val initialGoal: RobotPose, private val subConsc: Subcon
         val curResults = subConsc.resultsQueue.take()
         val measurements = curResults.measurements
         if (measurements.size > 0) {
-            val odoPose = measurements.first().odoPose as RobotPose
+            val odoPose = curResults.pilotPoses.odoPose
 
             val detectedFeatures = featureDetector.getFeatures(measurements)
 
