@@ -25,6 +25,7 @@ class SubconsciousThreaded(private val robotPilot: RobotPilot, private val accur
         thread {
             while (subConcCont) {
                 val startTime = System.currentTimeMillis()
+                val pilotPoses = robotPilot.poses
 
                 // get measurements as the robot sees them
                 val measurements = ArrayList<Measurement>()
@@ -52,7 +53,6 @@ class SubconsciousThreaded(private val robotPilot: RobotPilot, private val accur
 
                 robotPilot.execLocalPlan(plan)
 
-                val pilotPoses = robotPilot.poses
                 resultsQueue.offer(SubconsciousThreadedResults(measurements, pilotPoses, plan))
 
                 val endTime = System.currentTimeMillis()
