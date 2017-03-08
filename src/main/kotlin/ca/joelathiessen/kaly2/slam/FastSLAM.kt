@@ -76,10 +76,6 @@ class FastSLAM(val startPose: RobotPose, private val carMotionModel: CarModel, p
         ))
     }
 
-    override fun getCurPos(): RobotPose {
-        throw UnsupportedOperationException()
-    }
-
     override fun resetTimeSteps() {
         throw UnsupportedOperationException()
     }
@@ -151,13 +147,13 @@ class FastSLAM(val startPose: RobotPose, private val carMotionModel: CarModel, p
         particles = partResamp.resample(newParticles)
     }
 
-    var particlePoses: List<Pose> = ArrayList()
+    override var particlePoses: List<Pose> = ArrayList()
         get() {
             return particles.map { Pose(it.pose.x, it.pose.y, it.pose.heading) }
         }
         private set
 
-    var avgPose: RobotPose = RobotPose(0, 0f, 0f, 0f, 0f)
+    override var avgPose: RobotPose = RobotPose(0, 0f, 0f, 0f, 0f)
         get() {
             val xAvg = particles.map { it.pose.x }.sum() / particles.size
             val yAvg = particles.map { it.pose.y }.sum() / particles.size

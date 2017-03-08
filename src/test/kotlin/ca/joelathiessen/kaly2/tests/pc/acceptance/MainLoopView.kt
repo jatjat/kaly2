@@ -1,5 +1,6 @@
 package ca.joelathiessen.kaly2.tests.pc.acceptance
 
+import ca.joelathiessen.kaly2.RobotCore
 import ca.joelathiessen.kaly2.featuredetector.Feature
 import ca.joelathiessen.kaly2.featuredetector.SplitAndMerge
 import ca.joelathiessen.kaly2.odometry.AccurateSlamOdometry
@@ -105,7 +106,7 @@ class MainLoopView : JPanel() {
     private var drawParticlePoses: List<Pose> = ArrayList()
     private var drawFeatures: List<Feature> = ArrayList()
 
-    private var drawPaths = ArrayList<PathSegmentInfo>()
+    private var drawPaths: List<PathSegmentInfo> = ArrayList<PathSegmentInfo>()
     private var drawManeuvers: List<RobotPose> = ArrayList()
     private var drawPlan = LocalPlan(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0f)
 
@@ -154,68 +155,66 @@ class MainLoopView : JPanel() {
         val sensor: Kaly2Sensor = simSensor
         val spinner: Spinnable = simSpinner
 
-
-        val slam = FastSLAM(startPos, motionModel, dataAssoc, partResamp, sensor)
-
         val gblManeuvers: AtomicReference<List<RobotPose>> = AtomicReference(ArrayList())
         val resultsQueue = ArrayBlockingQueue<SubconsciousThreadedResults>(SUBCONSC_QUEUE_SIZE)
-
-        val accurateOdo = AccurateSlamOdometry(startPose, { robotPilot.poses.odoPose })
+        val accurateOdo = AccurateSlamOdometry(robotPilot.poses.odoPose, { robotPilot.poses.odoPose })
 
         val localPlanner = LocalPlanner(0f, LCL_PLN_ROT_STEP, LCL_PLN_DIST_STEP, LCL_PLN_GRID_STEP,
                 LCL_PLN_GRID_SIZE, OBS_SIZE)
 
         val subConsc = SubconsciousThreaded(robotPilot, accurateOdo, localPlanner, LCL_PLN_MAX_ROT, LCL_PLN_MAX_DIST,
                 sensor, spinner, gblManeuvers, resultsQueue, MIN_MES_TIME)
-        subConsc.start()
+
+        val slam = FastSLAM(startPos, motionModel, dataAssoc, partResamp, sensor)
+
+        val featureDetector = SplitAndMerge(LINE_THRESHOLD, CHECK_WITHIN_ANGLE, MAX_RATIO)
+
+        val globalPathPlannerFactory = { obstacles: GenTree<Point>, curPose: RobotPose, goalPose: RobotPose ->
+            GlobalPathPlanner(factory, obstacles, OBS_SIZE, SEARCH_DIST, GBL_PTH_PLN_STEP_DIST, curPose, goalPose)
+        }
+
+        val robotCore = RobotCore(end, subConsc, accurateOdo, slam, featureDetector, globalPathPlannerFactory, GBL_PTH_PLN_ITRS, obstacles)
 
         thread {
+
+            robotCore.startSubconscious()
+
             while (true) {
-                val results = resultsQueue.take()
-                val measurements = results.measurements
-                if (measurements.size > 0) {
-                    val odoPose = measurements.first().odoPose as RobotPose
+                robotCore.iterate()
+                val subResults = robotCore.subconcResults
+                val features = robotCore.features
+                val maneuvers = robotCore.maneuvers
+                val paths = robotCore.paths
+                val particlePoses = robotCore.particlePoses
 
-                    // make features
-                    val featureDetector = SplitAndMerge(LINE_THRESHOLD, CHECK_WITHIN_ANGLE, MAX_RATIO)
-                    val features = featureDetector.getFeatures(measurements)
+                synchronized(drawPathLock) {
+                    drawPaths = paths
+                }
 
-                    slam.addTimeStep(features, odoPose)
-                    val avgPoseAfter = slam.avgPose
-
-                    accurateOdo.setInputPoses(avgPoseAfter, odoPose)
-
-                    val gblPthPln = GlobalPathPlanner(factory, obstacles, OBS_SIZE, SEARCH_DIST, GBL_PTH_PLN_STEP_DIST,
-                            avgPoseAfter, end)
-                    gblPthPln.iterate(GBL_PTH_PLN_ITRS)
-                    gblManeuvers.set(gblPthPln.getManeuvers())
-
-                    synchronized(drawPathLock) {
-                        drawPaths = gblPthPln.paths
-                    }
+                if (subResults != null) {
                     synchronized(odoLock) {
-                        odoLocs.add(results.pilotPoses.odoPose)
+                        odoLocs.add(subResults.pilotPoses.odoPose)
                     }
                     synchronized(realLock) {
-                        val simPoses = results.pilotPoses
+                        val simPoses = subResults.pilotPoses
                         if (simPoses is SimPilotPoses) {
                             realLocs.add(simPoses.realPose)
                         }
                     }
-                    synchronized(drawManeuversLock) {
-                        drawManeuvers = gblPthPln.getManeuvers()
-                    }
-                    synchronized(drawFeatLock) {
-                        drawFeatures = features
-                    }
-                    val particlePoses = slam.particlePoses
-                    synchronized(drawPartLock) {
-                        drawParticlePoses = particlePoses
-                    }
                     synchronized(drawPlanLock) {
-                        drawPlan = results.plan
+                        drawPlan = subResults.plan
                     }
                 }
+                synchronized(drawManeuversLock) {
+                    drawManeuvers = maneuvers
+                }
+                synchronized(drawFeatLock) {
+                    drawFeatures = features
+                }
+                synchronized(drawPartLock) {
+                    drawParticlePoses = particlePoses
+                }
+
             }
         }
 

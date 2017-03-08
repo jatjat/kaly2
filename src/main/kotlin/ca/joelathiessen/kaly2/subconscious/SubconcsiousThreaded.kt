@@ -14,8 +14,8 @@ class SubconsciousThreadedResults(val measurements: ArrayList<Measurement>, val 
 class SubconsciousThreaded(private val robotPilot: RobotPilot, private val accurateOdo: AccurateSlamOdometry,
                            private val localPlanner: LocalPlanner, private val localPlannerMaxRot: Float,
                            private val localPlannerMaxDist: Float, private val sensor: Kaly2Sensor,
-                           private val spinner: Spinnable, private var globalManeuvers: AtomicReference<List<RobotPose>>,
-                           private val resultsQueue: ArrayBlockingQueue<SubconsciousThreadedResults>, private val minMeasTime: Long) {
+                           private val spinner: Spinnable, var globalManeuvers: AtomicReference<List<RobotPose>>,
+                           val resultsQueue: ArrayBlockingQueue<SubconsciousThreadedResults>, private val minMeasTime: Long) {
 
     private val getGlobalManeuversLock = Any()
 
