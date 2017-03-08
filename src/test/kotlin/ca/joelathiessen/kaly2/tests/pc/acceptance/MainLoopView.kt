@@ -173,7 +173,8 @@ class MainLoopView : JPanel() {
             GlobalPathPlanner(factory, obstacles, OBS_SIZE, SEARCH_DIST, GBL_PTH_PLN_STEP_DIST, curPose, goalPose)
         }
 
-        val robotCore = RobotCore(end, subConsc, accurateOdo, slam, featureDetector, globalPathPlannerFactory, GBL_PTH_PLN_ITRS, obstacles)
+        val robotCore = RobotCore(end, subConsc, accurateOdo, slam, featureDetector, globalPathPlannerFactory,
+                GBL_PTH_PLN_ITRS, obstacles)
 
         thread {
 
@@ -181,16 +182,11 @@ class MainLoopView : JPanel() {
 
             while (true) {
                 robotCore.iterate()
-                val subResults = robotCore.subconcResults
-                val features = robotCore.features
-                val maneuvers = robotCore.maneuvers
-                val paths = robotCore.paths
-                val particlePoses = robotCore.particlePoses
 
                 synchronized(drawPathLock) {
-                    drawPaths = paths
+                    drawPaths = robotCore.paths
                 }
-
+                val subResults = robotCore.subconcResults
                 if (subResults != null) {
                     synchronized(odoLock) {
                         odoLocs.add(subResults.pilotPoses.odoPose)
@@ -206,15 +202,14 @@ class MainLoopView : JPanel() {
                     }
                 }
                 synchronized(drawManeuversLock) {
-                    drawManeuvers = maneuvers
+                    drawManeuvers = robotCore.maneuvers
                 }
                 synchronized(drawFeatLock) {
-                    drawFeatures = features
+                    drawFeatures = robotCore.features
                 }
                 synchronized(drawPartLock) {
-                    drawParticlePoses = particlePoses
+                    drawParticlePoses = robotCore.particlePoses
                 }
-
             }
         }
 
