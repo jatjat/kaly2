@@ -4,6 +4,7 @@ import java.util.concurrent.LinkedBlockingQueue
 
 class ItrActorChannel : ItrActorChannelAdder {
     private val mailbox = LinkedBlockingQueue<ItrActorMsg>()
+
     override fun addMsg(msg: ItrActorMsg) {
         mailbox.add(msg)
     }
@@ -14,5 +15,9 @@ class ItrActorChannel : ItrActorChannelAdder {
 
     fun size(): Int {
         return mailbox.size
+    }
+
+    fun isEmpty(): Boolean {
+        return mailbox.isEmpty()
     }
 }
