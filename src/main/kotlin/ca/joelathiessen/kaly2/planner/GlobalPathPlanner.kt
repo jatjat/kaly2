@@ -15,7 +15,8 @@ import java.util.*
  **/
 class GlobalPathPlanner(private val pathFactory: PathSegmentRootFactory, private val obstacles: GenTree<Point>,
                         private val obsSize: Float, private val searchDist: Float, private val stepDist: Float,
-                        private val startPose: RobotPose, private val endPose: RobotPose) {
+                        private val startPose: RobotPose, private val endPose: RobotPose,
+                        private val defaultNumItrs: Int = 1000) {
     val paths: ArrayList<PathSegmentInfo>
         get() {
             return ArrayList(pathList)
@@ -37,7 +38,7 @@ class GlobalPathPlanner(private val pathFactory: PathSegmentRootFactory, private
         pathTree.add(rootNode.x, rootNode.y, rootNode)
     }
 
-    fun iterate(numItrs: Int) {
+    fun iterate(numItrs: Int = defaultNumItrs) {
         for (i in 0 until numItrs) {
             val xSearch = searchXBase + (rand.nextFloat() * doubleSearchDist)
             val ySearch = searchYBase + (rand.nextFloat() * doubleSearchDist)
