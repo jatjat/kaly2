@@ -44,6 +44,10 @@ class RobotCoreActed(private val initialGoal: RobotPose, private val accurateOdo
         sendPlannerManeuversToLocalPlanner(maneuvers)
     }
 
+    fun onPaths(newPaths: List<PathSegmentInfo>) {
+        paths = newPaths
+    }
+
     fun iterate(curResults: SubconsciousActedResults): RobotCoreActedResults {
         val measurements = curResults.measurements
         val odoPose = curResults.pilotPoses.odoPose

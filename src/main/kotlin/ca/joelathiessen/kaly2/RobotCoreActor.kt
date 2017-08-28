@@ -1,7 +1,8 @@
 package ca.joelathiessen.kaly2
 
 import ca.joelathiessen.kaly2.odometry.RobotPose
-import ca.joelathiessen.kaly2.planner.PlannerResultsMsg
+import ca.joelathiessen.kaly2.planner.PlannerManeuversMsg
+import ca.joelathiessen.kaly2.planner.PlannerPathsMsg
 import ca.joelathiessen.kaly2.planner.ReqPlannerManeuvers
 import ca.joelathiessen.kaly2.subconscious.SubconscRsltsMsg
 import ca.joelathiessen.util.itractor.ItrActor
@@ -16,7 +17,7 @@ class RobotCoreActor(private val robotCore: RobotCoreActed, inputChannel: ItrAct
     init {
         robotCore.reqPlannerManeuvers = { plannerInputChannel.addMsg(ReqPlannerManeuvers()) }
         robotCore.sendPlannerManeuversToLocalPlanner = {
-            maneuvers: List<RobotPose> -> subconscInputChannel.addMsg(PlannerResultsMsg(maneuvers))
+            maneuvers: List<RobotPose> -> subconscInputChannel.addMsg(PlannerManeuversMsg(maneuvers))
         }
     }
 
@@ -25,7 +26,8 @@ class RobotCoreActor(private val robotCore: RobotCoreActed, inputChannel: ItrAct
             val msg = inputChannel.takeMsg()
             when (msg) {
                 is StopMsg -> return
-                is PlannerResultsMsg -> robotCore.onManeuverResults(msg.plan)
+                is PlannerManeuversMsg -> robotCore.onManeuverResults(msg.maneuvers)
+                is PlannerPathsMsg -> robotCore.onPaths(msg.paths)
                 is SubconscRsltsMsg -> outputChannel.addMsg(RobotCoreRsltsMsg(robotCore.iterate(msg.results)))
             }
         }

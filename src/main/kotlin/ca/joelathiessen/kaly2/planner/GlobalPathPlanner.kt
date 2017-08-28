@@ -38,7 +38,7 @@ class GlobalPathPlanner(private val pathFactory: PathSegmentRootFactory, private
         pathTree.add(rootNode.x, rootNode.y, rootNode)
     }
 
-    fun iterate(numItrs: Int = defaultNumItrs) {
+    fun iterate(numItrs: Int = defaultNumItrs): List<PathSegmentInfo> {
         for (i in 0 until numItrs) {
             val xSearch = searchXBase + (rand.nextFloat() * doubleSearchDist)
             val ySearch = searchYBase + (rand.nextFloat() * doubleSearchDist)
@@ -66,6 +66,7 @@ class GlobalPathPlanner(private val pathFactory: PathSegmentRootFactory, private
                 }
             }
         }
+        return paths
     }
 
     private fun rewire(newNode: PathSegment, pathTree: GenTree<PathSegment>, searchRadius: Float) {
