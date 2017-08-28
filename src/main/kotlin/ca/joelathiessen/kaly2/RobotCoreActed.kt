@@ -14,7 +14,7 @@ import java.util.*
 
 
 data class RobotCoreActedResults(val timestamp: Long, val features: List<Feature>,
-                                 val maneuvers: List<RobotPose>?, val globalPlannerPaths: List<PathSegmentInfo>,
+                                 val maneuvers: List<RobotPose>, val globalPlannerPaths: List<PathSegmentInfo>,
                                  val subconcResults: SubconsciousActedResults,
                                  val particlePoses: List<Pose>, val numItrs: Long)
 class RobotCoreActed(private val initialGoal: RobotPose, private val accurateOdo: AccurateSlamOdometry,
@@ -37,6 +37,12 @@ class RobotCoreActed(private val initialGoal: RobotPose, private val accurateOdo
     private var numItrs = 0L
 
     var reqPlannerManeuvers: () -> Unit = {}
+    var sendPlannerManeuversToLocalPlanner: (List<RobotPose>) -> Unit = {}
+
+    fun onManeuverResults(newManeuvers: List<RobotPose>) {
+        maneuvers = newManeuvers
+        sendPlannerManeuversToLocalPlanner(maneuvers)
+    }
 
     fun iterate(curResults: SubconsciousActedResults): RobotCoreActedResults {
         val measurements = curResults.measurements

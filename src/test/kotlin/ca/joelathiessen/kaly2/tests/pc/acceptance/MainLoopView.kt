@@ -1,6 +1,6 @@
 package ca.joelathiessen.kaly2.tests.pc.acceptance
 
-import ca.joelathiessen.kaly2.RobotCore
+import ca.joelathiessen.kaly2.*
 import ca.joelathiessen.kaly2.featuredetector.Feature
 import ca.joelathiessen.kaly2.featuredetector.SplitAndMerge
 import ca.joelathiessen.kaly2.odometry.AccurateSlamOdometry
@@ -8,6 +8,7 @@ import ca.joelathiessen.kaly2.odometry.CarModel
 import ca.joelathiessen.kaly2.odometry.RobotPose
 import ca.joelathiessen.kaly2.planner.GlobalPathPlanner
 import ca.joelathiessen.kaly2.planner.PathSegmentInfo
+import ca.joelathiessen.kaly2.planner.PlannerActor
 import ca.joelathiessen.kaly2.planner.linear.LinearPathSegmentRootFactory
 import ca.joelathiessen.kaly2.slam.FastSLAM
 import ca.joelathiessen.kaly2.slam.FastUnbiasedResampler
@@ -20,6 +21,8 @@ import ca.joelathiessen.kaly2.subconscious.sensor.Spinnable
 import ca.joelathiessen.util.FloatMath
 import ca.joelathiessen.util.GenTree
 import ca.joelathiessen.util.array2d
+import ca.joelathiessen.util.itractor.ItrActorChannel
+import ca.joelathiessen.util.itractor.ItrActorThreadedHost
 import lejos.robotics.geometry.Line
 import lejos.robotics.geometry.Point
 import lejos.robotics.navigation.Pose
@@ -85,7 +88,6 @@ class MainLoopView : JPanel() {
     private val LCL_PLN_MAX_DIST = 20f
 
     private val MIN_MES_TIME = 160L
-    private val SUBCONSC_QUEUE_SIZE = 100
 
     private val startPos = RobotPose(0, 0f, MIN_WIDTH / 2f, MIN_WIDTH / 2f, 0f)
     private val motionModel = CarModel()
@@ -155,60 +157,69 @@ class MainLoopView : JPanel() {
         val sensor: Kaly2Sensor = simSensor
         val spinner: Spinnable = simSpinner
 
-        val gblManeuvers: AtomicReference<List<RobotPose>> = AtomicReference(ArrayList())
-        val resultsQueue = ArrayBlockingQueue<SubconsciousThreadedResults>(SUBCONSC_QUEUE_SIZE)
+        val gblManeuvers: List<RobotPose> = ArrayList()
         val accurateOdo = AccurateSlamOdometry(robotPilot.poses.odoPose, { robotPilot.poses.odoPose })
 
         val localPlanner = LocalPlanner(0f, LCL_PLN_ROT_STEP, LCL_PLN_DIST_STEP, LCL_PLN_GRID_STEP,
                 LCL_PLN_GRID_SIZE, OBS_SIZE)
 
-        val subConsc = SubconsciousThreaded(robotPilot, accurateOdo, localPlanner, LCL_PLN_MAX_ROT, LCL_PLN_MAX_DIST,
-                sensor, spinner, gblManeuvers, resultsQueue, MIN_MES_TIME)
+        val subConsc = SubconsciousActed(robotPilot, accurateOdo, localPlanner, LCL_PLN_MAX_ROT, LCL_PLN_MAX_DIST,
+                sensor, spinner, gblManeuvers, MIN_MES_TIME)
+
+        val planner = GlobalPathPlanner(factory, obstacles, OBS_SIZE, SEARCH_DIST, GBL_PTH_PLN_STEP_DIST,
+                startPose, end)
 
         val slam = FastSLAM(startPos, motionModel, dataAssoc, partResamp, sensor)
 
         val featureDetector = SplitAndMerge(LINE_THRESHOLD, CHECK_WITHIN_ANGLE, MAX_RATIO)
 
-        val globalPathPlannerFactory = { obstacles: GenTree<Point>, curPose: RobotPose, goalPose: RobotPose ->
-            GlobalPathPlanner(factory, obstacles, OBS_SIZE, SEARCH_DIST, GBL_PTH_PLN_STEP_DIST, curPose, goalPose)
-        }
+        val robotCore = RobotCoreActed(end, accurateOdo, slam, featureDetector, obstacles)
 
-        val robotCore = RobotCore(end, subConsc, accurateOdo, slam, featureDetector, globalPathPlannerFactory,
-                GBL_PTH_PLN_ITRS, obstacles)
+        val subconscInput = ItrActorChannel()
+        val plannerInput = ItrActorChannel()
+        val robotCoreInput = ItrActorChannel()
+        val robotCoreOutput = ItrActorChannel()
+
+        val subConscActor = SubconsciousActor(subConsc, subconscInput, robotCoreInput)
+        val plannerActor = PlannerActor(planner, plannerInput, robotCoreInput)
+        val robotCoreActor = RobotCoreActor(robotCore, robotCoreInput, robotCoreOutput, plannerInput, subconscInput)
+
+        val subConscActorHost = ItrActorThreadedHost(subConscActor)
+        val plannerActorHost = ItrActorThreadedHost(plannerActor)
+        val robotCoreActorHost = ItrActorThreadedHost(robotCoreActor)
+
+        subConscActorHost.start()
+        plannerActorHost.start()
+        robotCoreActorHost.start()
 
         thread {
-
-            robotCore.startSubconscious()
-
             while (true) {
-                robotCore.iterate()
-
+                val results = (robotCoreOutput.takeMsg() as RobotCoreRsltsMsg).results
                 synchronized(drawPathLock) {
-                    drawPaths = robotCore.paths
+                    drawPaths = results.globalPlannerPaths
                 }
-                val subResults = robotCore.subconcResults
-                if (subResults != null) {
-                    synchronized(odoLock) {
-                        odoLocs.add(subResults.pilotPoses.odoPose)
-                    }
-                    synchronized(realLock) {
-                        val simPoses = subResults.pilotPoses
-                        if (simPoses is SimPilotPoses) {
-                            realLocs.add(simPoses.realPose)
-                        }
-                    }
-                    synchronized(drawPlanLock) {
-                        drawPlan = subResults.plan
+                val subResults = results.subconcResults
+                synchronized(odoLock) {
+                    odoLocs.add(subResults.pilotPoses.odoPose)
+                }
+                synchronized(realLock) {
+                    val simPoses = subResults.pilotPoses
+                    if (simPoses is SimPilotPoses) {
+                        realLocs.add(simPoses.realPose)
                     }
                 }
+                synchronized(drawPlanLock) {
+                    drawPlan = subResults.plan
+                }
+
                 synchronized(drawManeuversLock) {
-                    drawManeuvers = robotCore.maneuvers
+                    drawManeuvers = results.maneuvers
                 }
                 synchronized(drawFeatLock) {
-                    drawFeatures = robotCore.features
+                    drawFeatures = results.features
                 }
                 synchronized(drawPartLock) {
-                    drawParticlePoses = robotCore.particlePoses
+                    drawParticlePoses = results.particlePoses
                 }
             }
         }

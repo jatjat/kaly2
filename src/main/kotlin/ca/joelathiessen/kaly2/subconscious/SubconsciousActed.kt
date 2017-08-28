@@ -16,7 +16,15 @@ class SubconsciousActed(private val robotPilot: RobotPilot, private val accurate
 
     fun iterate(newGlobalManeuvers: List<RobotPose> = globalManeuvers): SubconsciousActedResults {
         val startTime = System.currentTimeMillis()
-        globalManeuvers = newGlobalManeuvers
+        var nextManeuvers = newGlobalManeuvers
+        if(globalManeuvers != nextManeuvers) {
+            // TODO: make this unnecessary by improving LocalPlanner:
+            if (nextManeuvers.isNotEmpty()) {
+                nextManeuvers = nextManeuvers.subList(1, nextManeuvers.size)
+            }
+        }
+        globalManeuvers = nextManeuvers
+
         val pilotPoses = robotPilot.poses
 
         val measurements = ArrayList<Measurement>()
@@ -27,11 +35,6 @@ class SubconsciousActed(private val robotPilot: RobotPilot, private val accurate
             sensor.fetchSample(sample, 0)
             measurements.add(Measurement(sample[0], sample[1], mesPose, robotPilot.poses.odoPose,
                     System.currentTimeMillis()))
-        }
-
-        // TODO: make this unnecessary by improving LocalPlanner:
-        if (globalManeuvers.isNotEmpty()) {
-            globalManeuvers = globalManeuvers.subList(1, globalManeuvers.size)
         }
 
         val plan = localPlanner.makePlan(measurements, mesPose, localPlannerMaxRot, localPlannerMaxDist,
