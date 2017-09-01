@@ -15,9 +15,11 @@ class PlannerActor(private val planner: GlobalPathPlanner, inputChannel: ItrActo
                 when (msg) {
                     is StopMsg -> return
                     is ReqPlannerManeuvers -> outputChannel.addMsg(PlannerManeuversMsg(planner.getManeuvers()))
+                    is PlanFromMsg -> planner.planFrom(msg.startPose)
                 }
+            } else {
+                outputChannel.addMsg(PlannerPathsMsg(planner.iterate()))
             }
-            outputChannel.addMsg(PlannerPathsMsg(planner.iterate()))
         }
     }
 }

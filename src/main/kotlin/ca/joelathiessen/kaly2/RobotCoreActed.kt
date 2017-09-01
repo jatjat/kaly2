@@ -20,6 +20,11 @@ data class RobotCoreActedResults(val timestamp: Long, val features: List<Feature
 class RobotCoreActed(private val initialGoal: RobotPose, private val accurateOdo: AccurateSlamOdometry,
                      private val slam: Slam, private val featureDetector: FeatureDetector,
                      private val obstacles: GenTree<Point>) {
+    private val REQ_MAN_INTERVAL = 5
+    private val UPDATE_PLAN_POSE_INTERVAL = 10
+    private var numItrs = 0L
+    private var currentPlanItrs = 0
+
     var features: List<Feature> = ArrayList()
         private set
 
@@ -34,10 +39,9 @@ class RobotCoreActed(private val initialGoal: RobotPose, private val accurateOdo
     var particlePoses: List<Pose> = ArrayList()
         private set
 
-    private var numItrs = 0L
-
     var reqPlannerManeuvers: () -> Unit = {}
     var sendPlannerManeuversToLocalPlanner: (List<RobotPose>) -> Unit = {}
+    var planFrom: (RobotPose) -> Unit = {}
 
     fun onManeuverResults(newManeuvers: List<RobotPose>) {
         maneuvers = newManeuvers
@@ -63,11 +67,18 @@ class RobotCoreActed(private val initialGoal: RobotPose, private val accurateOdo
         subconcResults = curResults
         particlePoses = slam.particlePoses
 
-        if(numItrs % 10 == 0L) {
+        if (currentPlanItrs > 0 && currentPlanItrs % REQ_MAN_INTERVAL == 0) {
             reqPlannerManeuvers()
         }
+
+        if (currentPlanItrs == UPDATE_PLAN_POSE_INTERVAL) {
+            planFrom(avgPoseAfter)
+            currentPlanItrs = 0
+        }
+
+        currentPlanItrs++
         numItrs++
         return RobotCoreActedResults(System.currentTimeMillis(), features, maneuvers, paths, curResults,
                 particlePoses, numItrs)
-        }
+    }
 }

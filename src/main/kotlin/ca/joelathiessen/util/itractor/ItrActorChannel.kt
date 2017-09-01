@@ -1,12 +1,22 @@
 package ca.joelathiessen.util.itractor
 
+import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 
-class ItrActorChannel : ItrActorChannelAdder {
-    private val mailbox = LinkedBlockingQueue<ItrActorMsg>()
+class ItrActorChannel(bufferSize: Int = 0) : ItrActorChannelAdder {
+    private val mailbox: BlockingQueue<ItrActorMsg>
+
+    init {
+        if(bufferSize <= 0) {
+            mailbox = LinkedBlockingQueue<ItrActorMsg>()
+        } else {
+            mailbox = ArrayBlockingQueue<ItrActorMsg>(bufferSize)
+        }
+    }
 
     override fun addMsg(msg: ItrActorMsg) {
-        mailbox.add(msg)
+        mailbox.put(msg)
     }
 
     fun takeMsg(): ItrActorMsg {

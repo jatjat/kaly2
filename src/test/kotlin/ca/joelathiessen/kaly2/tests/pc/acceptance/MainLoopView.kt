@@ -89,6 +89,11 @@ class MainLoopView : JPanel() {
 
     private val MIN_MES_TIME = 160L
 
+    private val SUBCONC_INPUT_SIZE = 2
+    private val PLANNER_INPUT_SIZE = 2
+    private val ROBOT_CORE_INPUT_SIZE = 2
+    private val ROBOT_CORE_OUTPUT_SIZE = 512
+
     private val startPos = RobotPose(0, 0f, MIN_WIDTH / 2f, MIN_WIDTH / 2f, 0f)
     private val motionModel = CarModel()
     private val dataAssoc = NNDataAssociator(NN_THRESHOLD)
@@ -167,7 +172,7 @@ class MainLoopView : JPanel() {
                 sensor, spinner, gblManeuvers, MIN_MES_TIME)
 
         val planner = GlobalPathPlanner(factory, obstacles, OBS_SIZE, SEARCH_DIST, GBL_PTH_PLN_STEP_DIST,
-                startPose, end)
+                startPose, end, GBL_PTH_PLN_ITRS)
 
         val slam = FastSLAM(startPos, motionModel, dataAssoc, partResamp, sensor)
 
@@ -175,10 +180,10 @@ class MainLoopView : JPanel() {
 
         val robotCore = RobotCoreActed(end, accurateOdo, slam, featureDetector, obstacles)
 
-        val subconscInput = ItrActorChannel()
-        val plannerInput = ItrActorChannel()
-        val robotCoreInput = ItrActorChannel()
-        val robotCoreOutput = ItrActorChannel()
+        val subconscInput = ItrActorChannel(SUBCONC_INPUT_SIZE)
+        val plannerInput = ItrActorChannel(PLANNER_INPUT_SIZE)
+        val robotCoreInput = ItrActorChannel(ROBOT_CORE_INPUT_SIZE)
+        val robotCoreOutput = ItrActorChannel(ROBOT_CORE_OUTPUT_SIZE)
 
         val subConscActor = SubconsciousActor(subConsc, subconscInput, robotCoreInput)
         val plannerActor = PlannerActor(planner, plannerInput, robotCoreInput)

@@ -15,7 +15,7 @@ import java.util.*
  **/
 class GlobalPathPlanner(private val pathFactory: PathSegmentRootFactory, private val obstacles: GenTree<Point>,
                         private val obsSize: Float, private val searchDist: Float, private val stepDist: Float,
-                        private val startPose: RobotPose, private val endPose: RobotPose,
+                        startPose: RobotPose, endPose: RobotPose,
                         private val defaultNumItrs: Int = 1000) {
     val paths: ArrayList<PathSegmentInfo>
         get() {
@@ -24,9 +24,9 @@ class GlobalPathPlanner(private val pathFactory: PathSegmentRootFactory, private
 
     private val PROB_REWIRE_ROOT = 0.01
     private val rand = Random(0)
-    private val pathTree = GenTree<PathSegment>()
-    private val rootNode = pathFactory.makePathSegmentRoot(startPose)
-    private val pathList = ArrayList<PathSegment>()
+    private var pathTree = GenTree<PathSegment>()
+    private var pathList = ArrayList<PathSegment>()
+    private var rootNode = pathFactory.makePathSegmentRoot(startPose)
     private val doubleSearchDist = 2 * searchDist
     private val searchArea = doubleSearchDist * doubleSearchDist
     private val searchXBase = startPose.x - searchDist
@@ -34,8 +34,29 @@ class GlobalPathPlanner(private val pathFactory: PathSegmentRootFactory, private
     private val gamma = 6 * searchArea // assume obstacles reduce the search area negligibly
     private var nodeCount = 1f
 
+    private var start: RobotPose = startPose
+
+    private var end: RobotPose = endPose
+
     init {
+        reroot()
+    }
+
+    private fun reroot() {
+        pathTree = GenTree()
+        rootNode = pathFactory.makePathSegmentRoot(start)
         pathTree.add(rootNode.x, rootNode.y, rootNode)
+        pathList = ArrayList<PathSegment>()
+        nodeCount = 1f
+    }
+
+    fun planFrom(startPose: RobotPose) {
+        start = startPose
+        reroot()
+    }
+
+    fun planTo(endPose: RobotPose) {
+        end = endPose
     }
 
     fun iterate(numItrs: Int = defaultNumItrs): List<PathSegmentInfo> {
@@ -87,8 +108,8 @@ class GlobalPathPlanner(private val pathFactory: PathSegmentRootFactory, private
 
     fun getManeuvers(): List<RobotPose> {
         val poses = LinkedList<RobotPose>()
-        var angle = startPose.heading
-        val nearestToLast = pathTree.getNearestNeighbors(endPose.x, endPose.y)
+        var angle = start.heading
+        val nearestToLast = pathTree.getNearestNeighbors(end.x, end.y)
         if (nearestToLast.hasNext()) {
             val nearest = nearestToLast.next()
             var cur: PathSegment? = nearest

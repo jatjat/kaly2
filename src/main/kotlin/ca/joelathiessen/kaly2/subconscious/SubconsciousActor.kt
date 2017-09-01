@@ -12,7 +12,7 @@ class SubconsciousActor(private val subconscious: SubconsciousActed, inputChanne
     override fun act() {
         while (true) {
             var msg: ItrActorMsg? = null
-            if (inputChannel.isEmpty() == false) {
+            while(inputChannel.isEmpty() == false) {
                 msg = inputChannel.takeMsg()
                 when (msg) {
                     is StopMsg -> return
