@@ -1,6 +1,6 @@
 package ca.joelathiessen.kaly2.map
 
-import ca.joelathiessen.kaly2.featuredetector.Feature
+import ca.joelathiessen.kaly2.Measurement
 import ca.joelathiessen.kaly2.odometry.RobotPose
 import ca.joelathiessen.util.FloatMath
 import ca.joelathiessen.util.GenTree
@@ -17,11 +17,11 @@ class GlobalMap(private val stepDist: Float, private val obsSize: Float, private
 
     private var numCalled = 0
 
-    fun incorporateFeatures(features: List<Feature>, improvedPose: RobotPose, unimprovedPose: RobotPose) {
-        val featureObstacles = makeObstacles(improvedPose, unimprovedPose, features)
+    fun incorporateMeasurements(measurements: List<Measurement>, improvedPose: RobotPose) {
+        val mesObstacles = makeObstacles(improvedPose, measurements)
 
         // The map should have no obstacles between the sensor and the detected obstacle:
-        featureObstacles.forEach { shouldRemove.addAll(getObstaclesUpToFeature(improvedPose, it, obstacles)) }
+        mesObstacles.forEach { shouldRemove.addAll(getObstaclesUpToMes(improvedPose, it, obstacles)) }
 
         // It's expensive to always recreate the obstacle tree with removed obstacles:
         if (numCalled > 0 && numCalled % removeInvalidObsInterval == 0) {
@@ -38,7 +38,7 @@ class GlobalMap(private val stepDist: Float, private val obsSize: Float, private
             shouldRemove = HashSet()
         }
 
-        featureObstacles.forEach {
+        mesObstacles.forEach {
             obstacles.add(it.x, it.y, it)
             obstacleList.add(it)
         }
@@ -46,24 +46,24 @@ class GlobalMap(private val stepDist: Float, private val obsSize: Float, private
         numCalled++
     }
 
-    private fun makeObstacles(improvedPose: RobotPose, unimprovedPose: RobotPose, features: List<Feature>):
+    private fun makeObstacles(improvedPose: RobotPose, measurements: List<Measurement>):
             List<Point> {
-        return features.map {
-            val improvedAngle = improvedPose.heading - unimprovedPose.heading + it.angle
-            val improvedFeatureX = FloatMath.sin(improvedAngle) * it.distance
-            val improvedFeatureY = FloatMath.sin(improvedAngle) * it.distance
+        return measurements.map {
+            val improvedAngle = improvedPose.heading - it.odoPose.heading + it.probAngle
+            val improvedMesX = FloatMath.sin(improvedAngle) * it.distance
+            val improvedMesY = FloatMath.sin(improvedAngle) * it.distance
 
-            Point(improvedFeatureX, improvedFeatureY)
+            Point(improvedMesX, improvedMesY)
         }
     }
 
-    private fun getObstaclesUpToFeature(improvedPose: RobotPose, featureObstacle: Point, obstacles: GenTree<Point>):
+    private fun getObstaclesUpToMes(improvedPose: RobotPose, mesObs: Point, obstacles: GenTree<Point>):
             HashSet<Point> {
-        val obstaclesUpToFeature = HashSet<Point>()
+        val obstaclesUpToMes = HashSet<Point>()
 
-        val spanDeltaX = featureObstacle.x - improvedPose.x
-        val spanDeltaY = featureObstacle.y - improvedPose.y
-        val spanDist = distance(featureObstacle.x, improvedPose.x, featureObstacle.y, improvedPose.y)
+        val spanDeltaX = mesObs.x - improvedPose.x
+        val spanDeltaY = mesObs.y - improvedPose.y
+        val spanDist = distance(mesObs.x, improvedPose.x, mesObs.y, improvedPose.y)
 
         val endT = 1f - Math.min(1f, obsSize / spanDist)
         var t = 0f
@@ -78,7 +78,7 @@ class GlobalMap(private val stepDist: Float, private val obsSize: Float, private
                 val nextObs = nextObstacles.next()
                 val distToObs = distance(nextObs.x, curX, nextObs.y, curY)
                 if (distToObs < obsSize) {
-                    obstaclesUpToFeature.add(nextObs)
+                    obstaclesUpToMes.add(nextObs)
                 } else {
                     shouldCont = false
                 }
@@ -89,6 +89,6 @@ class GlobalMap(private val stepDist: Float, private val obsSize: Float, private
 
             t += Math.max(stepDist, maxDist / spanDist)
         }
-        return obstaclesUpToFeature
+        return obstaclesUpToMes
     }
 }
