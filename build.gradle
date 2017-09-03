@@ -40,12 +40,6 @@ sourceSets {
     }
 }
 
-task includeTestResources(type: Copy) {
-    from "${projectDir}/src/test/resources"
-    into "${buildDir}/resources/main"
-}
-processResources.dependsOn includeTestResources
-
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib:1.1.4-3"
     compile 'gov.nist.math:jama:1.0.3'
