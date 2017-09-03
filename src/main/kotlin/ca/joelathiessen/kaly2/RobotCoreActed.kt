@@ -2,13 +2,12 @@ package ca.joelathiessen.kaly2
 
 import ca.joelathiessen.kaly2.featuredetector.Feature
 import ca.joelathiessen.kaly2.featuredetector.FeatureDetector
+import ca.joelathiessen.kaly2.map.GlobalMap
 import ca.joelathiessen.kaly2.odometry.AccurateSlamOdometry
 import ca.joelathiessen.kaly2.odometry.RobotPose
 import ca.joelathiessen.kaly2.planner.PathSegmentInfo
 import ca.joelathiessen.kaly2.slam.Slam
 import ca.joelathiessen.kaly2.subconscious.SubconsciousActedResults
-import ca.joelathiessen.util.GenTree
-import lejos.robotics.geometry.Point
 import lejos.robotics.navigation.Pose
 import java.util.*
 
@@ -19,7 +18,7 @@ data class RobotCoreActedResults(val timestamp: Long, val features: List<Feature
                                  val particlePoses: List<Pose>, val numItrs: Long)
 class RobotCoreActed(private val initialGoal: RobotPose, private val accurateOdo: AccurateSlamOdometry,
                      private val slam: Slam, private val featureDetector: FeatureDetector,
-                     private val obstacles: GenTree<Point>) {
+                     private val map: GlobalMap) {
     private val REQ_MAN_INTERVAL = 5
     private val UPDATE_PLAN_POSE_INTERVAL = 10
     private var numItrs = 0L
@@ -58,8 +57,10 @@ class RobotCoreActed(private val initialGoal: RobotPose, private val accurateOdo
 
         val detectedFeatures = featureDetector.getFeatures(measurements)
 
-        slam.addTimeStep(features, odoPose)
+        slam.addTimeStep(detectedFeatures, odoPose)
         val avgPoseAfter = slam.avgPose
+
+        map.incorporateFeatures(detectedFeatures, avgPoseAfter, odoPose)
 
         accurateOdo.setInputPoses(avgPoseAfter, odoPose)
 

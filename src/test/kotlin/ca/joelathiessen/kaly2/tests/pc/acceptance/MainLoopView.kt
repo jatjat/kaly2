@@ -1,8 +1,11 @@
 package ca.joelathiessen.kaly2.tests.pc.acceptance
 
-import ca.joelathiessen.kaly2.*
+import ca.joelathiessen.kaly2.RobotCoreActed
+import ca.joelathiessen.kaly2.RobotCoreActor
+import ca.joelathiessen.kaly2.RobotCoreRsltsMsg
 import ca.joelathiessen.kaly2.featuredetector.Feature
 import ca.joelathiessen.kaly2.featuredetector.SplitAndMerge
+import ca.joelathiessen.kaly2.map.GlobalMap
 import ca.joelathiessen.kaly2.odometry.AccurateSlamOdometry
 import ca.joelathiessen.kaly2.odometry.CarModel
 import ca.joelathiessen.kaly2.odometry.RobotPose
@@ -30,8 +33,6 @@ import java.awt.Color
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.util.*
-import java.util.concurrent.ArrayBlockingQueue
-import java.util.concurrent.atomic.AtomicReference
 import javax.imageio.ImageIO
 import javax.swing.JFrame
 import javax.swing.JPanel
@@ -40,7 +41,8 @@ import kotlin.concurrent.fixedRateTimer
 import kotlin.concurrent.thread
 
 object MainLoopDemo {
-    @JvmStatic fun main(args: Array<String>) {
+    @JvmStatic
+    fun main(args: Array<String>) {
         val frame = JFrame()
         val panel = MainLoopView()
         frame.add(panel)
@@ -78,7 +80,7 @@ class MainLoopView : JPanel() {
     private val OBS_SIZE = 2f
     private val SEARCH_DIST = MIN_WIDTH
     private val GBL_PTH_PLN_STEP_DIST = 20f
-    private val GBL_PTH_PLN_ITRS = 1000
+    private val GBL_PTH_PLN_ITRS = 100
 
     private val LCL_PLN_ROT_STEP = 0.017f
     private val LCL_PLN_DIST_STEP = 1f
@@ -87,12 +89,14 @@ class MainLoopView : JPanel() {
     private val LCL_PLN_MAX_ROT = 1f
     private val LCL_PLN_MAX_DIST = 20f
 
+    private val MAP_REMOVE_INVALID_OBS_INTERVAL = 100
+
     private val MIN_MES_TIME = 160L
 
-    private val SUBCONC_INPUT_SIZE = 2
-    private val PLANNER_INPUT_SIZE = 2
-    private val ROBOT_CORE_INPUT_SIZE = 2
-    private val ROBOT_CORE_OUTPUT_SIZE = 512
+    private val SUBCONC_INPUT_SIZE = 0
+    private val PLANNER_INPUT_SIZE = 0
+    private val ROBOT_CORE_INPUT_SIZE = 0
+    private val ROBOT_CORE_OUTPUT_SIZE = 0
 
     private val startPos = RobotPose(0, 0f, MIN_WIDTH / 2f, MIN_WIDTH / 2f, 0f)
     private val motionModel = CarModel()
@@ -178,7 +182,9 @@ class MainLoopView : JPanel() {
 
         val featureDetector = SplitAndMerge(LINE_THRESHOLD, CHECK_WITHIN_ANGLE, MAX_RATIO)
 
-        val robotCore = RobotCoreActed(end, accurateOdo, slam, featureDetector, obstacles)
+        val map = GlobalMap(OBS_SIZE, OBS_SIZE, MAP_REMOVE_INVALID_OBS_INTERVAL)
+
+        val robotCore = RobotCoreActed(end, accurateOdo, slam, featureDetector, map)
 
         val subconscInput = ItrActorChannel(SUBCONC_INPUT_SIZE)
         val plannerInput = ItrActorChannel(PLANNER_INPUT_SIZE)
