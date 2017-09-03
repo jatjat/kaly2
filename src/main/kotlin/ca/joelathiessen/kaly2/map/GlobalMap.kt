@@ -50,8 +50,8 @@ class GlobalMap(private val stepDist: Float, private val obsSize: Float, private
             List<Point> {
         return measurements.map {
             val improvedAngle = improvedPose.heading - unimprovedPose.heading + it.probAngle
-            val improvedMesX = FloatMath.sin(improvedAngle) * it.distance
-            val improvedMesY = FloatMath.sin(improvedAngle) * it.distance
+            val improvedMesX = improvedPose.x + FloatMath.cos(improvedAngle) * it.distance
+            val improvedMesY = improvedPose.y + FloatMath.sin(improvedAngle) * it.distance
 
             Point(improvedMesX, improvedMesY)
         }
@@ -65,7 +65,7 @@ class GlobalMap(private val stepDist: Float, private val obsSize: Float, private
         val spanDeltaY = mesObs.y - improvedPose.y
         val spanDist = distance(mesObs.x, improvedPose.x, mesObs.y, improvedPose.y)
 
-        val endT = 1f - Math.min(1f, obsSize / spanDist)
+        val endT = 1f - ((obsSize / 2f) / spanDist)
         var t = 0f
         while (t < endT) {
             val curX = improvedPose.x + (t * spanDeltaX)
