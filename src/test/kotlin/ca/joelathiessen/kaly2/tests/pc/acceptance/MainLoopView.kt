@@ -16,7 +16,13 @@ import ca.joelathiessen.kaly2.planner.linear.LinearPathSegmentRootFactory
 import ca.joelathiessen.kaly2.slam.FastSLAM
 import ca.joelathiessen.kaly2.slam.FastUnbiasedResampler
 import ca.joelathiessen.kaly2.slam.NNDataAssociator
-import ca.joelathiessen.kaly2.subconscious.*
+import ca.joelathiessen.kaly2.subconscious.LocalPlan
+import ca.joelathiessen.kaly2.subconscious.LocalPlanner
+import ca.joelathiessen.kaly2.subconscious.RobotPilot
+import ca.joelathiessen.kaly2.subconscious.SimPilotPoses
+import ca.joelathiessen.kaly2.subconscious.SimulatedPilot
+import ca.joelathiessen.kaly2.subconscious.SubconsciousActed
+import ca.joelathiessen.kaly2.subconscious.SubconsciousActor
 import ca.joelathiessen.kaly2.subconscious.sensor.Kaly2Sensor
 import ca.joelathiessen.kaly2.subconscious.sensor.SimSensor
 import ca.joelathiessen.kaly2.subconscious.sensor.SimSpinner
@@ -32,7 +38,8 @@ import lejos.robotics.navigation.Pose
 import java.awt.Color
 import java.awt.Graphics
 import java.awt.Graphics2D
-import java.util.*
+import java.util.ArrayList
+import java.util.Collections
 import javax.imageio.ImageIO
 import javax.swing.JFrame
 import javax.swing.JPanel
@@ -156,11 +163,10 @@ class MainLoopView : JPanel() {
         Collections.shuffle(points)
         points.forEach { obstacles.add(it.x, it.y, it) }
 
-
         val simPilot = SimulatedPilot(ODO_ANG_STD_DEV, ODO_DIST_STD_DEV, STEP_DIST, startPose)
         val simSpinner = SimSpinner(SENSOR_START_ANG, SENSOR_END_ANG, SENSOR_ANG_INCR)
         val simSensor = SimSensor(obsGrid, image.width, image.height,
-                MAX_SENSOR_RANGE, SENSOR_DIST_STDEV, SENSOR_ANG_STDEV, simSpinner, simPilot)
+            MAX_SENSOR_RANGE, SENSOR_DIST_STDEV, SENSOR_ANG_STDEV, simSpinner, simPilot)
 
         val robotPilot: RobotPilot = simPilot
         val sensor: Kaly2Sensor = simSensor
@@ -170,13 +176,13 @@ class MainLoopView : JPanel() {
         val accurateOdo = AccurateSlamOdometry(robotPilot.poses.odoPose, { robotPilot.poses.odoPose })
 
         val localPlanner = LocalPlanner(0f, LCL_PLN_ROT_STEP, LCL_PLN_DIST_STEP, LCL_PLN_GRID_STEP,
-                LCL_PLN_GRID_SIZE, OBS_SIZE)
+            LCL_PLN_GRID_SIZE, OBS_SIZE)
 
         val subConsc = SubconsciousActed(robotPilot, accurateOdo, localPlanner, LCL_PLN_MAX_ROT, LCL_PLN_MAX_DIST,
-                sensor, spinner, gblManeuvers, MIN_MES_TIME)
+            sensor, spinner, gblManeuvers, MIN_MES_TIME)
 
         val planner = GlobalPathPlanner(factory, obstacles, OBS_SIZE, SEARCH_DIST, GBL_PTH_PLN_STEP_DIST,
-                startPose, end, GBL_PTH_PLN_ITRS)
+            startPose, end, GBL_PTH_PLN_ITRS)
 
         val slam = FastSLAM(startPos, motionModel, dataAssoc, partResamp, sensor)
 
@@ -285,7 +291,7 @@ class MainLoopView : JPanel() {
         val manLines = ArrayList<Line>(paintDrawManeuvers.size)
         for (i in 1 until manPoints.size) {
             manLines.add(Line(manPoints[i - 1].x, manPoints[i - 1].y,
-                    manPoints[i].x, manPoints[i].y))
+                manPoints[i].x, manPoints[i].y))
         }
         graphics.color = Color.GREEN
         manLines.forEach {

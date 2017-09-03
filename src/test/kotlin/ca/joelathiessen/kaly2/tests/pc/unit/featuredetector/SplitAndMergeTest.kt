@@ -2,12 +2,12 @@ package ca.joelathiessen.kaly2.tests.pc.unit.featuredetector
 
 import ca.joelathiessen.kaly2.Measurement
 import ca.joelathiessen.kaly2.featuredetector.SplitAndMerge
-import ca.joelathiessen.kaly2.tests.pc.unit.util.*
+import ca.joelathiessen.kaly2.tests.pc.unit.util.makeMeasFromXY
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.runners.MockitoJUnitRunner
-import java.util.*
+import java.util.ArrayList
 
 @RunWith(MockitoJUnitRunner::class)
 class SplitAndMergeTest {

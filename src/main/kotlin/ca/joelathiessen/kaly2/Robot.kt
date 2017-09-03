@@ -1,7 +1,7 @@
 package ca.joelathiessen.kaly2
 
 import ca.joelathiessen.kaly2.subconscious.Subconscious
-import java.util.*
+import java.util.ArrayList
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantLock
@@ -9,7 +9,7 @@ import java.util.concurrent.locks.ReentrantLock
 class Robot(private val subconsc: Subconscious, private val sweeps: ConcurrentLinkedQueue<ArrayList<Measurement>>) : Runnable {
     private val subconscThread: Thread
     private val runRobot = AtomicBoolean(false)
-    private final val lock = ReentrantLock();
+    private final val lock = ReentrantLock()
     private val runRobot2 = lock.newCondition()
 
     init {
@@ -45,9 +45,7 @@ class Robot(private val subconsc: Subconscious, private val sweeps: ConcurrentLi
                     runRobot.set(false)
                 } else {
 
-
                     // pass the latest sweep to the feature finder algorithm, then wait a bit for now...
-
 
                     try {
                         Thread.sleep(10)

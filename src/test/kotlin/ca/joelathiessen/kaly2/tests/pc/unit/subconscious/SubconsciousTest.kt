@@ -9,7 +9,11 @@ import com.nhaarman.mockito_kotlin.doAnswer
 import lejos.robotics.localization.OdometryPoseProvider
 import lejos.robotics.navigation.MovePilot
 import lejos.robotics.navigation.Pose
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -18,18 +22,18 @@ import org.mockito.Mockito.`when`
 import org.powermock.api.mockito.PowerMockito
 import org.powermock.core.classloader.annotations.PrepareForTest
 import org.powermock.modules.junit4.PowerMockRunner
-import java.util.*
+import java.util.ArrayList
 import java.util.concurrent.ConcurrentLinkedQueue
 
 @RunWith(PowerMockRunner::class)
 @PrepareForTest(Kaly2PulsedLightLidarLiteV2::class, Spinner::class)
 class SubconsciousTest {
 
-    lateinit private var sensor: Kaly2PulsedLightLidarLiteV2
-    lateinit private var spinner: Spinner
-    lateinit private var pilot: MovePilot
-    lateinit private var odometry: OdometryPoseProvider
-    lateinit private var sweeps: ConcurrentLinkedQueue<ArrayList<Measurement>>
+    private lateinit var sensor: Kaly2PulsedLightLidarLiteV2
+    private lateinit var spinner: Spinner
+    private lateinit var pilot: MovePilot
+    private lateinit var odometry: OdometryPoseProvider
+    private lateinit var sweeps: ConcurrentLinkedQueue<ArrayList<Measurement>>
 
     @Before
     fun setUp() {
@@ -74,7 +78,6 @@ class SubconsciousTest {
             sample[0] = 10f
             null
         }.`when`<Kaly2PulsedLightLidarLiteV2>(sensor).fetchSample(any<FloatArray>(), any<Int>())
-
 
         timeout = System.currentTimeMillis() + 1000
         thread.start()

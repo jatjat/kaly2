@@ -9,7 +9,6 @@ class Commander(private val robot: Robot) {
     private val br: BufferedReader
     private val robotThread: Thread
 
-
     init {
         robotThread = Thread(robot)
         br = BufferedReader(InputStreamReader(System.`in`))
@@ -56,7 +55,8 @@ class Commander(private val robot: Robot) {
 
     companion object {
 
-        @JvmStatic fun main(args: Array<String>) {
+        @JvmStatic
+        fun main(args: Array<String>) {
             // the robot will start itself from here; i.e. :
             // Commander commander = new Commander(robot);
             // ...

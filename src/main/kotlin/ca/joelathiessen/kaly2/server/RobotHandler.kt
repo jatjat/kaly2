@@ -3,7 +3,14 @@ package ca.joelathiessen.kaly2.server
 import ca.joelathiessen.kaly2.featuredetector.Feature
 import ca.joelathiessen.kaly2.odometry.CarModel
 import ca.joelathiessen.kaly2.odometry.RobotPose
-import ca.joelathiessen.kaly2.server.messages.*
+import ca.joelathiessen.kaly2.server.messages.FastSlamInfo
+import ca.joelathiessen.kaly2.server.messages.FastSlamSettingsMsg
+import ca.joelathiessen.kaly2.server.messages.RTFeature
+import ca.joelathiessen.kaly2.server.messages.RTLandmark
+import ca.joelathiessen.kaly2.server.messages.RTMsg
+import ca.joelathiessen.kaly2.server.messages.RTParticle
+import ca.joelathiessen.kaly2.server.messages.RTPose
+import ca.joelathiessen.kaly2.server.messages.RobotSettingsMsg
 import ca.joelathiessen.kaly2.slam.FastSLAM
 import ca.joelathiessen.kaly2.slam.FastUnbiasedResampler
 import ca.joelathiessen.kaly2.slam.NNDataAssociator
@@ -13,7 +20,7 @@ import ca.joelathiessen.util.FloatMath
 import ca.joelathiessen.util.FloatRandom
 import ca.joelathiessen.util.getFeatureForPosition
 import lejos.robotics.navigation.Pose
-import java.util.*
+import java.util.ArrayList
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicBoolean
@@ -132,7 +139,7 @@ class RobotHandler(val rid: Long) {
      * (TODO: could hard guarantee locking not required by using immutability)
      */
     private fun sendUpdateEvent(truePos: Pose, odoPos: Pose, particlePoses: List<Pose>, featuresForRT: List<Feature>,
-                                realLandmarks: ArrayList<xyPnt>) {
+        realLandmarks: ArrayList<xyPnt>) {
         updateExecutor.execute {
             val rtParticlePoses = particlePoses.map {
                 RTParticle(it.x, it.y, it.heading, ArrayList<RTLandmark>())

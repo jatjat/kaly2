@@ -11,8 +11,8 @@ abstract class PathSegment(val x: Float, val y: Float, parentIn: PathSegment?, c
         protected set
 
     abstract fun makeChild(xChild: Float, yChild: Float, obstacles: GenTree<Point> = GenTree(),
-                           obsSize: Float = 0f): PathSegment?
+        obsSize: Float = 0f): PathSegment?
 
     abstract fun changeParentIfCheaper(posNewParent: PathSegment, obstacles: GenTree<Point> = GenTree(),
-                                       obsSize: Float = 0f)
+        obsSize: Float = 0f)
 }

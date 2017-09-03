@@ -4,9 +4,8 @@ import ca.joelathiessen.util.itractor.ItrActor
 import ca.joelathiessen.util.itractor.ItrActorChannel
 import ca.joelathiessen.util.itractor.StopMsg
 
-
 class PlannerActor(private val planner: GlobalPathPlanner, inputChannel: ItrActorChannel,
-                   private val outputChannel: ItrActorChannel) : ItrActor(inputChannel) {
+    private val outputChannel: ItrActorChannel) : ItrActor(inputChannel) {
 
     override fun act() {
         while (true) {

@@ -1,6 +1,6 @@
 package ca.joelathiessen.kaly2.subconscious.sensor
 
-class SimSpinner(private val startAng: Float, private val endAng: Float, private val angIncr: Float): Spinnable {
+class SimSpinner(private val startAng: Float, private val endAng: Float, private val angIncr: Float) : Spinnable {
     var angle = startAng
         private set
 
@@ -15,16 +15,16 @@ class SimSpinner(private val startAng: Float, private val endAng: Float, private
     }
 
     fun incr() {
-        if(!turningClockwise) {
+        if (!turningClockwise) {
             angle += angIncr
-            if(angle > endAng) {
+            if (angle > endAng) {
                 angle = endAng
                 turningClockwise = true
                 spinning = false
             }
         } else {
             angle -= angIncr
-            if(angle < startAng) {
+            if (angle < startAng) {
                 angle = startAng
                 turningClockwise = false
                 spinning = false

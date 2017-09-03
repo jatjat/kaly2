@@ -8,7 +8,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.runners.MockitoJUnitRunner
-import java.util.*
+import java.util.ArrayList
 
 @RunWith(MockitoJUnitRunner::class)
 class GlobalMapTest {

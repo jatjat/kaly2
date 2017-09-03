@@ -8,7 +8,7 @@ class ItrActorChannel(bufferSize: Int = 0) : ItrActorChannelAdder {
     private val mailbox: BlockingQueue<ItrActorMsg>
 
     init {
-        if(bufferSize <= 0) {
+        if (bufferSize <= 0) {
             mailbox = LinkedBlockingQueue<ItrActorMsg>()
         } else {
             mailbox = ArrayBlockingQueue<ItrActorMsg>(bufferSize)

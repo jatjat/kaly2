@@ -1,8 +1,8 @@
 package ca.joelathiessen.kaly2.slam
 
 import ca.joelathiessen.util.FloatMath
-import java.util.*
 import ca.joelathiessen.util.sumByFloat
+import java.util.ArrayList
 
 class FastUnbiasedResampler : ParticleResampler {
 

@@ -25,6 +25,6 @@ class GenTree<T> {
 
     fun getNearestNeighbors(x: Float, y: Float): Iterator<T> {
         return kdTree.getNearestNeighborIterator(doubleArrayOf(x.toDouble(), y.toDouble()),
-                Int.MAX_VALUE, sqEucDistFunc).iterator<T>()
+            Int.MAX_VALUE, sqEucDistFunc).iterator<T>()
     }
 }

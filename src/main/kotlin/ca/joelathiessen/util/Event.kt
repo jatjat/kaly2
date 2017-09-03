@@ -1,6 +1,6 @@
 package ca.joelathiessen.util
 
-import java.util.*
+import java.util.ArrayList
 
 /**
  * For a containing class, allows exposing a public event for subscription while keeping its invocation private

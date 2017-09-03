@@ -11,16 +11,20 @@ import java.awt.Color
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.image.BufferedImage
-import java.util.*
+import java.util.ArrayList
 import java.util.concurrent.Executors
 import javax.imageio.ImageIO
-import javax.swing.*
-
+import javax.swing.ImageIcon
+import javax.swing.JFrame
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.WindowConstants
 
 object FeatureDetectorDemo {
     val IMAGE_LOC = "/images/squareFIlledRound.png"
 
-    @JvmStatic fun main(args: Array<String>) {
+    @JvmStatic
+    fun main(args: Array<String>) {
         val image = ImageIO.read(javaClass.getResource(IMAGE_LOC))
         val frame = JFrame()
         var panel = FeatureDetectorView(image)

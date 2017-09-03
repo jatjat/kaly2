@@ -11,4 +11,3 @@ class Kaly2PulsedLightLidarLiteV2(port: Port) : I2CSensor(port), Kaly2Sensor {
     }
 }
 
-

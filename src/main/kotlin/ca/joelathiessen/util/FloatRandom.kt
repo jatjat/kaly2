@@ -1,6 +1,6 @@
 package ca.joelathiessen.util
 
-import java.util.*
+import java.util.Random
 
 // It doesn't seem to be possible to overload a function with an extension function
 class FloatRandom(seed: Long) {

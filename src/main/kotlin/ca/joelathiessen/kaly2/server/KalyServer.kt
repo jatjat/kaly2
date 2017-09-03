@@ -12,7 +12,8 @@ class KalyServer {
         val REST_API_ROBOT_PATH = "/api/rest/robot"
         val ROOT_PATH = "/"
 
-        @JvmStatic fun main(args: Array<String>) {
+        @JvmStatic
+        fun main(args: Array<String>) {
             val servletContextHandler = ServletContextHandler()
             servletContextHandler.addServlet(KalyWebSocketServlet::class.java, WEBSOCKET_API_ROBOT_PATH)
             servletContextHandler.addServlet(RestApiServlet::class.java, REST_API_ROBOT_PATH)

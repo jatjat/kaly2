@@ -1,7 +1,8 @@
 package ca.joelathiessen.kaly2.odometry
 
+import ca.joelathiessen.util.FloatMath
+import ca.joelathiessen.util.FloatRandom
 import lejos.robotics.navigation.Pose
-import ca.joelathiessen.util.*
 
 class CarModel : MotionModel {
     private val ANGLE_ERROR = 0.01f

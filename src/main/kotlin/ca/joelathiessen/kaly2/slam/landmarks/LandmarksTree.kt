@@ -3,7 +3,7 @@ package ca.joelathiessen.kaly2.slam.landmarks
 import ags.utils.dataStructures.trees.thirdGenKD.KdTree
 import ags.utils.dataStructures.trees.thirdGenKD.SquareEuclideanDistanceFunction
 import lejos.robotics.geometry.Point
-import java.util.*
+import java.util.HashSet
 
 class LandmarksTree() : AssociatableLandmarks {
     private val DIMENSIONS = 2
@@ -49,7 +49,7 @@ class LandmarksTree() : AssociatableLandmarks {
         var nearest: Landmark? = null
         if (kdTree.size() > 0) {
             nearest = kdTree.findNearestNeighbors(doubleArrayOf(point.x.toDouble(), point.y.toDouble()),
-                    1, sqEucDistFunc).max
+                1, sqEucDistFunc).max
         }
         return nearest
     }

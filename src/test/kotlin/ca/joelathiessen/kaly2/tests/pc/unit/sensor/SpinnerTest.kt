@@ -3,7 +3,9 @@ package ca.joelathiessen.kaly2.tests.pc.unit.sensor
 import ca.joelathiessen.kaly2.subconscious.sensor.Spinner
 import ca.joelathiessen.util.FloatMath
 import lejos.robotics.RegulatedMotor
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mock
@@ -15,7 +17,7 @@ import org.mockito.runners.MockitoJUnitRunner
 class SpinnerTest {
 
     @Mock
-    lateinit private var motor: RegulatedMotor
+    private lateinit var motor: RegulatedMotor
 
     @Test
     fun testSpin_DefaultLimits() {

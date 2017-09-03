@@ -3,22 +3,22 @@ package ca.joelathiessen.kaly2.subconscious
 import ca.joelathiessen.kaly2.Measurement
 import ca.joelathiessen.kaly2.odometry.RobotPose
 import ca.joelathiessen.util.FloatMath
-import ca.joelathiessen.util.rotate
 import ca.joelathiessen.util.array2d
-import java.util.*
-
+import ca.joelathiessen.util.rotate
+import java.util.ArrayList
 
 data class LocalPlan(val angle: Float, val distance: Float, val startX: Float, val startY: Float, val startAngle: Float,
-                     val endX: Float, val endY: Float)
+    val endX: Float, val endY: Float)
+
 class LocalPlanner(val robotSize: Float, val rotStep: Float, val distStep: Float, val gridStep: Float,
-                   val gridSize: Float, val staticObstacleSize: Float) {
+    val gridSize: Float, val staticObstacleSize: Float) {
     private val halfGridSize = gridSize / 2
     private val numSteps = (gridSize / gridStep).toInt()
 
     private data class GridPoint(val x: Float, val y: Float)
 
     fun makePlan(staticObstacles: List<Measurement>, startPose: RobotPose, maxRot: Float,
-                 maxDist: Float, desiredPath: List<RobotPose>): LocalPlan {
+        maxDist: Float, desiredPath: List<RobotPose>): LocalPlan {
         val searchGrid = array2d<ArrayList<GridPoint>>(numSteps, numSteps, { ArrayList() })
         val checkDist = robotSize + staticObstacleSize
 
@@ -82,7 +82,7 @@ class LocalPlanner(val robotSize: Float, val rotStep: Float, val distStep: Float
         }
         return LocalPlan(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f)
     }
-    
+
     private fun withinFast(one: Float, two: Float, epsilon: Float): Boolean {
         return FloatMath.abs(two - one) < epsilon
     }

@@ -2,7 +2,6 @@ package ca.joelathiessen.kaly2.tests.pc.unit.slam
 
 import Jama.Matrix
 import ca.joelathiessen.kaly2.featuredetector.Feature
-import ca.joelathiessen.kaly2.odometry.RobotPose
 import ca.joelathiessen.kaly2.slam.NNDataAssociator
 import ca.joelathiessen.kaly2.slam.landmarks.Landmark
 import ca.joelathiessen.kaly2.slam.landmarks.LandmarksTree
@@ -12,7 +11,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.runners.MockitoJUnitRunner
-import java.util.*
+import java.util.ArrayList
 
 @RunWith(MockitoJUnitRunner::class)
 class NNDataAssociatorTest() {

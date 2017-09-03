@@ -2,7 +2,7 @@ package ca.joelathiessen.kaly2.featuredetector
 
 import ca.joelathiessen.kaly2.Measurement
 import ca.joelathiessen.util.FloatMath
-import java.util.*
+import java.util.ArrayList
 
 class SplitAndMerge(val threshold: Float, val checkWithinAngle: Float, val maxRatio: Float) : FeatureDetector {
     private val TWO_PI = 2 * FloatMath.PI
@@ -54,7 +54,7 @@ class SplitAndMerge(val threshold: Float, val checkWithinAngle: Float, val maxRa
             val expSepFeats = arrayListOf(sepFeats[sepFeats.size - 1]) + sepFeats + sepFeats[0]
             val innerFeats = ArrayList<Feature>()
             for (i in 1 until expSepFeats.size - 1) {
-                if(distanceFromLineToPoint(expSepFeats[i], expSepFeats[i-1], expSepFeats[i+1]) > threshold) {
+                if (distanceFromLineToPoint(expSepFeats[i], expSepFeats[i - 1], expSepFeats[i + 1]) > threshold) {
                     innerFeats.add(expSepFeats[i])
                 }
             }

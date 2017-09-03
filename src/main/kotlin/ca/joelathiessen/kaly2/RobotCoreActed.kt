@@ -9,16 +9,16 @@ import ca.joelathiessen.kaly2.planner.PathSegmentInfo
 import ca.joelathiessen.kaly2.slam.Slam
 import ca.joelathiessen.kaly2.subconscious.SubconsciousActedResults
 import lejos.robotics.navigation.Pose
-import java.util.*
-
+import java.util.ArrayList
 
 data class RobotCoreActedResults(val timestamp: Long, val features: List<Feature>, val slamPose: RobotPose,
-                                 val maneuvers: List<RobotPose>, val globalPlannerPaths: List<PathSegmentInfo>,
-                                 val subconcResults: SubconsciousActedResults,
-                                 val particlePoses: List<Pose>, val numItrs: Long)
+    val maneuvers: List<RobotPose>, val globalPlannerPaths: List<PathSegmentInfo>,
+    val subconcResults: SubconsciousActedResults,
+    val particlePoses: List<Pose>, val numItrs: Long)
+
 class RobotCoreActed(private val initialGoal: RobotPose, private val accurateOdo: AccurateSlamOdometry,
-                     private val slam: Slam, private val featureDetector: FeatureDetector,
-                     private val map: GlobalMap) {
+    private val slam: Slam, private val featureDetector: FeatureDetector,
+    private val map: GlobalMap) {
     private val REQ_MAN_INTERVAL = 5
     private val UPDATE_PLAN_POSE_INTERVAL = 10
     private var numItrs = 0L
@@ -80,6 +80,6 @@ class RobotCoreActed(private val initialGoal: RobotPose, private val accurateOdo
         currentPlanItrs++
         numItrs++
         return RobotCoreActedResults(System.currentTimeMillis(), features, avgPoseAfter, maneuvers, paths, curResults,
-                particlePoses, numItrs)
+            particlePoses, numItrs)
     }
 }

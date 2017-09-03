@@ -19,7 +19,7 @@ class KalyWebSocketServlet() : HttpServlet() {
             rid = robotsManager.getUnspecifiedRid()
         } else {
             response.sendError(HttpServletResponse.SC_NOT_FOUND,
-                    "Robot URI must be followed by a numeric ID or nothing")
+                "Robot URI must be followed by a numeric ID or nothing")
             return
         }
 
@@ -37,6 +37,6 @@ class KalyWebSocketServlet() : HttpServlet() {
             return
         }
         response.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE,
-                "WebSocket connections only")
+            "WebSocket connections only")
     }
 }

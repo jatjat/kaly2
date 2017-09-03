@@ -8,10 +8,11 @@ import ca.joelathiessen.kaly2.slam.landmarks.Landmark
 import ca.joelathiessen.kaly2.subconscious.sensor.SensorInfo
 import ca.joelathiessen.util.FloatMath
 import lejos.robotics.navigation.Pose
-import java.util.*
+import java.util.ArrayList
+import java.util.Random
 
 class FastSLAM(val startPose: RobotPose, private val carMotionModel: CarModel, private val dataAssoc: DataAssociator,
-               private val partResamp: ParticleResampler, val sensorInfo: SensorInfo) : Slam {
+    private val partResamp: ParticleResampler, val sensorInfo: SensorInfo) : Slam {
     private val ADD_REMOVE_SEED = 1L
     val DEFAULT_NUM_PARTICLES = 20
     val DEFAULT_DIST_VARIANCE = 1.0f
@@ -55,7 +56,7 @@ class FastSLAM(val startPose: RobotPose, private val carMotionModel: CarModel, p
         particles.addAll(newParticles)
 
         particles.forEach { it.weight = 1.0f / numParticles }
-        println("Removed: ${remCnt}, added: ${addCnt}, total num particles: ${numParticles}")
+        println("Removed: $remCnt, added: $addCnt, total num particles: $numParticles")
     }
 
     fun changeDistanceVariance(variance: Float = DEFAULT_DIST_VARIANCE) {
@@ -70,9 +71,9 @@ class FastSLAM(val startPose: RobotPose, private val carMotionModel: CarModel, p
 
     private fun createR(distVar: Float, angVar: Float, identVar: Float): Matrix {
         return Matrix(arrayOf(
-                doubleArrayOf(distVar.toDouble(), 0.0, 0.0),
-                doubleArrayOf(0.0, angVar.toDouble(), 0.0),
-                doubleArrayOf(0.0, 0.0, identVar.toDouble())
+            doubleArrayOf(distVar.toDouble(), 0.0, 0.0),
+            doubleArrayOf(0.0, angVar.toDouble(), 0.0),
+            doubleArrayOf(0.0, 0.0, identVar.toDouble())
         ))
     }
 
@@ -105,9 +106,9 @@ class FastSLAM(val startPose: RobotPose, private val carMotionModel: CarModel, p
 
                     //...and the distance and angle from the sensor to the feature, find the residual:
                     val residual = Matrix(arrayOf(
-                            doubleArrayOf(feat.distance - particleDist.toDouble()),
-                            doubleArrayOf(feat.angle - particleAngle.toDouble()),
-                            doubleArrayOf(0.0)
+                        doubleArrayOf(feat.distance - particleDist.toDouble()),
+                        doubleArrayOf(feat.angle - particleAngle.toDouble()),
+                        doubleArrayOf(0.0)
                     ))
 
                     //Find the Kalman gain:
@@ -129,7 +130,7 @@ class FastSLAM(val startPose: RobotPose, private val carMotionModel: CarModel, p
                     //Update particle's weight:
                     val firstPart = FloatMath.pow(Q.times(2 * Math.PI).norm2().toFloat(), -0.5f)
                     val secondPart = FloatMath.exp((residual.transpose().times(-0.5)
-                            .times(Q.inverse()).times(residual))[0, 0].toFloat())
+                        .times(Q.inverse()).times(residual))[0, 0].toFloat())
                     newParticle.weight = newParticle.weight * firstPart * secondPart
 
                     newParticle.landmarks.markForUpdateOnCopy(updatedLand, land)

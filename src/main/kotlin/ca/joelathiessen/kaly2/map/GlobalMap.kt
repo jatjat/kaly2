@@ -5,7 +5,8 @@ import ca.joelathiessen.kaly2.odometry.RobotPose
 import ca.joelathiessen.util.FloatMath
 import ca.joelathiessen.util.distance
 import lejos.robotics.geometry.Point
-import java.util.*
+import java.util.ArrayList
+import java.util.HashSet
 
 class GlobalMap(private val stepDist: Float, private val obsSize: Float, private val removeInvalidObsInterval: Int) {
     var obstacles = MapTree()
@@ -21,7 +22,7 @@ class GlobalMap(private val stepDist: Float, private val obsSize: Float, private
     }
 
     private fun makeObstacles(improvedPose: RobotPose, unimprovedPose: RobotPose, measurements: List<Measurement>):
-            List<Point> {
+        List<Point> {
         return measurements.map {
             val improvedAngle = improvedPose.heading - unimprovedPose.heading + it.probAngle
             val improvedMesX = improvedPose.x + FloatMath.cos(improvedAngle) * it.distance
@@ -67,7 +68,7 @@ class GlobalMap(private val stepDist: Float, private val obsSize: Float, private
     }
 
     private fun getObstaclesUpToMes(improvedPose: RobotPose, mesObs: Point, obstacles: MapTree):
-            HashSet<Point> {
+        HashSet<Point> {
         val obstaclesUpToMes = HashSet<Point>()
 
         val spanDeltaX = mesObs.x - improvedPose.x

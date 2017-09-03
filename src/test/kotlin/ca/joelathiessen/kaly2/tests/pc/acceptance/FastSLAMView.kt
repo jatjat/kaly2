@@ -12,14 +12,15 @@ import ca.joelathiessen.util.getFeatureForPosition
 import org.mockito.Mockito
 import java.awt.Color
 import java.awt.Graphics
-import java.util.*
+import java.util.ArrayList
 import javax.swing.JFrame
 import javax.swing.JPanel
 import javax.swing.WindowConstants
 import kotlin.concurrent.fixedRateTimer
 
 object FastSLAMDemo {
-    @JvmStatic fun main(args: Array<String>) {
+    @JvmStatic
+    fun main(args: Array<String>) {
         val frame = JFrame()
         var panel = FastSLAMView()
         frame.add(panel)
@@ -93,7 +94,6 @@ class FastSLAMView : JPanel() {
         }
         this@FastSLAMView.repaint()
     }
-
 
     override fun paint(graphics: Graphics) {
 

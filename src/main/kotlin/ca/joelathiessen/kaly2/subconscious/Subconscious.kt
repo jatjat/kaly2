@@ -6,12 +6,12 @@ import ca.joelathiessen.kaly2.subconscious.sensor.Spinner
 import lejos.robotics.localization.OdometryPoseProvider
 import lejos.robotics.navigation.MovePilot
 import lejos.robotics.navigation.Pose
-import java.util.*
+import java.util.ArrayList
 import java.util.concurrent.ConcurrentLinkedQueue
 
 class Subconscious(private val sensor: Kaly2Sensor, private val pilot: MovePilot,
-                   private val odometry: OdometryPoseProvider, private val spinner: Spinner,
-                   private val sweeps: ConcurrentLinkedQueue<ArrayList<Measurement>>) : Runnable {
+    private val odometry: OdometryPoseProvider, private val spinner: Spinner,
+    private val sweeps: ConcurrentLinkedQueue<ArrayList<Measurement>>) : Runnable {
 
     // probable maximum number of measurements we will get per
     // 360 degree spin of the distance detector:
@@ -39,7 +39,6 @@ class Subconscious(private val sensor: Kaly2Sensor, private val pilot: MovePilot
                     Thread.currentThread().interrupt()
                 }
             }
-
 
             // spin the detector back or forth (if we spun one direction the
             // wires would jam):

@@ -6,8 +6,7 @@ import ca.joelathiessen.kaly2.slam.landmarks.Landmark
 import ca.joelathiessen.util.FloatMath
 import lejos.robotics.geometry.Point
 import lejos.robotics.navigation.Pose
-
-import java.util.*
+import java.util.HashMap
 
 class NNDataAssociator(val threshold: Float = 15.0f) : DataAssociator {
     override fun associate(pose: Pose, features: List<Feature>, landmarks: AssociatableLandmarks): Map<Feature, Landmark?> {

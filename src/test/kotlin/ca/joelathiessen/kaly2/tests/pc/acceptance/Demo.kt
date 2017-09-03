@@ -10,13 +10,13 @@ import lejos.hardware.motor.EV3LargeRegulatedMotor
 import lejos.robotics.localization.OdometryPoseProvider
 import lejos.robotics.navigation.MovePilot
 import org.mockito.Mockito
-import java.util.*
+import java.util.ArrayList
 import java.util.concurrent.ConcurrentLinkedQueue
-
 
 object Demo {
 
-    @JvmStatic fun main(args: Array<String>) {
+    @JvmStatic
+    fun main(args: Array<String>) {
         println("Running kaly2 on a PC, attempting to mock only access to the hardware")
 
         val sensor = Mockito.mock(Kaly2Sensor::class.java)
@@ -30,7 +30,6 @@ object Demo {
         val robot = Robot(sub, sweeps)
         val commander = Commander(robot)
         commander.takeCommands()
-
 
         println("Demo completed")
     }

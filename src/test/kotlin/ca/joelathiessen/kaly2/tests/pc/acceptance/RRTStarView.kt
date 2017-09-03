@@ -10,7 +10,8 @@ import lejos.robotics.geometry.Point
 import java.awt.Color
 import java.awt.Graphics
 import java.awt.Graphics2D
-import java.util.*
+import java.util.ArrayList
+import java.util.Collections
 import java.util.concurrent.Executors
 import javax.imageio.ImageIO
 import javax.swing.JFrame
@@ -20,7 +21,8 @@ import kotlin.concurrent.fixedRateTimer
 import kotlin.concurrent.thread
 
 object RRTStarDemo {
-    @JvmStatic fun main(args: Array<String>) {
+    @JvmStatic
+    fun main(args: Array<String>) {
         val frame = JFrame()
         var panel = RRTStarView()
         frame.add(panel)
@@ -76,7 +78,7 @@ class RRTStarView : JPanel() {
 
         val segmentFactory = LinearPathSegmentRootFactory()
         val planner = GlobalPathPlanner(segmentFactory, obstacles, OBS_SIZE, SEARCH_DIST, STEP_DIST,
-                RobotPose(0, 0f, xStart, yStart, 0f), RobotPose(0, 0f, xEnd, yEnd, 0f))
+            RobotPose(0, 0f, xStart, yStart, 0f), RobotPose(0, 0f, xEnd, yEnd, 0f))
 
         thread {
             while (true) {
@@ -103,7 +105,7 @@ class RRTStarView : JPanel() {
         synchronized(drawLock) {
             curPaths = paths
         }
-        
+
         curPaths!!.forEach {
             it.getLines().forEach {
                 graphics.drawLine(it.x1.toInt(), it.y1.toInt(), it.x2.toInt(), it.y2.toInt())

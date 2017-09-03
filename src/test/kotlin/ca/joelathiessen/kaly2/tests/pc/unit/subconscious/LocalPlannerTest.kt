@@ -8,7 +8,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.runners.MockitoJUnitRunner
-import java.util.*
+import java.util.ArrayList
 
 @RunWith(MockitoJUnitRunner::class)
 class LocalPlannerTest {
@@ -17,7 +17,7 @@ class LocalPlannerTest {
     val DEFAULT_SENSOR_Y = 0f
 
     fun makeMeasurement(x: Float, y: Float,
-                        sensorPos: RobotPose = RobotPose(0, 0f, DEFAULT_SENSOR_X, DEFAULT_SENSOR_Y, 0f)): Measurement {
+        sensorPos: RobotPose = RobotPose(0, 0f, DEFAULT_SENSOR_X, DEFAULT_SENSOR_Y, 0f)): Measurement {
         val deltaX = x - sensorPos.x
         val deltaY = y - sensorPos.y
         val dist = FloatMath.sqrt((deltaX * deltaX) + (deltaY * deltaY))
@@ -90,7 +90,7 @@ class LocalPlannerTest {
     @Test
     fun testBlockedByVertLine() {
         val staticObstacles = ArrayList<Measurement>()
-        for(y in -10 until 10 step 1) {
+        for (y in -10 until 10 step 1) {
             staticObstacles += makeMeasurement(1.9f, y.toFloat())
         }
 
@@ -115,7 +115,7 @@ class LocalPlannerTest {
     @Test
     fun testGoAroundVertLine() {
         val staticObstacles = ArrayList<Measurement>()
-        for(y in -10 until 1 step 1) {
+        for (y in -10 until 1 step 1) {
             staticObstacles += makeMeasurement(4.9f, y - 0.6f)
         }
 

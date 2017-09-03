@@ -5,7 +5,9 @@ import ca.joelathiessen.util.FloatMath
 import ca.joelathiessen.util.GenTree
 import ca.joelathiessen.util.distance
 import lejos.robotics.geometry.Point
-import java.util.*
+import java.util.ArrayList
+import java.util.LinkedList
+import java.util.Random
 
 /**
  * See:
@@ -14,9 +16,9 @@ import java.util.*
  * Robotics Science and Systems VI 104 (2010).
  **/
 class GlobalPathPlanner(private val pathFactory: PathSegmentRootFactory, private val obstacles: GenTree<Point>,
-                        private val obsSize: Float, private val searchDist: Float, private val stepDist: Float,
-                        startPose: RobotPose, endPose: RobotPose,
-                        private val defaultNumItrs: Int = 1000) {
+    private val obsSize: Float, private val searchDist: Float, private val stepDist: Float,
+    startPose: RobotPose, endPose: RobotPose,
+    private val defaultNumItrs: Int = 1000) {
     val paths: ArrayList<PathSegmentInfo>
         get() {
             return ArrayList(pathList)

@@ -3,41 +3,40 @@ package ca.joelathiessen.kaly2.server.messages
 import com.google.gson.annotations.Expose
 
 class FastSlamInfo(
-        val timestamp: Long,
-        val particles: List<RTParticle>,
-        val features: List<RTFeature>,
+    val timestamp: Long,
+    val particles: List<RTParticle>,
+    val features: List<RTFeature>,
 
-        val bestPose: RTPose,
-        val odoPose: RTPose,
-        val truePose: RTPose,
-        val trueLandmarks: List<RTLandmark>
+    val bestPose: RTPose,
+    val odoPose: RTPose,
+    val truePose: RTPose,
+    val trueLandmarks: List<RTLandmark>
 ) : RobotMsg {
     @Expose(serialize = false, deserialize = false)
     override var MSG_TYPE = "fastSlamInfo"
 }
 
-
 class RTPose(
-        val x: Float,
-        val y: Float,
-        val theta: Float
+    val x: Float,
+    val y: Float,
+    val theta: Float
 )
 
 class RTFeature(
-        val distance: Float,
-        val angle: Float,
-        val stdDev: Float
+    val distance: Float,
+    val angle: Float,
+    val stdDev: Float
 )
 
 class RTLandmark(
-        val x: Float,
-        val y: Float,
-        val stdDev: Float
+    val x: Float,
+    val y: Float,
+    val stdDev: Float
 )
 
 class RTParticle(
-        val x: Float,
-        val y: Float,
-        val theta: Float,
-        val Landmarks: List<RTLandmark>
+    val x: Float,
+    val y: Float,
+    val theta: Float,
+    val Landmarks: List<RTLandmark>
 )

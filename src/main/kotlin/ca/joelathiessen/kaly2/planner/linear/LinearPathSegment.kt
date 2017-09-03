@@ -6,13 +6,13 @@ import ca.joelathiessen.util.GenTree
 import ca.joelathiessen.util.distance
 import lejos.robotics.geometry.Line
 import lejos.robotics.geometry.Point
-import java.util.*
+import java.util.ArrayList
 
 class LinearPathSegment(x: Float, y: Float, parent: PathSegment?, cost: Float) : PathSegment(x, y, parent, cost) {
     val MIN_INCR = 0.0001f // handle 0 sized obstacles
 
     override fun makeChild(xChild: Float, yChild: Float, obstacles: GenTree<Point>, obsSize: Float):
-            LinearPathSegment? {
+        LinearPathSegment? {
 
         if (collides(obstacles, obsSize, x, y, xChild, yChild)) {
             return null
@@ -55,7 +55,7 @@ class LinearPathSegment(x: Float, y: Float, parent: PathSegment?, cost: Float) :
     }
 
     private fun collides(obstacles: GenTree<Point>, obsSize: Float, xChild: Float, yChild: Float,
-                         xParent: Float, yParent: Float): Boolean {
+        xParent: Float, yParent: Float): Boolean {
         val deltaX = xChild - xParent
         val deltaY = yChild - yParent
         val mag = FloatMath.sqrt((deltaX * deltaX) + (deltaY * deltaY))
