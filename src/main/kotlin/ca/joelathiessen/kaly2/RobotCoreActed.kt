@@ -60,7 +60,7 @@ class RobotCoreActed(private val initialGoal: RobotPose, private val accurateOdo
         slam.addTimeStep(detectedFeatures, odoPose)
         val avgPoseAfter = slam.avgPose
 
-        map.incorporateMeasurements(measurements, avgPoseAfter)
+        map.incorporateMeasurements(measurements, avgPoseAfter, odoPose)
 
         accurateOdo.setInputPoses(avgPoseAfter, odoPose)
 

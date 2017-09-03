@@ -17,8 +17,8 @@ class GlobalMap(private val stepDist: Float, private val obsSize: Float, private
 
     private var numCalled = 0
 
-    fun incorporateMeasurements(measurements: List<Measurement>, improvedPose: RobotPose) {
-        val mesObstacles = makeObstacles(improvedPose, measurements)
+    fun incorporateMeasurements(measurements: List<Measurement>, improvedPose: RobotPose, unimprovedPose: RobotPose) {
+        val mesObstacles = makeObstacles(improvedPose, unimprovedPose, measurements)
 
         // The map should have no obstacles between the sensor and the detected obstacle:
         mesObstacles.forEach { shouldRemove.addAll(getObstaclesUpToMes(improvedPose, it, obstacles)) }
@@ -46,10 +46,10 @@ class GlobalMap(private val stepDist: Float, private val obsSize: Float, private
         numCalled++
     }
 
-    private fun makeObstacles(improvedPose: RobotPose, measurements: List<Measurement>):
+    private fun makeObstacles(improvedPose: RobotPose, unimprovedPose: RobotPose, measurements: List<Measurement>):
             List<Point> {
         return measurements.map {
-            val improvedAngle = improvedPose.heading - it.odoPose.heading + it.probAngle
+            val improvedAngle = improvedPose.heading - unimprovedPose.heading + it.probAngle
             val improvedMesX = FloatMath.sin(improvedAngle) * it.distance
             val improvedMesY = FloatMath.sin(improvedAngle) * it.distance
 
