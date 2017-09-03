@@ -27,7 +27,7 @@ class GlobalMapTest {
 
         map.incorporateMeasurements(measurements, improvedPose, unimprovedPose)
 
-        val nearest = map.obstacles.getNearestNeighbors(0f, 0f).asSequence().toList()
+        val nearest = map.obstacles.getNearestObstacles(0f, 0f).asSequence().toList()
         assertEquals(1, nearest.size)
 
         assertEquals(measurements[0].x, nearest[0].x, EPSILON)
@@ -53,7 +53,7 @@ class GlobalMapTest {
 
         map.incorporateMeasurements(secondMeasurements, improvedPose, unimprovedPose)
 
-        val nearest = map.obstacles.getNearestNeighbors(0f, 0f).asSequence().toList()
+        val nearest = map.obstacles.getNearestObstacles(0f, 0f).asSequence().toList()
         assertEquals(2, nearest.size)
 
         assertEquals(secondMeasurements[0].x, nearest[0].x, EPSILON)

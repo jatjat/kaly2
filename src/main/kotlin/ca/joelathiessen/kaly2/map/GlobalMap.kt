@@ -3,47 +3,21 @@ package ca.joelathiessen.kaly2.map
 import ca.joelathiessen.kaly2.Measurement
 import ca.joelathiessen.kaly2.odometry.RobotPose
 import ca.joelathiessen.util.FloatMath
-import ca.joelathiessen.util.GenTree
 import ca.joelathiessen.util.distance
 import lejos.robotics.geometry.Point
 import java.util.*
 
 class GlobalMap(private val stepDist: Float, private val obsSize: Float, private val removeInvalidObsInterval: Int) {
-    var obstacles = GenTree<Point>()
+    var obstacles = MapTree()
         private set
 
     private var obstacleList = ArrayList<Point>()
     private var shouldRemove = HashSet<Point>()
-
     private var numCalled = 0
 
     fun incorporateMeasurements(measurements: List<Measurement>, improvedPose: RobotPose, unimprovedPose: RobotPose) {
         val mesObstacles = makeObstacles(improvedPose, unimprovedPose, measurements)
-
-        // The map should have no obstacles between the sensor and the detected obstacle:
-        mesObstacles.forEach { shouldRemove.addAll(getObstaclesUpToMes(improvedPose, it, obstacles)) }
-
-        // It's expensive to always recreate the obstacle tree with removed obstacles:
-        if (numCalled > 0 && numCalled % removeInvalidObsInterval == 0) {
-            val newObstacles = GenTree<Point>()
-            val newObstacleList = ArrayList<Point>()
-            obstacleList.forEach {
-                if (shouldRemove.contains(it) == false) {
-                    newObstacles.add(it.x, it.y, it)
-                    newObstacleList.add(it)
-                }
-            }
-            obstacles = newObstacles
-            obstacleList = newObstacleList
-            shouldRemove = HashSet()
-        }
-
-        mesObstacles.forEach {
-            obstacles.add(it.x, it.y, it)
-            obstacleList.add(it)
-        }
-
-        numCalled++
+        return incorporateObstacles(mesObstacles, improvedPose)
     }
 
     private fun makeObstacles(improvedPose: RobotPose, unimprovedPose: RobotPose, measurements: List<Measurement>):
@@ -57,7 +31,42 @@ class GlobalMap(private val stepDist: Float, private val obsSize: Float, private
         }
     }
 
-    private fun getObstaclesUpToMes(improvedPose: RobotPose, mesObs: Point, obstacles: GenTree<Point>):
+    private fun incorporateObstacles(newObstacles: List<Point>, improvedPose: RobotPose) {
+        var newObsSize = 0
+        // The map should have no obstacles between the sensor and the detected obstacle:
+        newObstacles.forEach {
+            shouldRemove.addAll(getObstaclesUpToMes(improvedPose, it, obstacles))
+            newObsSize++
+        }
+
+        // It's expensive to recreate the obstacle tree:
+        if (numCalled > 0 && numCalled % removeInvalidObsInterval == 0) {
+            val nextObstacles = MapTree()
+            val nextObstacleList = ArrayList<Point>()
+            obstacleList.forEach {
+                if (shouldRemove.contains(it) == false) {
+                    nextObstacles.add(it)
+                    nextObstacleList.add(it)
+                }
+            }
+            newObstacles.forEach {
+                nextObstacles.add(it)
+                nextObstacleList.add(it)
+            }
+
+            obstacles = nextObstacles
+            obstacleList = nextObstacleList
+            shouldRemove = HashSet()
+        } else {
+            newObstacles.forEach {
+                obstacles = obstacles.addAsCopy(it)
+                obstacleList.add(it)
+            }
+        }
+        numCalled++
+    }
+
+    private fun getObstaclesUpToMes(improvedPose: RobotPose, mesObs: Point, obstacles: MapTree):
             HashSet<Point> {
         val obstaclesUpToMes = HashSet<Point>()
 
@@ -71,7 +80,7 @@ class GlobalMap(private val stepDist: Float, private val obsSize: Float, private
             val curX = improvedPose.x + (t * spanDeltaX)
             val curY = improvedPose.y + (t * spanDeltaY)
 
-            val nextObstacles = obstacles.getNearestNeighbors(curX, curY)
+            val nextObstacles = obstacles.getNearestObstacles(curX, curY)
             var maxDist = 0f
             var shouldCont = true
             while (nextObstacles.hasNext() && shouldCont) {

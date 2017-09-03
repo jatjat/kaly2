@@ -83,7 +83,6 @@ class GlobalPathPlanner(private val pathFactory: PathSegmentRootFactory, private
                     if (rand.nextFloat() < PROB_REWIRE_ROOT) {
                         rewire(rootNode, pathTree, searchRadius)
                     }
-
                 }
             }
         }
