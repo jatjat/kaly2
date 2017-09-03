@@ -12,7 +12,7 @@ import lejos.robotics.navigation.Pose
 import java.util.*
 
 
-data class RobotCoreActedResults(val timestamp: Long, val features: List<Feature>,
+data class RobotCoreActedResults(val timestamp: Long, val features: List<Feature>, val slamPose: RobotPose,
                                  val maneuvers: List<RobotPose>, val globalPlannerPaths: List<PathSegmentInfo>,
                                  val subconcResults: SubconsciousActedResults,
                                  val particlePoses: List<Pose>, val numItrs: Long)
@@ -79,7 +79,7 @@ class RobotCoreActed(private val initialGoal: RobotPose, private val accurateOdo
 
         currentPlanItrs++
         numItrs++
-        return RobotCoreActedResults(System.currentTimeMillis(), features, maneuvers, paths, curResults,
+        return RobotCoreActedResults(System.currentTimeMillis(), features, avgPoseAfter, maneuvers, paths, curResults,
                 particlePoses, numItrs)
     }
 }
