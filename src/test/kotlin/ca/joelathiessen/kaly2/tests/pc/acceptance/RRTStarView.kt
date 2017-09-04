@@ -1,10 +1,10 @@
 package ca.joelathiessen.kaly2.tests.pc.acceptance
 
+import ca.joelathiessen.kaly2.map.MapTree
 import ca.joelathiessen.kaly2.odometry.RobotPose
 import ca.joelathiessen.kaly2.planner.GlobalPathPlanner
 import ca.joelathiessen.kaly2.planner.PathSegmentInfo
 import ca.joelathiessen.kaly2.planner.linear.LinearPathSegmentRootFactory
-import ca.joelathiessen.util.GenTree
 import lejos.robotics.geometry.Line
 import lejos.robotics.geometry.Point
 import java.awt.Color
@@ -53,7 +53,7 @@ class RRTStarView : JPanel() {
     init {
         this.setSize(WINDOW_SIZE, WINDOW_SIZE)
 
-        val obstacles = GenTree<Point>()
+        val obstacles = MapTree()
 
         var xStart = HALF_SIZE.toFloat()
         var yStart = HALF_SIZE.toFloat()
@@ -74,7 +74,7 @@ class RRTStarView : JPanel() {
             }
         }
         Collections.shuffle(points)
-        points.forEach { obstacles.add(it.x, it.y, it) }
+        points.forEach { obstacles.add(it) }
 
         val segmentFactory = LinearPathSegmentRootFactory()
         val planner = GlobalPathPlanner(segmentFactory, obstacles, OBS_SIZE, SEARCH_DIST, STEP_DIST,

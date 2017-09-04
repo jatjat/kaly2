@@ -1,10 +1,10 @@
 package ca.joelathiessen.kaly2.planner
 
+import ca.joelathiessen.kaly2.map.MapTree
 import ca.joelathiessen.kaly2.odometry.RobotPose
 import ca.joelathiessen.util.FloatMath
 import ca.joelathiessen.util.GenTree
 import ca.joelathiessen.util.distance
-import lejos.robotics.geometry.Point
 import java.util.ArrayList
 import java.util.LinkedList
 import java.util.Random
@@ -15,7 +15,7 @@ import java.util.Random
  * "Incremental sampling-based algorithms for optimal motion planning."
  * Robotics Science and Systems VI 104 (2010).
  **/
-class GlobalPathPlanner(private val pathFactory: PathSegmentRootFactory, private val obstacles: GenTree<Point>,
+class GlobalPathPlanner(private val pathFactory: PathSegmentRootFactory, private var obstacles: MapTree,
     private val obsSize: Float, private val searchDist: Float, private val stepDist: Float,
     startPose: RobotPose, endPose: RobotPose,
     private val defaultNumItrs: Int = 1000) {
@@ -52,8 +52,9 @@ class GlobalPathPlanner(private val pathFactory: PathSegmentRootFactory, private
         nodeCount = 1f
     }
 
-    fun planFrom(startPose: RobotPose) {
+    fun planFrom(startPose: RobotPose, obstacles: MapTree) {
         start = startPose
+        this.obstacles = obstacles
         reroot()
     }
 

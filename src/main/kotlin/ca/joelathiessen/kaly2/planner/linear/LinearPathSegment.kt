@@ -1,17 +1,16 @@
 package ca.joelathiessen.kaly2.planner.linear
 
+import ca.joelathiessen.kaly2.map.MapTree
 import ca.joelathiessen.kaly2.planner.PathSegment
 import ca.joelathiessen.util.FloatMath
-import ca.joelathiessen.util.GenTree
 import ca.joelathiessen.util.distance
 import lejos.robotics.geometry.Line
-import lejos.robotics.geometry.Point
 import java.util.ArrayList
 
 class LinearPathSegment(x: Float, y: Float, parent: PathSegment?, cost: Float) : PathSegment(x, y, parent, cost) {
     val MIN_INCR = 0.0001f // handle 0 sized obstacles
 
-    override fun makeChild(xChild: Float, yChild: Float, obstacles: GenTree<Point>, obsSize: Float):
+    override fun makeChild(xChild: Float, yChild: Float, obstacles: MapTree, obsSize: Float):
         LinearPathSegment? {
 
         if (collides(obstacles, obsSize, x, y, xChild, yChild)) {
@@ -22,7 +21,7 @@ class LinearPathSegment(x: Float, y: Float, parent: PathSegment?, cost: Float) :
         }
     }
 
-    override fun changeParentIfCheaper(posNewParent: PathSegment, obstacles: GenTree<Point>, obsSize: Float) {
+    override fun changeParentIfCheaper(posNewParent: PathSegment, obstacles: MapTree, obsSize: Float) {
         var curTotalCost = 0f
         var curSeg: PathSegment? = this
         while (curSeg != null) {
@@ -54,7 +53,7 @@ class LinearPathSegment(x: Float, y: Float, parent: PathSegment?, cost: Float) :
         return lines
     }
 
-    private fun collides(obstacles: GenTree<Point>, obsSize: Float, xChild: Float, yChild: Float,
+    private fun collides(obstacles: MapTree, obsSize: Float, xChild: Float, yChild: Float,
         xParent: Float, yParent: Float): Boolean {
         val deltaX = xChild - xParent
         val deltaY = yChild - yParent
@@ -67,7 +66,7 @@ class LinearPathSegment(x: Float, y: Float, parent: PathSegment?, cost: Float) :
         while (distIncr < mag && !collided) {
             val xIncr = xParent + deltaXUnit * distIncr
             val yIncr = yParent + deltaYUnit * distIncr
-            val nearest = obstacles.getNearestNeighbors(xIncr, yIncr)
+            val nearest = obstacles.getNearestObstacles(xIncr, yIncr)
             if (nearest.hasNext()) {
                 val next = nearest.next()
                 val dist = distance(next.x, xIncr, next.y, yIncr)

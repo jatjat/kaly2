@@ -1,10 +1,9 @@
 package ca.joelathiessen.kaly2.tests.pc.unit.subconscious
 
+import ca.joelathiessen.kaly2.map.MapTree
 import ca.joelathiessen.kaly2.odometry.RobotPose
 import ca.joelathiessen.kaly2.planner.GlobalPathPlanner
 import ca.joelathiessen.kaly2.planner.linear.LinearPathSegmentRootFactory
-import ca.joelathiessen.util.GenTree
-import lejos.robotics.geometry.Point
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Test
@@ -19,7 +18,7 @@ class GlobalPathPlannerTest {
     fun testNoObs() {
         val factory = LinearPathSegmentRootFactory()
 
-        val obsTree = GenTree<Point>()
+        val obsTree = MapTree()
         val obsSize = 0.1f
         val searchDist = 1.2f
         val stepDist = 0.2f

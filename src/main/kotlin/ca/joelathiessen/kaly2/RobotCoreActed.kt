@@ -3,6 +3,7 @@ package ca.joelathiessen.kaly2
 import ca.joelathiessen.kaly2.featuredetector.Feature
 import ca.joelathiessen.kaly2.featuredetector.FeatureDetector
 import ca.joelathiessen.kaly2.map.GlobalMap
+import ca.joelathiessen.kaly2.map.MapTree
 import ca.joelathiessen.kaly2.odometry.AccurateSlamOdometry
 import ca.joelathiessen.kaly2.odometry.RobotPose
 import ca.joelathiessen.kaly2.planner.PathSegmentInfo
@@ -45,7 +46,7 @@ class RobotCoreActed(private val initialGoal: RobotPose, private val accurateOdo
 
     var reqPlannerManeuvers: () -> Unit = {}
     var sendPlannerManeuversToLocalPlanner: (List<RobotPose>) -> Unit = {}
-    var planFrom: (RobotPose) -> Unit = {}
+    var planFrom = { _: RobotPose, _: MapTree -> Unit }
     var planTo: (RobotPose) -> Unit = {}
 
     fun onManeuverResults(newManeuvers: List<RobotPose>) {
@@ -79,7 +80,7 @@ class RobotCoreActed(private val initialGoal: RobotPose, private val accurateOdo
         }
 
         if (currentPlanItrs == UPDATE_PLAN_START_POSE_INTERVAL) {
-            planFrom(avgPoseAfter)
+            planFrom(avgPoseAfter, map.obstacleTree)
             currentPlanItrs = 0
         }
 

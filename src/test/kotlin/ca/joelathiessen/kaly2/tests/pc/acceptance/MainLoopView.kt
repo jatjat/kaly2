@@ -6,6 +6,7 @@ import ca.joelathiessen.kaly2.RobotCoreRsltsMsg
 import ca.joelathiessen.kaly2.featuredetector.Feature
 import ca.joelathiessen.kaly2.featuredetector.SplitAndMerge
 import ca.joelathiessen.kaly2.map.GlobalMap
+import ca.joelathiessen.kaly2.map.MapTree
 import ca.joelathiessen.kaly2.odometry.AccurateSlamOdometry
 import ca.joelathiessen.kaly2.odometry.CarModel
 import ca.joelathiessen.kaly2.odometry.RobotPose
@@ -28,7 +29,6 @@ import ca.joelathiessen.kaly2.subconscious.sensor.SimSensor
 import ca.joelathiessen.kaly2.subconscious.sensor.SimSpinner
 import ca.joelathiessen.kaly2.subconscious.sensor.Spinnable
 import ca.joelathiessen.util.FloatMath
-import ca.joelathiessen.util.GenTree
 import ca.joelathiessen.util.array2d
 import ca.joelathiessen.util.itractor.ItrActorChannel
 import ca.joelathiessen.util.itractor.ItrActorThreadedHost
@@ -118,7 +118,7 @@ class MainLoopView : JPanel() {
     private val realLocs = ArrayList<RobotPose>()
     private var odoLocs: ArrayList<Pose> = ArrayList()
 
-    private val obstacles = GenTree<Point>()
+    private val obstacles = MapTree()
     private val obsGrid = array2d<Point?>(image.width, image.height, { null })
 
     private var drawParticlePoses: List<Pose> = ArrayList()
@@ -163,7 +163,7 @@ class MainLoopView : JPanel() {
         val end = RobotPose(0, 0f, xEnd, yEnd, 0f)
 
         Collections.shuffle(points)
-        points.forEach { obstacles.add(it.x, it.y, it) }
+        points.forEach { obstacles.add(it) }
 
         val simPilot = SimulatedPilot(ODO_ANG_STD_DEV, ODO_DIST_STD_DEV, STEP_DIST, startPose)
         val simSpinner = SimSpinner(SENSOR_START_ANG, SENSOR_END_ANG, SENSOR_ANG_INCR)

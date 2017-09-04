@@ -1,5 +1,6 @@
 package ca.joelathiessen.kaly2
 
+import ca.joelathiessen.kaly2.map.MapTree
 import ca.joelathiessen.kaly2.odometry.RobotPose
 import ca.joelathiessen.kaly2.planner.PlanFromMsg
 import ca.joelathiessen.kaly2.planner.PlanToMsg
@@ -20,7 +21,7 @@ class RobotCoreActor(private val robotCore: RobotCoreActed, inputChannel: ItrAct
         robotCore.sendPlannerManeuversToLocalPlanner = { maneuvers: List<RobotPose> ->
             subconscInputChannel.addMsg(PlannerManeuversMsg(maneuvers))
         }
-        robotCore.planFrom = { startPose: RobotPose -> plannerInputChannel.addMsg(PlanFromMsg(startPose)) }
+        robotCore.planFrom = { startPose: RobotPose, obstacles: MapTree -> plannerInputChannel.addMsg(PlanFromMsg(startPose, obstacles)) }
         robotCore.planTo = { endPose: RobotPose -> plannerInputChannel.addMsg(PlanToMsg(endPose)) }
     }
 
