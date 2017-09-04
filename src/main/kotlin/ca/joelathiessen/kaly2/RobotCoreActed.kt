@@ -11,6 +11,7 @@ import ca.joelathiessen.kaly2.subconscious.SubconsciousActedResults
 import lejos.robotics.geometry.Point
 import lejos.robotics.navigation.Pose
 import java.util.ArrayList
+import java.util.Random
 
 data class RobotCoreActedResults(val timestamp: Long, val features: List<Feature>, val obstacles: List<Point>,
     val slamPose: RobotPose, val maneuvers: List<RobotPose>, val globalPlannerPaths: List<PathSegmentInfo>,
@@ -22,6 +23,9 @@ class RobotCoreActed(private val initialGoal: RobotPose, private val accurateOdo
     private val map: GlobalMap) {
     private val REQ_MAN_INTERVAL = 5
     private val UPDATE_PLAN_START_POSE_INTERVAL = 10
+    private val UPDATE_PLAN_END_POSE_INTERVAL = 20
+    private val MAX_PLAN_DIST = 4096
+    private val random = Random(0)
     private var numItrs = 0L
     private var currentPlanItrs = 0
 
@@ -42,6 +46,7 @@ class RobotCoreActed(private val initialGoal: RobotPose, private val accurateOdo
     var reqPlannerManeuvers: () -> Unit = {}
     var sendPlannerManeuversToLocalPlanner: (List<RobotPose>) -> Unit = {}
     var planFrom: (RobotPose) -> Unit = {}
+    var planTo: (RobotPose) -> Unit = {}
 
     fun onManeuverResults(newManeuvers: List<RobotPose>) {
         maneuvers = newManeuvers
@@ -76,6 +81,12 @@ class RobotCoreActed(private val initialGoal: RobotPose, private val accurateOdo
         if (currentPlanItrs == UPDATE_PLAN_START_POSE_INTERVAL) {
             planFrom(avgPoseAfter)
             currentPlanItrs = 0
+        }
+
+        if ((numItrs % UPDATE_PLAN_END_POSE_INTERVAL) == 0L) {
+            val randomEnd = RobotPose(0, 0f, (random.nextFloat() - 0.5f) * MAX_PLAN_DIST,
+                (random.nextFloat() - 0.5f) * MAX_PLAN_DIST, 0f)
+            planTo(randomEnd)
         }
 
         currentPlanItrs++
