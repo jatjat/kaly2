@@ -96,7 +96,7 @@ class MainLoopView : JPanel() {
     private val LCL_PLN_MAX_ROT = 1f
     private val LCL_PLN_MAX_DIST = 20f
 
-    private val MAP_REMOVE_INVALID_OBS_INTERVAL = 100
+    private val MAP_REMOVE_INVALID_OBS_INTERVAL = 10
 
     private val MIN_MES_TIME = 160L
 
@@ -127,10 +127,12 @@ class MainLoopView : JPanel() {
     private var drawPaths: List<PathSegmentInfo> = ArrayList<PathSegmentInfo>()
     private var drawManeuvers: List<RobotPose> = ArrayList()
     private var drawPlan = LocalPlan(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0f)
+    private var drawObstacles: List<Point> = ArrayList()
 
     private val drawPathLock = Any()
     private val drawManeuversLock = Any()
     private val drawPlanLock = Any()
+    private val drawObsLock = Any()
 
     private val factory = LinearPathSegmentRootFactory()
 
@@ -238,6 +240,9 @@ class MainLoopView : JPanel() {
                 synchronized(drawPartLock) {
                     drawParticlePoses = results.particlePoses
                 }
+                synchronized(drawObsLock) {
+                    drawObstacles = results.obstacles
+                }
             }
         }
 
@@ -249,6 +254,14 @@ class MainLoopView : JPanel() {
     override fun paint(graphics: Graphics) {
         val graphics2d = graphics as Graphics2D
         graphics2d.drawImage(image, 0, 0, null)
+
+        // draw the obstacles
+        graphics.color = Color.ORANGE
+        synchronized(drawObsLock) {
+            drawObstacles.forEach {
+                graphics.drawRect(it.x.toInt(), it.y.toInt(), 1, 1)
+            }
+        }
 
         // draw the drawPaths
         graphics.color = Color.LIGHT_GRAY

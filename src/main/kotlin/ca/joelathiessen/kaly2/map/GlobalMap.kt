@@ -9,22 +9,24 @@ import java.util.ArrayList
 import java.util.HashSet
 
 class GlobalMap(private val stepDist: Float, private val obsSize: Float, private val removeInvalidObsInterval: Int) {
-    var obstacles = MapTree()
+    var obstacleTree = MapTree()
+        private set
+    private var internalObstacleList = ArrayList<Point>()
+    var obstacleList = ArrayList(internalObstacleList)
+        get() { return ArrayList(internalObstacleList) }
         private set
 
-    private var obstacleList = ArrayList<Point>()
     private var shouldRemove = HashSet<Point>()
     private var numCalled = 0
 
-    fun incorporateMeasurements(measurements: List<Measurement>, improvedPose: RobotPose, unimprovedPose: RobotPose) {
-        val mesObstacles = makeObstacles(improvedPose, unimprovedPose, measurements)
+    fun incorporateMeasurements(measurements: List<Measurement>, improvedPose: RobotPose) {
+        val mesObstacles = makeObstacles(improvedPose, measurements)
         return incorporateObstacles(mesObstacles, improvedPose)
     }
 
-    private fun makeObstacles(improvedPose: RobotPose, unimprovedPose: RobotPose, measurements: List<Measurement>):
-        List<Point> {
+    private fun makeObstacles(improvedPose: RobotPose, measurements: List<Measurement>): List<Point> {
         return measurements.map {
-            val improvedAngle = improvedPose.heading - unimprovedPose.heading + it.probAngle
+            val improvedAngle = improvedPose.heading - it.probPose.heading + it.probAngle
             val improvedMesX = improvedPose.x + FloatMath.cos(improvedAngle) * it.distance
             val improvedMesY = improvedPose.y + FloatMath.sin(improvedAngle) * it.distance
 
@@ -36,7 +38,7 @@ class GlobalMap(private val stepDist: Float, private val obsSize: Float, private
         var newObsSize = 0
         // The map should have no obstacles between the sensor and the detected obstacle:
         newObstacles.forEach {
-            shouldRemove.addAll(getObstaclesUpToMes(improvedPose, it, obstacles))
+            shouldRemove.addAll(getObstaclesUpToMes(improvedPose, it, obstacleTree))
             newObsSize++
         }
 
@@ -44,7 +46,7 @@ class GlobalMap(private val stepDist: Float, private val obsSize: Float, private
         if (numCalled > 0 && numCalled % removeInvalidObsInterval == 0) {
             val nextObstacles = MapTree()
             val nextObstacleList = ArrayList<Point>()
-            obstacleList.forEach {
+            internalObstacleList.forEach {
                 if (shouldRemove.contains(it) == false) {
                     nextObstacles.add(it)
                     nextObstacleList.add(it)
@@ -55,13 +57,13 @@ class GlobalMap(private val stepDist: Float, private val obsSize: Float, private
                 nextObstacleList.add(it)
             }
 
-            obstacles = nextObstacles
-            obstacleList = nextObstacleList
+            obstacleTree = nextObstacles
+            internalObstacleList = nextObstacleList
             shouldRemove = HashSet()
         } else {
             newObstacles.forEach {
-                obstacles = obstacles.addAsCopy(it)
-                obstacleList.add(it)
+                obstacleTree = obstacleTree.addAsCopy(it)
+                internalObstacleList.add(it)
             }
         }
         numCalled++
@@ -75,7 +77,8 @@ class GlobalMap(private val stepDist: Float, private val obsSize: Float, private
         val spanDeltaY = mesObs.y - improvedPose.y
         val spanDist = distance(mesObs.x, improvedPose.x, mesObs.y, improvedPose.y)
 
-        val endT = 1f - ((obsSize / 2f) / spanDist)
+        val stepT = stepDist / spanDist
+        val endT = 1f - (obsSize / spanDist)
         var t = 0f
         while (t < endT) {
             val curX = improvedPose.x + (t * spanDeltaX)
@@ -97,7 +100,7 @@ class GlobalMap(private val stepDist: Float, private val obsSize: Float, private
                 }
             }
 
-            t += Math.max(stepDist, maxDist / spanDist)
+            t += Math.max(stepT, maxDist / spanDist)
         }
         return obstaclesUpToMes
     }

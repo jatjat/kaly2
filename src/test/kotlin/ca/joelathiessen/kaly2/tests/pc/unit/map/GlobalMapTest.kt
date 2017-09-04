@@ -18,16 +18,15 @@ class GlobalMapTest {
     @Test
     fun testOneMes() {
         val improvedPose = RobotPose(0, 0f, ROBOT_POSE, ROBOT_POSE, 0f)
-        val unimprovedPose = RobotPose(0, 0f, ROBOT_POSE - 0.5f, ROBOT_POSE - 0.5f, 0f)
 
         val map = GlobalMap(0.1f, 0.1f, 2)
 
         val measurements = ArrayList<Measurement>()
         measurements.add(makeMeasFromXY(0.0f, 0.0f, ROBOT_POSE, ROBOT_POSE))
 
-        map.incorporateMeasurements(measurements, improvedPose, unimprovedPose)
+        map.incorporateMeasurements(measurements, improvedPose)
 
-        val nearest = map.obstacles.getNearestObstacles(0f, 0f).asSequence().toList()
+        val nearest = map.obstacleTree.getNearestObstacles(0f, 0f).asSequence().toList()
         assertEquals(1, nearest.size)
 
         assertEquals(measurements[0].x, nearest[0].x, EPSILON)
@@ -37,7 +36,6 @@ class GlobalMapTest {
     @Test
     fun testKeepTwoPointsOfFourPointLine() {
         val improvedPose = RobotPose(0, 0f, ROBOT_POSE, ROBOT_POSE, 0f)
-        val unimprovedPose = RobotPose(0, 0f, ROBOT_POSE - 0.5f, ROBOT_POSE - 0.5f, 0f)
 
         val map = GlobalMap(0.1f, 1f, 1)
 
@@ -45,15 +43,15 @@ class GlobalMapTest {
         firstMeasurements.add(makeMeasFromXY(0.0f, 0.0f, ROBOT_POSE, ROBOT_POSE))
         firstMeasurements.add(makeMeasFromXY(0.0f, 1.0f, ROBOT_POSE, ROBOT_POSE))
 
-        map.incorporateMeasurements(firstMeasurements, improvedPose, unimprovedPose)
+        map.incorporateMeasurements(firstMeasurements, improvedPose)
 
         val secondMeasurements = ArrayList<Measurement>()
         secondMeasurements.add(makeMeasFromXY(0.0f, 2.0f, ROBOT_POSE, ROBOT_POSE))
         secondMeasurements.add(makeMeasFromXY(0.0f, 3.0f, ROBOT_POSE, ROBOT_POSE))
 
-        map.incorporateMeasurements(secondMeasurements, improvedPose, unimprovedPose)
+        map.incorporateMeasurements(secondMeasurements, improvedPose)
 
-        val nearest = map.obstacles.getNearestObstacles(0f, 0f).asSequence().toList()
+        val nearest = map.obstacleTree.getNearestObstacles(0f, 0f).asSequence().toList()
         assertEquals(2, nearest.size)
 
         assertEquals(secondMeasurements[0].x, nearest[0].x, EPSILON)

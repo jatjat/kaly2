@@ -12,8 +12,7 @@ import ca.joelathiessen.util.itractor.StopMsg
 
 class RobotCoreActor(private val robotCore: RobotCoreActed, inputChannel: ItrActorChannel,
     private val outputChannel: ItrActorChannel, private val plannerInputChannel: ItrActorChannel,
-    private val subconscInputChannel: ItrActorChannel)
-    : ItrActor(inputChannel) {
+    private val subconscInputChannel: ItrActorChannel) : ItrActor(inputChannel) {
 
     init {
         robotCore.reqPlannerManeuvers = { plannerInputChannel.addMsg(ReqPlannerManeuvers()) }

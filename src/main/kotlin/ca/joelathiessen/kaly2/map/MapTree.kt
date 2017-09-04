@@ -8,7 +8,6 @@ class MapTree() : ReadableMap {
     private val DIMENSIONS = 2
     private val BUCKET_CAPACITY = 24
     private var kdTree: KdTree<Point> = KdTree(DIMENSIONS, BUCKET_CAPACITY)
-
     private val sqEucDistFunc = SquareEuclideanDistanceFunction()
 
     constructor(obstacles: KdTree<Point>) : this() {
@@ -25,7 +24,7 @@ class MapTree() : ReadableMap {
     }
 
     fun addAsCopy(point: Point): MapTree {
-        return MapTree(kdTree.addPointAsCopy(doubleArrayOf(point.x.toDouble(), point.y.toDouble()), point))
+        return MapTree(kdTree.addPointAsCopy(doubleArrayOf(point.x.toDouble(), point.y.toDouble()), point))//, nextList)
     }
 
     fun add(point: Point) {
