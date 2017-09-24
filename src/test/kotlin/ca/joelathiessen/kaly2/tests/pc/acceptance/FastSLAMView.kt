@@ -59,7 +59,7 @@ class FastSLAMView : JPanel() {
     var x = MIN_WIDTH / 2
     var y = MIN_WIDTH / 2
     var theta = 0.1f
-    var times = 0
+    var times = 0L
 
     lateinit var drawOdoLocs: List<Pair<Int, Int>>
     lateinit var drawParticlePoses: List<Pair<Int, Int>>

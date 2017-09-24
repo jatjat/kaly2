@@ -1,5 +1,8 @@
 package ca.joelathiessen.util
 
+val DEC_FOR_FLT_PREC = 8
+val DEC_FOR_FLT_SCALE = 5
+
 val EPSILON = 0.000001f
 fun equals(a: Float, b: Float): Boolean {
     return within(a, b, EPSILON)

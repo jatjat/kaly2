@@ -85,7 +85,7 @@ class RobotHandler(val rid: Long) {
             var odoY = y
             var odoTheta = theta
 
-            var times = 0
+            var times = 0L
             val odoLocs = ArrayList<RobotPose>()
             val realLocs = ArrayList<RobotPose>()
 

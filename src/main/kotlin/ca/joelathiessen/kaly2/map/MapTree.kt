@@ -24,7 +24,7 @@ class MapTree() : ReadableMap {
     }
 
     fun addAsCopy(point: Point): MapTree {
-        return MapTree(kdTree.addPointAsCopy(doubleArrayOf(point.x.toDouble(), point.y.toDouble()), point))//, nextList)
+        return MapTree(kdTree.addPointAsCopy(doubleArrayOf(point.x.toDouble(), point.y.toDouble()), point))
     }
 
     fun add(point: Point) {
