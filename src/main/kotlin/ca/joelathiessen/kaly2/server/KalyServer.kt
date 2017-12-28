@@ -19,8 +19,8 @@ class KalyServer {
             servletContextHandler.addServlet(RestApiServlet::class.java, REST_API_ROBOT_PATH)
             servletContextHandler.addServlet(DefaultServlet::class.java, ROOT_PATH)
 
-            val robotsManager = RobotsManager()
-            servletContextHandler.setAttribute("robotsManager", robotsManager)
+            val robotSessionManager = RobotSessionManager()
+            servletContextHandler.setAttribute("robotSessionManager", robotSessionManager)
 
             val contexts = HandlerList()
             contexts.handlers = arrayOf(servletContextHandler)

@@ -3,14 +3,7 @@ package ca.joelathiessen.kaly2.server
 import ca.joelathiessen.kaly2.featuredetector.Feature
 import ca.joelathiessen.kaly2.odometry.CarModel
 import ca.joelathiessen.kaly2.odometry.RobotPose
-import ca.joelathiessen.kaly2.server.messages.FastSlamInfo
-import ca.joelathiessen.kaly2.server.messages.FastSlamSettingsMsg
-import ca.joelathiessen.kaly2.server.messages.RTFeature
-import ca.joelathiessen.kaly2.server.messages.RTLandmark
-import ca.joelathiessen.kaly2.server.messages.RTMsg
-import ca.joelathiessen.kaly2.server.messages.RTParticle
-import ca.joelathiessen.kaly2.server.messages.RTPose
-import ca.joelathiessen.kaly2.server.messages.RobotSettingsMsg
+import ca.joelathiessen.kaly2.server.messages.*
 import ca.joelathiessen.kaly2.slam.FastSLAM
 import ca.joelathiessen.kaly2.slam.FastUnbiasedResampler
 import ca.joelathiessen.kaly2.slam.NNDataAssociator
@@ -26,7 +19,7 @@ import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.thread
 
-class RobotHandler(val rid: Long) {
+class RobotSession(val rid: Long, private val sessionStoppedWithNoSubscribersHandler: () -> Unit) {
     val NUM_LANDMARKS = 11
     val MIN_TIMESTEP = 33 // Don't wait for shorter than this (in ms) before starting the next simulation timestep
     val ROT_RATE = 0.03f
@@ -42,7 +35,7 @@ class RobotHandler(val rid: Long) {
     val startPos = RobotPose(0, 0f, MIN_WIDTH / 2f, MIN_WIDTH / 2f, 0f)
 
     private val rtUpdateEventCont = EventContainer<RTMsg>()
-    val rtUpdateEvent = rtUpdateEventCont.event
+    private val rtUpdateEvent = rtUpdateEventCont.event
 
     private val updateExecutor = Executors.newSingleThreadExecutor()!!
     private val shouldRun = AtomicBoolean()
@@ -61,6 +54,8 @@ class RobotHandler(val rid: Long) {
 
     private val realObjectLocs = ArrayList<xyPnt>()
 
+    private val rtEventSubscriptionLock = Any()
+
     init {
         for (i in 1..NUM_LANDMARKS) {
             realObjectLocs += xyPnt(random.nextFloat() * MIN_WIDTH, random.nextFloat() * MIN_WIDTH)
@@ -71,7 +66,7 @@ class RobotHandler(val rid: Long) {
 
     fun makeSimThread(): Thread = thread(start = false) {
 
-        // for now, instead of running an entire robot, run just its FastSLAM simulation
+        // for now, instead of shouldRun an entire robot, run just its FastSLAM simulation
 
         synchronized(robotIsRunningLock) {
             println("Robot $rid started...")
@@ -159,13 +154,33 @@ class RobotHandler(val rid: Long) {
             }
             val rtBestPose = RTPose(sumX / particlePoses.size, sumY / particlePoses.size, sumHeading / particlePoses.size)
 
-            val rtMsg = RTMsg(FastSlamInfo(System.currentTimeMillis(), rtParticlePoses, rtFeatures, rtBestPose, rtOdoPos, rtTruePos, rtTrueLandmarks))
-            rtUpdateEventCont(this, rtMsg)
+            val rtMsg = RTMsg(SlamInfoMsg(rid, System.currentTimeMillis(), rtParticlePoses, rtFeatures, rtBestPose, rtOdoPos, rtTruePos, rtTrueLandmarks))
+            synchronized(rtEventSubscriptionLock) {
+                rtUpdateEventCont(this, rtMsg)
+            }
+        }
+    }
+
+    @Synchronized
+    fun subscribeToRTEvents(handler: (sender: Any, eventArgs: RTMsg) -> Unit) {
+        synchronized(rtEventSubscriptionLock) {
+            rtUpdateEvent += handler
+        }
+    }
+
+    @Synchronized
+    fun unsubscribeFromRTEvents(handler: (sender: Any, eventArgs: RTMsg) -> Unit) {
+        synchronized(rtEventSubscriptionLock) {
+            rtUpdateEvent -= handler
+            if(rtUpdateEvent.length == 0) {
+                stopRobot() // just stop immediately for now...
+                sessionStoppedWithNoSubscribersHandler()
+            }
         }
     }
 
     /**
-     * Starts the robot if it is not already running
+     * Starts the robot if it is not already shouldRun
      */
     @Synchronized
     fun startRobot() {
@@ -199,7 +214,7 @@ class RobotHandler(val rid: Long) {
         shouldRun.set(false)
     }
 
-    // To avoid several bugs, all public facing methods are synchronized
+    // All these public facing methods should be synchronized
     @Synchronized
     fun getAvgPose(): RobotPose {
         synchronized(slam) {
@@ -208,30 +223,34 @@ class RobotHandler(val rid: Long) {
     }
 
     @Synchronized
-    fun applyFastSlamSettings(fSettingsMsg: FastSlamSettingsMsg) {
+    fun applySlamSettings(fSettingsMsg: SlamSettingsMsg) {
         synchronized(slam) {
             slam.changeNumParticles(fSettingsMsg.numParticles)
             slam.changeAngleVariance(fSettingsMsg.sensorAngVar)
             slam.changeDistanceVariance(fSettingsMsg.sensorDistVar)
-            rtUpdateEventCont(this, RTMsg(FastSlamSettingsMsg(slam.numParticles, slam.angleVariance, slam.distVariance)))
+            synchronized(rtEventSubscriptionLock) {
+                rtUpdateEventCont(this, RTMsg(SlamSettingsMsg(rid, slam.numParticles, slam.angleVariance, slam.distVariance)))
+            }
         }
     }
 
     @Synchronized
-    fun applyRobotSettings(rSettings: RobotSettingsMsg) {
-        if (rSettings.resetting) {
+    fun applyRobotSessionSettings(rSettingsRobotReq: RobotSessionSettingsReqMsg) {
+        if (rSettingsRobotReq.shouldReset) {
             stopRobot()
             unpauseRobot()
         }
 
-        if (rSettings.running) {
-            if (rSettings.resetting == false) {
+        if (rSettingsRobotReq.shouldRun) {
+            if (rSettingsRobotReq.shouldReset == false) {
                 unpauseRobot()
             }
             startRobot()
         } else {
             pauseRobot()
         }
-        rtUpdateEventCont(this, RTMsg(RobotSettingsMsg(!shouldPause.get(), !shouldRun.get())))
+        synchronized(rtEventSubscriptionLock) {
+            rtUpdateEventCont(this, RTMsg(RobotSessionSettingsRespMsg(rid, !shouldPause.get(), !shouldRun.get())))
+        }
     }
 }

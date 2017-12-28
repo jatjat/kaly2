@@ -1,8 +1,6 @@
 package ca.joelathiessen.kaly2.server
 
-import ca.joelathiessen.kaly2.server.messages.FastSlamSettingsMsg
-import ca.joelathiessen.kaly2.server.messages.RTMsg
-import ca.joelathiessen.kaly2.server.messages.RobotSettingsMsg
+import ca.joelathiessen.kaly2.server.messages.*
 import com.github.salomonbrys.kotson.fromJson
 import com.github.salomonbrys.kotson.obj
 import com.github.salomonbrys.kotson.string
@@ -10,23 +8,26 @@ import com.google.gson.GsonBuilder
 import com.google.gson.JsonParser
 import org.eclipse.jetty.websocket.WebSocket
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
-class KalyWebSocket(private val robotsManager: RobotsManager, private val rid: Long) : WebSocket.OnTextMessage {
+class KalyWebSocket(private val robotSessionManager: RobotSessionManager) : WebSocket.OnTextMessage {
+    val TERMINATION_TIMOUT_SECONDS = 10L
     val MSG_TYPE = "msgType"
     val MSG_LABEL = "msg"
     private val connectionExecutor = Executors.newSingleThreadExecutor()!!
     private lateinit var connection: WebSocket.Connection
-    private lateinit var robotHandler: RobotHandler
+    private var robotSession: RobotSession? = null
     private val handleRTMessageCaller = { sender: Any, msg: RTMsg -> HandleRTMessage(sender, msg) } // can't pass HandleRTMessage directly
-    private val gson = GsonBuilder().create()!!
-    private var closed = false
+    private val gson = {
+        val builder = GsonBuilder()
+        builder.registerTypeAdapter(RobotSessionSettingsReqMsg::class.java, RobotSessionSettingsMsgDeserializer())
+        builder.create()
+    }()
     private var closedLock = Any()
 
     override fun onOpen(connection: WebSocket.Connection) {
         this.connection = connection
-        this.robotHandler = robotsManager.getHandler(rid)
-
-        robotHandler.rtUpdateEvent += handleRTMessageCaller
+        robotSession?.subscribeToRTEvents(handleRTMessageCaller)
     }
 
     override fun onMessage(data: String) {
@@ -36,21 +37,32 @@ class KalyWebSocket(private val robotsManager: RobotsManager, private val rid: L
         val msgType = dataJson[MSG_TYPE].string
         val msg = dataJson[MSG_LABEL]
 
-        if (msgType == RobotSettingsMsg.MSG_TYPE_NAME) {
-            this.robotHandler.applyRobotSettings(gson.fromJson<RobotSettingsMsg>(msg))
-        } else if (msgType == FastSlamSettingsMsg.MSG_TYPE_NAME) {
-            this.robotHandler.applyFastSlamSettings(gson.fromJson<FastSlamSettingsMsg>(msg))
+        if (msgType == RobotSessionSettingsReqMsg.MSG_TYPE_NAME) {
+            val settings = gson.fromJson<RobotSessionSettingsReqMsg>(msg)
+            updateRobotSession(settings.sessionID)
+            this.robotSession?.applyRobotSessionSettings(settings)
+        } else if (msgType == SlamSettingsMsg.MSG_TYPE_NAME) {
+            val settings = gson.fromJson<SlamSettingsMsg>(msg)
+            updateRobotSession(settings.sessionID)
+            this.robotSession?.applySlamSettings(settings)
+        }
+    }
+
+    private fun updateRobotSession(sessionID: Long?) {
+        val shouldReplace = sessionID != null && sessionID != robotSession?.rid
+        val shouldStart = robotSession == null && sessionID == null
+        if(shouldReplace || shouldStart) {
+            robotSession?.unsubscribeFromRTEvents(handleRTMessageCaller)
+            robotSession = robotSessionManager.getHandler(sessionID ?: robotSessionManager.getUnspecifiedSID())
+            robotSession?.subscribeToRTEvents(handleRTMessageCaller)
         }
     }
 
     override fun onClose(closeCode: Int, message: String?) {
-        robotHandler.rtUpdateEvent -= handleRTMessageCaller
-        if (robotHandler.rtUpdateEvent.length == 0) {
-            robotsManager.removeHandler(rid)
-        }
+        robotSession?.unsubscribeFromRTEvents(handleRTMessageCaller)
         synchronized(closedLock) {
-            closed = true
             connectionExecutor.shutdownNow()
+            connectionExecutor.awaitTermination(TERMINATION_TIMOUT_SECONDS, TimeUnit.SECONDS)
         }
     }
 
@@ -59,7 +71,7 @@ class KalyWebSocket(private val robotsManager: RobotsManager, private val rid: L
     fun HandleRTMessage(@Suppress("UNUSED_PARAMETER") sender: Any, message: RTMsg) {
         connectionExecutor.execute {
             synchronized(closedLock) {
-                if (!closed) {
+                if (!connectionExecutor.isShutdown()) {
                     connection.sendMessage(gson.toJson(message))
                 }
             }
