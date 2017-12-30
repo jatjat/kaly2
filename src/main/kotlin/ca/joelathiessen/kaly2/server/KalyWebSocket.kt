@@ -1,6 +1,9 @@
 package ca.joelathiessen.kaly2.server
 
-import ca.joelathiessen.kaly2.server.messages.*
+import ca.joelathiessen.kaly2.server.messages.RTMsg
+import ca.joelathiessen.kaly2.server.messages.RobotSessionSettingsMsgDeserializer
+import ca.joelathiessen.kaly2.server.messages.RobotSessionSettingsReqMsg
+import ca.joelathiessen.kaly2.server.messages.SlamSettingsMsg
 import com.github.salomonbrys.kotson.fromJson
 import com.github.salomonbrys.kotson.obj
 import com.github.salomonbrys.kotson.string
@@ -51,7 +54,7 @@ class KalyWebSocket(private val robotSessionManager: RobotSessionManager) : WebS
     private fun updateRobotSession(sessionID: Long?) {
         val shouldReplace = sessionID != null && sessionID != robotSession?.rid
         val shouldStart = robotSession == null && sessionID == null
-        if(shouldReplace || shouldStart) {
+        if (shouldReplace || shouldStart) {
             robotSession?.unsubscribeFromRTEvents(handleRTMessageCaller)
             robotSession = robotSessionManager.getHandler(sessionID ?: robotSessionManager.getUnspecifiedSID())
             robotSession?.subscribeToRTEvents(handleRTMessageCaller)

@@ -24,7 +24,6 @@ class Robot(private val subconsc: Subconscious, private val sweeps: ConcurrentLi
             runRobot2.signal()
             lock.unlock()
         }
-
     }
 
     fun stopRobot() {
@@ -52,7 +51,6 @@ class Robot(private val subconsc: Subconscious, private val sweeps: ConcurrentLi
                     } catch (e: InterruptedException) {
                         Thread.currentThread().interrupt()
                     }
-
                 }
             }
 
@@ -80,5 +78,4 @@ class Robot(private val subconsc: Subconscious, private val sweeps: ConcurrentLi
         }
         println("Robot completed")
     }
-
 }

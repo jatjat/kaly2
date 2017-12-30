@@ -16,8 +16,8 @@ fun distance(x1: Float, x2: Float, y1: Float, y2: Float): Float {
     return FloatMath.sqrt((dx * dx) + (dy * dy))
 }
 
-inline fun <reified INNER> array2d(sizeOuter: Int, sizeInner: Int, noinline innerInit: (Int) -> INNER): Array<Array<INNER>>
-    = Array(sizeOuter) { Array<INNER>(sizeInner, innerInit) }
+inline fun <reified INNER> array2d(sizeOuter: Int, sizeInner: Int, noinline innerInit: (Int) -> INNER): Array<Array<INNER>> =
+    Array(sizeOuter) { Array<INNER>(sizeInner, innerInit) }
 
 data class RotateResult(var deltaX: Float, var deltaY: Float)
 

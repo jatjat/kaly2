@@ -78,7 +78,5 @@ class RobotTest {
         } catch (e: InterruptedException) {
             fail("Robot thread was interupted but didn't stop in a timely fashion")
         }
-
     }
-
 }

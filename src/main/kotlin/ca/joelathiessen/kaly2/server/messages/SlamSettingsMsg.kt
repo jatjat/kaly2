@@ -2,7 +2,6 @@ package ca.joelathiessen.kaly2.server.messages
 
 import com.google.gson.annotations.Expose
 
-
 class SlamSettingsMsg(
     val sessionID: Long,
     val numParticles: Int,
@@ -16,4 +15,3 @@ class SlamSettingsMsg(
         val MSG_TYPE_NAME = "slamSettings"
     }
 }
-

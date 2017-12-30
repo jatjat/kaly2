@@ -117,6 +117,5 @@ class FastSLAMView : JPanel() {
         drawRealObjectLocs.forEach {
             graphics.drawRect(it.first, it.second, 2, 2)
         }
-
     }
 }

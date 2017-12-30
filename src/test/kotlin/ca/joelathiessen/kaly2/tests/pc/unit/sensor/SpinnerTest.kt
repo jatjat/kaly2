@@ -71,5 +71,4 @@ class SpinnerTest {
 
         assertEquals(spinner.angle, FloatMath.toRadians(77.0f), 0.0001f)
     }
-
 }

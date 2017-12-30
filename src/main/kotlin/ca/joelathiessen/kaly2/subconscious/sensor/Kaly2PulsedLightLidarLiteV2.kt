@@ -7,7 +7,5 @@ class Kaly2PulsedLightLidarLiteV2(port: Port) : I2CSensor(port), Kaly2Sensor {
 
     // TODO: install the sensor!
     override fun fetchSample(sample: FloatArray, offset: Int) {
-
     }
 }
-

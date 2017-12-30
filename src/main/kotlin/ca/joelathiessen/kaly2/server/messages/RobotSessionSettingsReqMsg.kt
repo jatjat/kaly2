@@ -14,4 +14,3 @@ class RobotSessionSettingsReqMsg(
         val MSG_TYPE_NAME = "robotSessionSettings"
     }
 }
-

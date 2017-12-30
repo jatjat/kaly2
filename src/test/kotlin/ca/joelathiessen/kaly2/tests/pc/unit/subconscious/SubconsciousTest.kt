@@ -105,6 +105,5 @@ class SubconsciousTest {
         } catch (e: InterruptedException) {
             fail("Subconscious thread was interrupted but didn't stop in a timely fashion")
         }
-
     }
 }

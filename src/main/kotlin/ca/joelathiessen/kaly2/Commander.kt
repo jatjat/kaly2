@@ -12,7 +12,6 @@ class Commander(private val robot: Robot) {
     init {
         robotThread = Thread(robot)
         br = BufferedReader(InputStreamReader(System.`in`))
-
     }
 
     fun takeCommands() {
@@ -36,7 +35,6 @@ class Commander(private val robot: Robot) {
                 }
             }
             robot.stopRobot()
-
         } catch (io: IOException) {
             io.printStackTrace()
         }
@@ -60,8 +58,6 @@ class Commander(private val robot: Robot) {
             // the robot will start itself from here; i.e. :
             // Commander commander = new Commander(robot);
             // ...
-
         }
     }
-
 }

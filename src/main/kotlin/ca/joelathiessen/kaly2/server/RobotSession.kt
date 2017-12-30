@@ -3,7 +3,15 @@ package ca.joelathiessen.kaly2.server
 import ca.joelathiessen.kaly2.featuredetector.Feature
 import ca.joelathiessen.kaly2.odometry.CarModel
 import ca.joelathiessen.kaly2.odometry.RobotPose
-import ca.joelathiessen.kaly2.server.messages.*
+import ca.joelathiessen.kaly2.server.messages.RTFeature
+import ca.joelathiessen.kaly2.server.messages.RTLandmark
+import ca.joelathiessen.kaly2.server.messages.RTMsg
+import ca.joelathiessen.kaly2.server.messages.RTParticle
+import ca.joelathiessen.kaly2.server.messages.RTPose
+import ca.joelathiessen.kaly2.server.messages.RobotSessionSettingsReqMsg
+import ca.joelathiessen.kaly2.server.messages.RobotSessionSettingsRespMsg
+import ca.joelathiessen.kaly2.server.messages.SlamInfoMsg
+import ca.joelathiessen.kaly2.server.messages.SlamSettingsMsg
 import ca.joelathiessen.kaly2.slam.FastSLAM
 import ca.joelathiessen.kaly2.slam.FastUnbiasedResampler
 import ca.joelathiessen.kaly2.slam.NNDataAssociator
@@ -172,7 +180,7 @@ class RobotSession(val rid: Long, private val sessionStoppedWithNoSubscribersHan
     fun unsubscribeFromRTEvents(handler: (sender: Any, eventArgs: RTMsg) -> Unit) {
         synchronized(rtEventSubscriptionLock) {
             rtUpdateEvent -= handler
-            if(rtUpdateEvent.length == 0) {
+            if (rtUpdateEvent.length == 0) {
                 stopRobot() // just stop immediately for now...
                 sessionStoppedWithNoSubscribersHandler()
             }
