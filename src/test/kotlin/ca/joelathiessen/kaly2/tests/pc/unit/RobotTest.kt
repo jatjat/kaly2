@@ -12,13 +12,11 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mockito
-import org.powermock.core.classloader.annotations.PrepareForTest
-import org.powermock.modules.junit4.PowerMockRunner
+import org.mockito.junit.MockitoJUnitRunner
 import java.util.ArrayList
 import java.util.concurrent.ConcurrentLinkedQueue
 
-@RunWith(PowerMockRunner::class)
-@PrepareForTest(Subconscious::class, Measurement::class)
+@RunWith(MockitoJUnitRunner::class)
 class RobotTest {
 
     internal lateinit var robot: Robot

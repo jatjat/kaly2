@@ -16,17 +16,11 @@ import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
 import org.mockito.Mockito
 import org.mockito.Mockito.`when`
-import org.powermock.api.mockito.PowerMockito
-import org.powermock.core.classloader.annotations.PrepareForTest
-import org.powermock.modules.junit4.PowerMockRunner
 import java.util.ArrayList
 import java.util.concurrent.ConcurrentLinkedQueue
 
-@RunWith(PowerMockRunner::class)
-@PrepareForTest(Kaly2PulsedLightLidarLiteV2::class, Spinner::class)
 class SubconsciousTest {
 
     private lateinit var sensor: Kaly2PulsedLightLidarLiteV2
@@ -37,11 +31,11 @@ class SubconsciousTest {
 
     @Before
     fun setUp() {
-        sensor = PowerMockito.mock(Kaly2PulsedLightLidarLiteV2::class.java)
+        sensor = Mockito.mock(Kaly2PulsedLightLidarLiteV2::class.java)
         pilot = Mockito.mock(MovePilot::class.java)
         odometry = Mockito.mock(OdometryPoseProvider::class.java)
 
-        spinner = PowerMockito.`mock`(Spinner::class.java)
+        spinner = Mockito.`mock`(Spinner::class.java)
         sweeps = ConcurrentLinkedQueue<ArrayList<Measurement>>()
     }
 
