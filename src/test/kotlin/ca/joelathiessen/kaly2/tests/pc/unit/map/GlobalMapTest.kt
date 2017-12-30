@@ -7,7 +7,7 @@ import ca.joelathiessen.kaly2.tests.pc.unit.util.makeMeasFromXY
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.runners.MockitoJUnitRunner
+import org.mockito.junit.MockitoJUnitRunner
 import java.util.ArrayList
 
 @RunWith(MockitoJUnitRunner::class)
