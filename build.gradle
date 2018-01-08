@@ -72,7 +72,7 @@ dependencies {
     compile 'com.github.salomonbrys.kotson:kotson:2.3.0'
     compile 'com.h2database:h2:1.4.196'
     compile 'mysql:mysql-connector-java:5.1.6'
-    compile group: 'org.jetbrains.exposed', name: 'exposed', version: '0.8.6'
+    compile 'org.jetbrains.exposed:exposed:0.8.6'
 
     // Jetty versions 8+ are incompatible with Android, so use the last 7x release
     compile 'org.eclipse.jetty:jetty-server:7.6.19.v20160209'
