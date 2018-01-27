@@ -10,6 +10,7 @@ import ca.joelathiessen.kaly2.map.MapTree
 import ca.joelathiessen.kaly2.odometry.AccurateSlamOdometry
 import ca.joelathiessen.kaly2.odometry.CarModel
 import ca.joelathiessen.kaly2.odometry.RobotPose
+import ca.joelathiessen.kaly2.persistence.PersistentStorage
 import ca.joelathiessen.kaly2.planner.GlobalPathPlanner
 import ca.joelathiessen.kaly2.planner.PathSegmentInfo
 import ca.joelathiessen.kaly2.planner.PlannerActor
@@ -35,11 +36,13 @@ import ca.joelathiessen.util.itractor.ItrActorThreadedHost
 import lejos.robotics.geometry.Line
 import lejos.robotics.geometry.Point
 import lejos.robotics.navigation.Pose
+import org.joda.time.DateTime
 import java.awt.Color
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.util.ArrayList
 import java.util.Collections
+import java.util.UUID
 import javax.imageio.ImageIO
 import javax.swing.JFrame
 import javax.swing.JPanel
@@ -104,6 +107,11 @@ class MainLoopView : JPanel() {
     private val PLANNER_INPUT_SIZE = 0
     private val ROBOT_CORE_INPUT_SIZE = 0
     private val ROBOT_CORE_OUTPUT_SIZE = 0
+
+    val ROBOT_NAME = "kaly2Robot"
+    val MAP_NAME = "persistedMap"
+    val CURRENT_DATE = DateTime()
+    val SERVER_UUID = UUID.randomUUID()
 
     private val startPos = RobotPose(0, 0f, MIN_WIDTH / 2f, MIN_WIDTH / 2f, 0f)
     private val motionModel = CarModel()
@@ -192,7 +200,16 @@ class MainLoopView : JPanel() {
 
         val map = GlobalMap(OBS_SIZE, OBS_SIZE, MAP_REMOVE_INVALID_OBS_INTERVAL)
 
-        val robotCore = RobotCoreActed(end, accurateOdo, slam, featureDetector, map)
+        val persistentStorage = PersistentStorage(SERVER_UUID,
+            dbInit = PersistentStorage.DbInitTypes.FILE_DB)
+
+        var robotStorage = persistentStorage.getRobotStorage(1L)
+
+        if (robotStorage == null) {
+            robotStorage = persistentStorage.makeRobotStorage(ROBOT_NAME, false, MAP_NAME, CURRENT_DATE)
+        }
+
+        val robotCore = RobotCoreActed(end, accurateOdo, slam, featureDetector, map, robotStorage)
 
         val subconscInput = ItrActorChannel(SUBCONC_INPUT_SIZE)
         val plannerInput = ItrActorChannel(PLANNER_INPUT_SIZE)

@@ -6,6 +6,7 @@ import ca.joelathiessen.kaly2.map.GlobalMap
 import ca.joelathiessen.kaly2.map.MapTree
 import ca.joelathiessen.kaly2.odometry.AccurateSlamOdometry
 import ca.joelathiessen.kaly2.odometry.RobotPose
+import ca.joelathiessen.kaly2.persistence.RobotStorage
 import ca.joelathiessen.kaly2.planner.PathSegmentInfo
 import ca.joelathiessen.kaly2.slam.Slam
 import ca.joelathiessen.kaly2.subconscious.SubconsciousActedResults
@@ -20,8 +21,9 @@ data class RobotCoreActedResults(val timestamp: Long, val features: List<Feature
     val particlePoses: List<Pose>, val numItrs: Long)
 
 class RobotCoreActed(private val initialGoal: RobotPose, private val accurateOdo: AccurateSlamOdometry,
-    private val slam: Slam, private val featureDetector: FeatureDetector,
-    private val map: GlobalMap) {
+    private val slam: Slam, private val featureDetector: FeatureDetector, private val map: GlobalMap,
+    private val robotStorage: RobotStorage) {
+
     private val REQ_MAN_INTERVAL = 5
     private val UPDATE_PLAN_START_POSE_INTERVAL = 10
     private val UPDATE_PLAN_END_POSE_INTERVAL = 20
@@ -48,6 +50,14 @@ class RobotCoreActed(private val initialGoal: RobotPose, private val accurateOdo
     var sendPlannerManeuversToLocalPlanner: (List<RobotPose>) -> Unit = {}
     var planFrom = { _: RobotPose, _: MapTree -> Unit }
     var planTo: (RobotPose) -> Unit = {}
+
+    init {
+        val measurements = robotStorage.getMeasurements()
+        measurements.forEach {
+            map.incorporateMeasurements(it.measurements, it.slamPose)
+            numItrs++
+        }
+    }
 
     fun onManeuverResults(newManeuvers: List<RobotPose>) {
         maneuvers = newManeuvers
@@ -90,9 +100,14 @@ class RobotCoreActed(private val initialGoal: RobotPose, private val accurateOdo
             planTo(randomEnd)
         }
 
+        val results = RobotCoreActedResults(System.currentTimeMillis(), features, map.obstacleList, avgPoseAfter,
+            maneuvers, paths, curResults, particlePoses, numItrs)
+
         currentPlanItrs++
         numItrs++
-        return RobotCoreActedResults(System.currentTimeMillis(), features, map.obstacleList, avgPoseAfter, maneuvers,
-            paths, curResults, particlePoses, numItrs)
+
+        println("finished iteration $numItrs")
+        robotStorage.saveTimeStep(results)
+        return results
     }
 }
