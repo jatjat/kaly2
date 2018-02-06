@@ -161,7 +161,6 @@ class RobotStorage(private val histid: Long, private val serverUUID: UUID,
                 jdbcConnection.commit()
             }
         }
-
     }
 
     private fun setMesInPreparedStatements(measurements: List<Measurement>, itrID: Long,
