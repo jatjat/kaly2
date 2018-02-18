@@ -9,8 +9,7 @@ import java.util.ArrayList
 
 class SubconsciousActedResults(val measurements: ArrayList<Measurement>, val pilotPoses: PilotPoses, val plan: LocalPlan)
 class SubconsciousActed(private val robotPilot: RobotPilot, private val accurateOdo: AccurateSlamOdometry,
-    private val localPlanner: LocalPlanner, private val localPlannerMaxRot: Float,
-    private val localPlannerMaxDist: Float, private val sensor: Kaly2Sensor,
+    private val localPlanner: LocalPlanner, private val sensor: Kaly2Sensor,
     private val spinner: Spinnable, private var globalManeuvers: List<RobotPose>,
     private val minMeasTime: Long) {
 
@@ -37,7 +36,7 @@ class SubconsciousActed(private val robotPilot: RobotPilot, private val accurate
                 System.currentTimeMillis()))
         }
 
-        val plan = localPlanner.makePlan(measurements, mesPose, localPlannerMaxRot, localPlannerMaxDist,
+        val plan = localPlanner.makePlan(measurements, mesPose, robotPilot.maxRot, robotPilot.maxDist,
             globalManeuvers)
 
         robotPilot.execLocalPlan(plan)

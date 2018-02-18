@@ -7,6 +7,6 @@ package ca.joelathiessen.kaly2.server.messages
  * messages to be treated identically
  *
  **/
-class RTMsg(val msg: RobotMsg) {
+class RTMsg(val msg: RTRobotMsg, val requestingNoNetworkSend: Boolean = false) {
     val msgType = msg.MSG_TYPE
 }

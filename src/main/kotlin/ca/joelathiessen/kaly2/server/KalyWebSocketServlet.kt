@@ -17,7 +17,7 @@ class KalyWebSocketServlet() : HttpServlet() {
             }
 
             override fun doWebSocketConnect(request: HttpServletRequest, protocol: String?): WebSocket? {
-                return KalyWebSocket(robotSessionManager)//, sid)
+                return KalyWebSocket(robotSessionManager)
             }
         })
 

@@ -7,6 +7,7 @@ import ca.joelathiessen.kaly2.planner.PlanToMsg
 import ca.joelathiessen.kaly2.planner.PlannerManeuversMsg
 import ca.joelathiessen.kaly2.planner.PlannerPathsMsg
 import ca.joelathiessen.kaly2.planner.ReqPlannerManeuvers
+import ca.joelathiessen.kaly2.server.SlamSettings
 import ca.joelathiessen.kaly2.subconscious.SubconscRsltsMsg
 import ca.joelathiessen.util.itractor.ItrActor
 import ca.joelathiessen.util.itractor.ItrActorChannel
@@ -33,6 +34,7 @@ class RobotCoreActor(private val robotCore: RobotCoreActed, inputChannel: ItrAct
                 is PlannerManeuversMsg -> robotCore.onManeuverResults(msg.maneuvers)
                 is PlannerPathsMsg -> robotCore.onPaths(msg.paths)
                 is SubconscRsltsMsg -> outputChannel.addMsg(RobotCoreRsltsMsg(robotCore.iterate(msg.results)))
+                is SlamSettings -> outputChannel.addMsg(robotCore.onSettings(msg))
             }
         }
     }

@@ -54,7 +54,7 @@ class FastSLAMView : JPanel() {
     val realObjectLocs = ArrayList<xyPnt>()
     val odoLocs = ArrayList<RobotPose>()
 
-    var slam = FastSLAM(startPos, motionModel, dataAssoc, partResamp, sensorInfo)
+    var slam = FastSLAM(startPos, motionModel, dataAssoc, partResamp)
 
     var x = MIN_WIDTH / 2
     var y = MIN_WIDTH / 2

@@ -20,7 +20,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import kotlin.coroutines.experimental.buildSequence
 
-class RobotStorage(private val histid: Long, private val serverUUID: UUID,
+class RobotStorage(val histid: Long, private val serverUUID: UUID,
                    dbUser: String, dbPassword: String, dbUrl: String) {
     private val dbPool = Executors.newSingleThreadExecutor()!!
     private val jdbcConnection: Connection

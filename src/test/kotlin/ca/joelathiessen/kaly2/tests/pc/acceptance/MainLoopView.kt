@@ -96,8 +96,8 @@ class MainLoopView : JPanel() {
     private val LCL_PLN_DIST_STEP = 1f
     private val LCL_PLN_GRID_STEP = 5f
     private val LCL_PLN_GRID_SIZE = 2 * MAX_SENSOR_RANGE
-    private val LCL_PLN_MAX_ROT = 1f
-    private val LCL_PLN_MAX_DIST = 20f
+    private val SIM_PILOT_MAX_ROT = 1f
+    private val SIM_PILOT_MAX_DIST = 20f
 
     private val MAP_REMOVE_INVALID_OBS_INTERVAL = 10
 
@@ -173,7 +173,8 @@ class MainLoopView : JPanel() {
         Collections.shuffle(points)
         points.forEach { obstacles.add(it) }
 
-        val simPilot = SimulatedPilot(ODO_ANG_STD_DEV, ODO_DIST_STD_DEV, STEP_DIST, startPose)
+        val simPilot = SimulatedPilot(ODO_ANG_STD_DEV, ODO_DIST_STD_DEV, STEP_DIST, startPose, SIM_PILOT_MAX_ROT,
+                SIM_PILOT_MAX_DIST)
         val simSpinner = SimSpinner(SENSOR_START_ANG, SENSOR_END_ANG, SENSOR_ANG_INCR)
         val simSensor = SimSensor(obsGrid, image.width, image.height,
             MAX_SENSOR_RANGE, SENSOR_DIST_STDEV, SENSOR_ANG_STDEV, simSpinner, simPilot)
@@ -188,13 +189,13 @@ class MainLoopView : JPanel() {
         val localPlanner = LocalPlanner(0f, LCL_PLN_ROT_STEP, LCL_PLN_DIST_STEP, LCL_PLN_GRID_STEP,
             LCL_PLN_GRID_SIZE, OBS_SIZE)
 
-        val subConsc = SubconsciousActed(robotPilot, accurateOdo, localPlanner, LCL_PLN_MAX_ROT, LCL_PLN_MAX_DIST,
+        val subConsc = SubconsciousActed(robotPilot, accurateOdo, localPlanner,
             sensor, spinner, gblManeuvers, MIN_MES_TIME)
 
         val planner = GlobalPathPlanner(factory, obstacles, OBS_SIZE, SEARCH_DIST, GBL_PTH_PLN_STEP_DIST,
             startPose, end, GBL_PTH_PLN_ITRS)
 
-        val slam = FastSLAM(startPos, motionModel, dataAssoc, partResamp, sensor)
+        val slam = FastSLAM(startPos, motionModel, dataAssoc, partResamp)
 
         val featureDetector = SplitAndMerge(LINE_THRESHOLD, CHECK_WITHIN_ANGLE, MAX_RATIO)
 

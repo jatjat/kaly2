@@ -1,46 +1,57 @@
 package ca.joelathiessen.kaly2.server
 
+import ca.joelathiessen.kaly2.RobotCoreActed
+import ca.joelathiessen.kaly2.RobotCoreActedResults
+import ca.joelathiessen.kaly2.RobotCoreActor
+import ca.joelathiessen.kaly2.RobotCoreRsltsMsg
 import ca.joelathiessen.kaly2.featuredetector.Feature
-import ca.joelathiessen.kaly2.odometry.CarModel
+import ca.joelathiessen.kaly2.featuredetector.FeatureDetector
+import ca.joelathiessen.kaly2.map.GlobalMap
+import ca.joelathiessen.kaly2.odometry.AccurateSlamOdometry
 import ca.joelathiessen.kaly2.odometry.RobotPose
+import ca.joelathiessen.kaly2.persistence.RobotStorage
+import ca.joelathiessen.kaly2.planner.GlobalPathPlanner
+import ca.joelathiessen.kaly2.planner.PlannerActor
 import ca.joelathiessen.kaly2.server.messages.RTFeature
 import ca.joelathiessen.kaly2.server.messages.RTLandmark
 import ca.joelathiessen.kaly2.server.messages.RTMsg
 import ca.joelathiessen.kaly2.server.messages.RTParticle
 import ca.joelathiessen.kaly2.server.messages.RTPose
-import ca.joelathiessen.kaly2.server.messages.RobotSessionSettingsReqMsg
-import ca.joelathiessen.kaly2.server.messages.RobotSessionSettingsRespMsg
-import ca.joelathiessen.kaly2.server.messages.SlamInfoMsg
-import ca.joelathiessen.kaly2.server.messages.SlamSettingsMsg
+import ca.joelathiessen.kaly2.server.messages.RTRobotSessionSettingsReqMsg
+import ca.joelathiessen.kaly2.server.messages.RTRobotSessionSettingsRespMsg
+import ca.joelathiessen.kaly2.server.messages.RTSlamInfoMsg
+import ca.joelathiessen.kaly2.server.messages.RTSlamSettingsMsg
 import ca.joelathiessen.kaly2.slam.FastSLAM
-import ca.joelathiessen.kaly2.slam.FastUnbiasedResampler
-import ca.joelathiessen.kaly2.slam.NNDataAssociator
-import ca.joelathiessen.kaly2.subconscious.sensor.SensorInfo
+import ca.joelathiessen.kaly2.subconscious.LocalPlanner
+import ca.joelathiessen.kaly2.subconscious.RobotPilot
+import ca.joelathiessen.kaly2.subconscious.SimPilotPoses
+import ca.joelathiessen.kaly2.subconscious.SubconsciousActed
+import ca.joelathiessen.kaly2.subconscious.SubconsciousActor
+import ca.joelathiessen.kaly2.subconscious.sensor.Kaly2Sensor
+import ca.joelathiessen.kaly2.subconscious.sensor.Spinnable
 import ca.joelathiessen.util.EventContainer
-import ca.joelathiessen.util.FloatMath
-import ca.joelathiessen.util.FloatRandom
-import ca.joelathiessen.util.getFeatureForPosition
+import ca.joelathiessen.util.itractor.ItrActorChannel
+import ca.joelathiessen.util.itractor.ItrActorMsg
+import ca.joelathiessen.util.itractor.ItrActorThreadedHost
 import lejos.robotics.navigation.Pose
-import java.util.ArrayList
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.collections.ArrayList
 import kotlin.concurrent.thread
 
-class RobotSession(val rid: Long, private val sessionStoppedWithNoSubscribersHandler: () -> Unit) {
-    val NUM_LANDMARKS = 11
-    val MIN_TIMESTEP = 33 // Don't wait for shorter than this (in ms) before starting the next simulation timestep
-    val ROT_RATE = 0.03f
-    val STEP_DIST = 2f
-    val STEP_ROT_STD_DEV = 0.01f
-    val STEP_DIST_STD_DEV = 0.5f
-    val MIN_WIDTH = 400.0f
-    val SENSOR_DIST_STD_DEV = 0.001f
-    val SENSOR_ANG_STD_DEV = 0.001f
-    val ODO_DIST_STD_DEV = 0.01f
-    val ODO_ANG_STD_DEV = 0.01f
+class SlamSettings(val numParticles: Int, val sensorAngVar: Float, val sensorDistVar: Float, val sessionID: Long) : ItrActorMsg()
 
-    val startPos = RobotPose(0, 0f, MIN_WIDTH / 2f, MIN_WIDTH / 2f, 0f)
+class RobotSession(val rid: Long, private val sessionStoppedWithNoSubscribersHandler: () -> Unit,
+                   private val startPose: RobotPose, initialGoal: RobotPose, robotPilot: RobotPilot, spinner: Spinnable,
+                   sensor: Kaly2Sensor, featureDetector: FeatureDetector, minSubcMeasTime: Long, map: GlobalMap,
+                   robotStorage: RobotStorage, slam: FastSLAM, localPlanner: LocalPlanner,
+                   globalPathPlanner: GlobalPathPlanner) {
+
+    private val SUBCONC_INPUT_SIZE = 0
+    private val PLANNER_INPUT_SIZE = 0
+    private val ROBOT_CORE_INPUT_SIZE = 0
+    private val ROBOT_CORE_OUTPUT_SIZE = 0
 
     private val rtUpdateEventCont = EventContainer<RTMsg>()
     private val rtUpdateEvent = rtUpdateEventCont.event
@@ -50,13 +61,8 @@ class RobotSession(val rid: Long, private val sessionStoppedWithNoSubscribersHan
     private var shouldPause = AtomicBoolean(false)
     private val pauseSemaphore = Semaphore(1)
     private val robotIsRunningLock = Any()
-
-    private lateinit var slam: FastSLAM
-    private val motionModel = CarModel()
-    private val dataAssoc = NNDataAssociator()
-    private val partResamp = FastUnbiasedResampler()
-    private val sensorInfo = object : SensorInfo {}
-    private val random = FloatRandom(1)
+    private val resultsLock = Any()
+    private var results: RobotCoreActedResults? = null
 
     private data class xyPnt(val x: Float, val y: Float)
 
@@ -64,88 +70,85 @@ class RobotSession(val rid: Long, private val sessionStoppedWithNoSubscribersHan
 
     private val rtEventSubscriptionLock = Any()
 
+    private val subconscInput = ItrActorChannel(SUBCONC_INPUT_SIZE)
+    private val globalPathPlannerInput = ItrActorChannel(PLANNER_INPUT_SIZE)
+    private val robotCoreInput = ItrActorChannel(ROBOT_CORE_INPUT_SIZE)
+    private val robotCoreOutput = ItrActorChannel(ROBOT_CORE_OUTPUT_SIZE)
+
+    private val subConscActorHost: ItrActorThreadedHost
+    private val plannerActorHost: ItrActorThreadedHost
+    private val robotCoreActorHost: ItrActorThreadedHost
+
     init {
-        for (i in 1..NUM_LANDMARKS) {
-            realObjectLocs += xyPnt(random.nextFloat() * MIN_WIDTH, random.nextFloat() * MIN_WIDTH)
-        }
+        val gblManeuvers: List<RobotPose> = ArrayList()
+        val accurateOdo = AccurateSlamOdometry(robotPilot.poses.odoPose, { robotPilot.poses.odoPose })
+
+        val subConsc = SubconsciousActed(robotPilot, accurateOdo, localPlanner,
+                sensor, spinner, gblManeuvers, minSubcMeasTime)
+
+        val robotCore = RobotCoreActed(initialGoal, accurateOdo, slam, featureDetector, map, robotStorage)
+
+        val subConscActor = SubconsciousActor(subConsc, subconscInput, robotCoreInput)
+        val plannerActor = PlannerActor(globalPathPlanner, globalPathPlannerInput, robotCoreInput)
+        val robotCoreActor = RobotCoreActor(robotCore, robotCoreInput, robotCoreOutput, globalPathPlannerInput, subconscInput)
+
+        subConscActorHost = ItrActorThreadedHost(subConscActor)
+        plannerActorHost = ItrActorThreadedHost(plannerActor)
+        robotCoreActorHost = ItrActorThreadedHost(robotCoreActor)
     }
 
     private lateinit var simThread: Thread
 
     fun makeSimThread(): Thread = thread(start = false) {
 
-        // for now, instead of shouldRun an entire robot, run just its FastSLAM simulation
-
         synchronized(robotIsRunningLock) {
+            subConscActorHost.start()
+            plannerActorHost.start()
+            robotCoreActorHost.start()
+
             println("Robot $rid started...")
-            slam = FastSLAM(startPos, motionModel, dataAssoc, partResamp, sensorInfo)
-
-            var x = MIN_WIDTH / 2
-            var y = MIN_WIDTH / 2
-            var theta = 0.1f
-
-            var odoX = x
-            var odoY = y
-            var odoTheta = theta
-
-            var times = 0L
-            val odoLocs = ArrayList<RobotPose>()
-            val realLocs = ArrayList<RobotPose>()
 
             while (shouldRun.get()) {
-                val startTime = System.currentTimeMillis()
+                val localResults = (robotCoreOutput.takeMsg() as RobotCoreRsltsMsg).results
 
-                // move the robot
-                val dTheta = ROT_RATE + (STEP_ROT_STD_DEV * random.nextGaussian())
-                theta += dTheta
-                odoTheta += dTheta + (ODO_ANG_STD_DEV * random.nextGaussian())
-                val distCommon = STEP_DIST + (STEP_DIST_STD_DEV * random.nextGaussian())
-                val odoOffsetCommon = distCommon + (ODO_DIST_STD_DEV * random.nextGaussian())
-                x += FloatMath.cos(theta) * distCommon
-                odoX += FloatMath.cos(odoTheta) * (odoOffsetCommon)
-                y += FloatMath.sin(theta) * distCommon
-                odoY += FloatMath.sin(odoTheta) * (odoOffsetCommon)
-
-                val realPos = RobotPose(times, 0f, x, y, theta)
-                realLocs.add(realPos)
-                val odoPos = RobotPose(times, 0f, odoX, odoY, odoTheta)
-                odoLocs.add(odoPos)
-
-                // make features as the robot sees them
-                val features = realObjectLocs.map { getFeatureForPosition(x, y, theta, it.x, it.y, SENSOR_ANG_STD_DEV, SENSOR_DIST_STD_DEV) }
-
-                // perform a FastSLAM timestep
-                synchronized(slam) {
-                    slam.addTimeStep(features, odoPos)
+                synchronized(resultsLock) {
+                    results = localResults
                 }
-                sendUpdateEvent(realPos, odoPos, slam.particlePoses, features, realObjectLocs)
+
+                val simPilotPoses = localResults.subconcResults.pilotPoses as SimPilotPoses
+
+                sendUpdateEvent(simPilotPoses.realPose, simPilotPoses.odoPose, localResults.particlePoses,
+                        localResults.features, realObjectLocs, localResults)
 
                 if (shouldPause.get() == true) {
                     println("Robot $rid attempting to pause")
+                    subConscActorHost.stop()
+                    plannerActorHost.stop()
+                    robotCoreActorHost.stop()
+
                     pauseSemaphore.acquire()
                     pauseSemaphore.release()
+
+                    subConscActorHost.start()
+                    plannerActorHost.start()
+                    robotCoreActorHost.start()
                     println("Robot $rid unpaused")
                 }
-
-                val endTime = System.currentTimeMillis()
-                val timeToSleep = MIN_TIMESTEP - (endTime - startTime)
-                if (timeToSleep > 0) {
-                    Thread.sleep(timeToSleep)
-                }
             }
+            subConscActorHost.stop()
+            plannerActorHost.stop()
+            robotCoreActorHost.stop()
             println("...Robot $rid stopped")
         }
     }
 
-    /**
-     * Send data that is never modified after being produced, using a helper thread
-     * (TODO: could hard guarantee locking not required by using immutability)
-     */
     private fun sendUpdateEvent(truePos: Pose, odoPos: Pose, particlePoses: List<Pose>, featuresForRT: List<Feature>,
-        realLandmarks: ArrayList<xyPnt>) {
+        realLandmarks: ArrayList<xyPnt>, results: RobotCoreActedResults) {
+
+        // send non-blocking events:
         updateExecutor.execute {
             val rtParticlePoses = particlePoses.map {
-                RTParticle(it.x, it.y, it.heading, ArrayList<RTLandmark>())
+                RTParticle(it.x, it.y, it.heading, ArrayList())
             }
             val rtFeatures = featuresForRT.map { RTFeature(it.distance, it.angle, it.stdDev) }
             val rtOdoPos = RTPose(odoPos.x, odoPos.y, odoPos.heading)
@@ -160,11 +163,17 @@ class RobotSession(val rid: Long, private val sessionStoppedWithNoSubscribersHan
                 sumY += it.y
                 sumHeading += it.heading
             }
-            val rtBestPose = RTPose(sumX / particlePoses.size, sumY / particlePoses.size, sumHeading / particlePoses.size)
+            val rtBestPose = RTPose(sumX / particlePoses.size, sumY / particlePoses.size,
+                    sumHeading / particlePoses.size)
 
-            val rtMsg = RTMsg(SlamInfoMsg(rid, System.currentTimeMillis(), rtParticlePoses, rtFeatures, rtBestPose, rtOdoPos, rtTruePos, rtTrueLandmarks))
+            val rtMsg = RTMsg(RTSlamInfoMsg(rid, System.currentTimeMillis(), rtParticlePoses, rtFeatures, rtBestPose,
+                    rtOdoPos, rtTruePos, rtTrueLandmarks))
+
+            val rtFullMsg = RTMsg(results, requestingNoNetworkSend = true)
+
             synchronized(rtEventSubscriptionLock) {
                 rtUpdateEventCont(this, rtMsg)
+                rtUpdateEventCont(this, rtFullMsg)
             }
         }
     }
@@ -188,7 +197,7 @@ class RobotSession(val rid: Long, private val sessionStoppedWithNoSubscribersHan
     }
 
     /**
-     * Starts the robot if it is not already shouldRun
+     * Starts the robot if it is not already started
      */
     @Synchronized
     fun startRobot() {
@@ -225,25 +234,22 @@ class RobotSession(val rid: Long, private val sessionStoppedWithNoSubscribersHan
     // All these public facing methods should be synchronized
     @Synchronized
     fun getAvgPose(): RobotPose {
-        synchronized(slam) {
-            return slam.avgPose
-        }
-    }
-
-    @Synchronized
-    fun applySlamSettings(fSettingsMsg: SlamSettingsMsg) {
-        synchronized(slam) {
-            slam.changeNumParticles(fSettingsMsg.numParticles)
-            slam.changeAngleVariance(fSettingsMsg.sensorAngVar)
-            slam.changeDistanceVariance(fSettingsMsg.sensorDistVar)
-            synchronized(rtEventSubscriptionLock) {
-                rtUpdateEventCont(this, RTMsg(SlamSettingsMsg(rid, slam.numParticles, slam.angleVariance, slam.distVariance)))
+        synchronized(resultsLock) {
+            val resultsObt = results
+            return when (resultsObt) {
+                is RobotCoreActedResults -> resultsObt.slamPose
+                else -> startPose
             }
         }
     }
 
     @Synchronized
-    fun applyRobotSessionSettings(rSettingsRobotReq: RobotSessionSettingsReqMsg) {
+    fun applySlamSettings(settingsMsg: RTSlamSettingsMsg) {
+        robotCoreInput.addMsg(SlamSettings(settingsMsg.numParticles, settingsMsg.sensorAngVar, settingsMsg.sensorDistVar, settingsMsg.sessionID))
+    }
+
+    @Synchronized
+    fun applyRobotSessionSettings(rSettingsRobotReq: RTRobotSessionSettingsReqMsg) {
         if (rSettingsRobotReq.shouldReset) {
             stopRobot()
             unpauseRobot()
@@ -258,7 +264,7 @@ class RobotSession(val rid: Long, private val sessionStoppedWithNoSubscribersHan
             pauseRobot()
         }
         synchronized(rtEventSubscriptionLock) {
-            rtUpdateEventCont(this, RTMsg(RobotSessionSettingsRespMsg(rid, !shouldPause.get(), !shouldRun.get())))
+            rtUpdateEventCont(this, RTMsg(RTRobotSessionSettingsRespMsg(rid, !shouldPause.get(), !shouldRun.get())))
         }
     }
 }
