@@ -8,6 +8,9 @@ import ca.joelathiessen.kaly2.odometry.AccurateSlamOdometry
 import ca.joelathiessen.kaly2.odometry.RobotPose
 import ca.joelathiessen.kaly2.persistence.RobotStorage
 import ca.joelathiessen.kaly2.planner.PathSegmentInfo
+import ca.joelathiessen.kaly2.server.SlamSettings
+import ca.joelathiessen.kaly2.server.messages.RTRobotMsg
+import ca.joelathiessen.kaly2.slam.FastSLAM
 import ca.joelathiessen.kaly2.slam.Slam
 import ca.joelathiessen.kaly2.subconscious.SubconsciousActedResults
 import lejos.robotics.geometry.Point
@@ -18,7 +21,9 @@ import java.util.Random
 data class RobotCoreActedResults(val timestamp: Long, val features: List<Feature>, val obstacles: List<Point>,
     val slamPose: RobotPose, val maneuvers: List<RobotPose>, val globalPlannerPaths: List<PathSegmentInfo>,
     val subconcResults: SubconsciousActedResults,
-    val particlePoses: List<Pose>, val numItrs: Long)
+    val particlePoses: List<Pose>, val numItrs: Long) : RTRobotMsg {
+    override val MSG_TYPE: String = "RobotCoreActedResults"
+}
 
 class RobotCoreActed(private val initialGoal: RobotPose, private val accurateOdo: AccurateSlamOdometry,
     private val slam: Slam, private val featureDetector: FeatureDetector, private val map: GlobalMap,
@@ -66,6 +71,15 @@ class RobotCoreActed(private val initialGoal: RobotPose, private val accurateOdo
 
     fun onPaths(newPaths: List<PathSegmentInfo>) {
         paths = newPaths
+    }
+
+    fun onSettings(newSettings: SlamSettings): SlamSettings {
+        if (slam is FastSLAM) {
+            slam.changeAngleVariance(newSettings.sensorAngVar)
+            slam.changeDistanceVariance(newSettings.sensorDistVar)
+            slam.changeNumParticles(newSettings.numParticles)
+        }
+        return newSettings
     }
 
     fun iterate(curResults: SubconsciousActedResults): RobotCoreActedResults {

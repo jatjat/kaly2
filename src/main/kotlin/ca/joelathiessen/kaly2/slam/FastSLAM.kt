@@ -5,14 +5,13 @@ import ca.joelathiessen.kaly2.featuredetector.Feature
 import ca.joelathiessen.kaly2.odometry.CarModel
 import ca.joelathiessen.kaly2.odometry.RobotPose
 import ca.joelathiessen.kaly2.slam.landmarks.Landmark
-import ca.joelathiessen.kaly2.subconscious.sensor.SensorInfo
 import ca.joelathiessen.util.FloatMath
 import lejos.robotics.navigation.Pose
 import java.util.ArrayList
 import java.util.Random
 
 class FastSLAM(val startPose: RobotPose, private val carMotionModel: CarModel, private val dataAssoc: DataAssociator,
-    private val partResamp: ParticleResampler, val sensorInfo: SensorInfo) : Slam {
+    private val partResamp: ParticleResampler) : Slam {
     private val ADD_REMOVE_SEED = 1L
     val DEFAULT_NUM_PARTICLES = 20
     val DEFAULT_DIST_VARIANCE = 1.0f

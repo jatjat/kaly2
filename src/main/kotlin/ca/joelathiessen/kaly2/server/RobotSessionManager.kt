@@ -2,7 +2,8 @@ package ca.joelathiessen.kaly2.server
 
 import java.util.HashMap
 
-class RobotSessionManager {
+class RobotSessionManager(private val realRobotSessionFactory: RobotSessionFactory?,
+                          private val simRobotSessionFactory: RobotSessionFactory?) {
     private val robotSessions = HashMap<Long, RobotSession>()
     private var nextSID = 1L
 
@@ -12,9 +13,17 @@ class RobotSessionManager {
     @Synchronized
     fun getHandler(sid: Long): RobotSession {
         if (!robotSessions.containsKey(sid)) {
-            val robotSession = RobotSession(sid,
-                    sessionStoppedWithNoSubscribersHandler = { handleSessionStoppedWithNoSubscribers(sid) })
-            robotSessions[sid] = robotSession
+            val factory: RobotSessionFactory
+            if (sid == 0L) {
+                factory = checkNotNull(realRobotSessionFactory) {
+                    "No factory to create a session with a real robot was provided"
+                }
+            } else {
+                factory = checkNotNull(simRobotSessionFactory) {
+                    "No factory to create a session with a simulated robot was provided"
+                }
+            }
+            robotSessions[sid] = factory.makeRobotSession(sid, { handleSessionStoppedWithNoSubscribers(sid) })
         }
         printManagingMsg()
         return robotSessions[sid]!!

@@ -2,15 +2,16 @@ package ca.joelathiessen.kaly2.server.messages
 
 import com.google.gson.annotations.Expose
 
-class RobotSessionSettingsRespMsg(
+class RTSlamSettingsMsg(
     val sessionID: Long,
-    val isRunning: Boolean,
-    val hasJustReset: Boolean
-) : RobotMsg {
+    val numParticles: Int,
+    val sensorDistVar: Float,
+    val sensorAngVar: Float
+) : RTRobotMsg {
     @Expose(serialize = false, deserialize = false)
     override val MSG_TYPE = MSG_TYPE_NAME
 
     companion object {
-        val MSG_TYPE_NAME = "robotSessionSettings"
+        val MSG_TYPE_NAME = "slamSettings"
     }
 }

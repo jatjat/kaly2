@@ -2,7 +2,7 @@ package ca.joelathiessen.kaly2.server.messages
 
 import com.google.gson.annotations.Expose
 
-class SlamInfoMsg(
+class RTSlamInfoMsg(
     val sessionID: Long,
     val timestamp: Long,
     val particles: List<RTParticle>,
@@ -12,7 +12,7 @@ class SlamInfoMsg(
     val odoPose: RTPose,
     val truePose: RTPose,
     val trueLandmarks: List<RTLandmark>
-) : RobotMsg {
+) : RTRobotMsg {
     @Expose(serialize = false, deserialize = false)
     override var MSG_TYPE = "slamInfo"
 }

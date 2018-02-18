@@ -39,6 +39,18 @@ class PersistentStorage(private val serverUUID: UUID, private val canAssumeRobot
         }
     }
 
+    fun getOrMakeRobotStorage(histid: Long, robotName: String, isReal: Boolean, mapName: String,
+                              historyStartDate: DateTime): RobotStorage {
+        var storage: RobotStorage? = null
+        transaction {
+            storage = getRobotStorage(histid)
+            if (storage == null) {
+                storage = makeRobotStorage(robotName, isReal, mapName, historyStartDate)
+            }
+        }
+        return checkNotNull(storage) { "Failed to get or create Robot Storage" }
+    }
+
     fun makeRobotStorage(robotName: String, isReal: Boolean, mapName: String, historyStartDate: DateTime): RobotStorage {
         var histid = 0L
         transaction {

@@ -1,5 +1,5 @@
 package ca.joelathiessen.kaly2.server.messages
 
-interface RobotMsg {
+interface RTRobotMsg {
     val MSG_TYPE: String
 }
