@@ -42,13 +42,13 @@ class FastSLAM(val startPose: RobotPose, private val carMotionModel: CarModel, p
 
     fun changeNumParticles(number: Int = DEFAULT_NUM_PARTICLES) {
         var remCnt = 0
-        for (i in number..particles.size.toInt() - 1) {
+        for (i in number..particles.size - 1) {
             particles.removeAt(Random(ADD_REMOVE_SEED).nextInt(particles.size))
             remCnt++
         }
         var addCnt = 0
         val newParticles = ArrayList<Particle>()
-        for (i in particles.size.toInt()..number - 1) {
+        for (i in particles.size..number - 1) {
             newParticles += particles[Random(ADD_REMOVE_SEED).nextInt(particles.size)].copy()
             addCnt++
         }
