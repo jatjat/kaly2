@@ -1,48 +1,20 @@
 package ca.joelathiessen.kaly2.tests.pc.acceptance
 
-import ca.joelathiessen.kaly2.RobotCoreActed
-import ca.joelathiessen.kaly2.RobotCoreActor
-import ca.joelathiessen.kaly2.RobotCoreRsltsMsg
+import ca.joelathiessen.kaly2.RobotCoreActedResults
 import ca.joelathiessen.kaly2.featuredetector.Feature
-import ca.joelathiessen.kaly2.featuredetector.SplitAndMerge
-import ca.joelathiessen.kaly2.map.GlobalMap
-import ca.joelathiessen.kaly2.map.MapTree
-import ca.joelathiessen.kaly2.odometry.AccurateSlamOdometry
-import ca.joelathiessen.kaly2.odometry.CarModel
 import ca.joelathiessen.kaly2.odometry.RobotPose
-import ca.joelathiessen.kaly2.persistence.PersistentStorage
-import ca.joelathiessen.kaly2.planner.GlobalPathPlanner
 import ca.joelathiessen.kaly2.planner.PathSegmentInfo
-import ca.joelathiessen.kaly2.planner.PlannerActor
-import ca.joelathiessen.kaly2.planner.linear.LinearPathSegmentRootFactory
-import ca.joelathiessen.kaly2.slam.FastSLAM
-import ca.joelathiessen.kaly2.slam.FastUnbiasedResampler
-import ca.joelathiessen.kaly2.slam.NNDataAssociator
+import ca.joelathiessen.kaly2.server.KalyServer
+import ca.joelathiessen.kaly2.server.messages.RTMsg
 import ca.joelathiessen.kaly2.subconscious.LocalPlan
-import ca.joelathiessen.kaly2.subconscious.LocalPlanner
-import ca.joelathiessen.kaly2.subconscious.RobotPilot
 import ca.joelathiessen.kaly2.subconscious.SimPilotPoses
-import ca.joelathiessen.kaly2.subconscious.SimulatedPilot
-import ca.joelathiessen.kaly2.subconscious.SubconsciousActed
-import ca.joelathiessen.kaly2.subconscious.SubconsciousActor
-import ca.joelathiessen.kaly2.subconscious.sensor.Kaly2Sensor
-import ca.joelathiessen.kaly2.subconscious.sensor.SimSensor
-import ca.joelathiessen.kaly2.subconscious.sensor.SimSpinner
-import ca.joelathiessen.kaly2.subconscious.sensor.Spinnable
-import ca.joelathiessen.util.FloatMath
-import ca.joelathiessen.util.array2d
-import ca.joelathiessen.util.itractor.ItrActorChannel
-import ca.joelathiessen.util.itractor.ItrActorThreadedHost
 import lejos.robotics.geometry.Line
 import lejos.robotics.geometry.Point
 import lejos.robotics.navigation.Pose
-import org.joda.time.DateTime
 import java.awt.Color
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.util.ArrayList
-import java.util.Collections
-import java.util.UUID
 import javax.imageio.ImageIO
 import javax.swing.JFrame
 import javax.swing.JPanel
@@ -68,55 +40,7 @@ class MainLoopView : JPanel() {
 
     private val REFRESH_INTERVAL = 16L
 
-    private val LINE_THRESHOLD = 10.0f
-    private val CHECK_WITHIN_ANGLE = 0.3f
-    private val MAX_RATIO = 1.0f
-
-    private val MAX_SENSOR_RANGE = 500.0f
-    private val SENSOR_DIST_STDEV = 0.01f
-    private val SENSOR_ANG_STDEV = 0.001f
-    private val SENSOR_START_ANG = 0.0f
-    private val SENSOR_END_ANG = 2 * FloatMath.PI
-    private val SENSOR_ANG_INCR = 0.0174533f
-
-    private val ODO_ANG_STD_DEV = 0.01f
-    private val ODO_DIST_STD_DEV = 0.01f
-    private val STEP_DIST = 2f
-
     private val MIN_WIDTH = 400.0f
-
-    private val NN_THRESHOLD = 10.0f
-
-    private val OBS_SIZE = 2f
-    private val SEARCH_DIST = MIN_WIDTH
-    private val GBL_PTH_PLN_STEP_DIST = 20f
-    private val GBL_PTH_PLN_ITRS = 100
-
-    private val LCL_PLN_ROT_STEP = 0.017f
-    private val LCL_PLN_DIST_STEP = 1f
-    private val LCL_PLN_GRID_STEP = 5f
-    private val LCL_PLN_GRID_SIZE = 2 * MAX_SENSOR_RANGE
-    private val SIM_PILOT_MAX_ROT = 1f
-    private val SIM_PILOT_MAX_DIST = 20f
-
-    private val MAP_REMOVE_INVALID_OBS_INTERVAL = 10
-
-    private val MIN_MES_TIME = 160L
-
-    private val SUBCONC_INPUT_SIZE = 0
-    private val PLANNER_INPUT_SIZE = 0
-    private val ROBOT_CORE_INPUT_SIZE = 0
-    private val ROBOT_CORE_OUTPUT_SIZE = 0
-
-    val ROBOT_NAME = "kaly2Robot"
-    val MAP_NAME = "persistedMap"
-    val CURRENT_DATE = DateTime()
-    val SERVER_UUID = UUID.randomUUID()
-
-    private val startPos = RobotPose(0, 0f, MIN_WIDTH / 2f, MIN_WIDTH / 2f, 0f)
-    private val motionModel = CarModel()
-    private val dataAssoc = NNDataAssociator(NN_THRESHOLD)
-    private val partResamp = FastUnbiasedResampler()
 
     private val drawFeatLock = Any()
     private val drawPartLock = Any()
@@ -125,9 +49,6 @@ class MainLoopView : JPanel() {
 
     private val realLocs = ArrayList<RobotPose>()
     private var odoLocs: ArrayList<Pose> = ArrayList()
-
-    private val obstacles = MapTree()
-    private val obsGrid = array2d<Point?>(image.width, image.height, { null })
 
     private var drawParticlePoses: List<Pose> = ArrayList()
     private var drawFeatures: List<Feature> = ArrayList()
@@ -142,130 +63,57 @@ class MainLoopView : JPanel() {
     private val drawPlanLock = Any()
     private val drawObsLock = Any()
 
-    private val factory = LinearPathSegmentRootFactory()
+    private val handleRTMessageCaller = { sender: Any, msg: RTMsg -> handleRTMessage(sender, msg) } // can't pass handleRTMessage directly
 
     init {
         this.setSize(MIN_WIDTH.toInt(), MIN_WIDTH.toInt())
 
-        var x = MIN_WIDTH / 2f
-        var y = MIN_WIDTH / 2f
-        var xEnd = MIN_WIDTH
-        var yEnd = MIN_WIDTH
-
-        val points = ArrayList<Point>()
-        for (xInc in 0 until image.width) {
-            for (yInc in 0 until image.height) {
-                if (image.getRGB(xInc, yInc) == Color.BLACK.rgb) {
-                    points.add(Point(xInc.toFloat(), yInc.toFloat()))
-                    obsGrid[xInc][yInc] = Point(xInc.toFloat(), yInc.toFloat())
-                } else if (image.getRGB(xInc, yInc) == Color.RED.rgb) {
-                    x = xInc.toFloat()
-                    y = yInc.toFloat()
-                } else if (image.getRGB(xInc, yInc) == Color.GREEN.rgb) {
-                    xEnd = xInc.toFloat()
-                    yEnd = yInc.toFloat()
-                }
-            }
-        }
-        val startPose = RobotPose(0, 0f, x, y, 0f)
-        val end = RobotPose(0, 0f, xEnd, yEnd, 0f)
-
-        Collections.shuffle(points)
-        points.forEach { obstacles.add(it) }
-
-        val simPilot = SimulatedPilot(ODO_ANG_STD_DEV, ODO_DIST_STD_DEV, STEP_DIST, startPose, SIM_PILOT_MAX_ROT,
-                SIM_PILOT_MAX_DIST)
-        val simSpinner = SimSpinner(SENSOR_START_ANG, SENSOR_END_ANG, SENSOR_ANG_INCR)
-        val simSensor = SimSensor(obsGrid, image.width, image.height,
-            MAX_SENSOR_RANGE, SENSOR_DIST_STDEV, SENSOR_ANG_STDEV, simSpinner, simPilot)
-
-        val robotPilot: RobotPilot = simPilot
-        val sensor: Kaly2Sensor = simSensor
-        val spinner: Spinnable = simSpinner
-
-        val gblManeuvers: List<RobotPose> = ArrayList()
-        val accurateOdo = AccurateSlamOdometry(robotPilot.poses.odoPose, { robotPilot.poses.odoPose })
-
-        val localPlanner = LocalPlanner(0f, LCL_PLN_ROT_STEP, LCL_PLN_DIST_STEP, LCL_PLN_GRID_STEP,
-            LCL_PLN_GRID_SIZE, OBS_SIZE)
-
-        val subConsc = SubconsciousActed(robotPilot, accurateOdo, localPlanner,
-            sensor, spinner, gblManeuvers, MIN_MES_TIME)
-
-        val planner = GlobalPathPlanner(factory, obstacles, OBS_SIZE, SEARCH_DIST, GBL_PTH_PLN_STEP_DIST,
-            startPose, end, GBL_PTH_PLN_ITRS)
-
-        val slam = FastSLAM(startPos, motionModel, dataAssoc, partResamp)
-
-        val featureDetector = SplitAndMerge(LINE_THRESHOLD, CHECK_WITHIN_ANGLE, MAX_RATIO)
-
-        val map = GlobalMap(OBS_SIZE, OBS_SIZE, MAP_REMOVE_INVALID_OBS_INTERVAL)
-
-        val persistentStorage = PersistentStorage(SERVER_UUID,
-            dbInit = PersistentStorage.DbInitTypes.FILE_DB)
-
-        var robotStorage = persistentStorage.getRobotStorage(1L)
-
-        if (robotStorage == null) {
-            robotStorage = persistentStorage.makeRobotStorage(ROBOT_NAME, false, MAP_NAME, CURRENT_DATE)
-        }
-
-        val robotCore = RobotCoreActed(end, accurateOdo, slam, featureDetector, map, robotStorage)
-
-        val subconscInput = ItrActorChannel(SUBCONC_INPUT_SIZE)
-        val plannerInput = ItrActorChannel(PLANNER_INPUT_SIZE)
-        val robotCoreInput = ItrActorChannel(ROBOT_CORE_INPUT_SIZE)
-        val robotCoreOutput = ItrActorChannel(ROBOT_CORE_OUTPUT_SIZE)
-
-        val subConscActor = SubconsciousActor(subConsc, subconscInput, robotCoreInput)
-        val plannerActor = PlannerActor(planner, plannerInput, robotCoreInput)
-        val robotCoreActor = RobotCoreActor(robotCore, robotCoreInput, robotCoreOutput, plannerInput, subconscInput)
-
-        val subConscActorHost = ItrActorThreadedHost(subConscActor)
-        val plannerActorHost = ItrActorThreadedHost(plannerActor)
-        val robotCoreActorHost = ItrActorThreadedHost(robotCoreActor)
-
-        subConscActorHost.start()
-        plannerActorHost.start()
-        robotCoreActorHost.start()
-
+        val server = KalyServer()
         thread {
-            while (true) {
-                val results = (robotCoreOutput.takeMsg() as RobotCoreRsltsMsg).results
-                synchronized(drawPathLock) {
-                    drawPaths = results.globalPlannerPaths
-                }
-                val subResults = results.subconcResults
-                synchronized(odoLock) {
-                    odoLocs.add(subResults.pilotPoses.odoPose)
-                }
-                synchronized(realLock) {
-                    val simPoses = subResults.pilotPoses
-                    if (simPoses is SimPilotPoses) {
-                        realLocs.add(simPoses.realPose)
-                    }
-                }
-                synchronized(drawPlanLock) {
-                    drawPlan = subResults.plan
-                }
-
-                synchronized(drawManeuversLock) {
-                    drawManeuvers = results.maneuvers
-                }
-                synchronized(drawFeatLock) {
-                    drawFeatures = results.features
-                }
-                synchronized(drawPartLock) {
-                    drawParticlePoses = results.particlePoses
-                }
-                synchronized(drawObsLock) {
-                    drawObstacles = results.obstacles
-                }
-            }
+            server.serve()
         }
+
+        val robotSession = server.inprocessAPI.getRobotSession(0)
+        robotSession.subscribeToRTEvents(handleRTMessageCaller)
+        robotSession.startRobot()
 
         fixedRateTimer(period = REFRESH_INTERVAL) {
             this@MainLoopView.repaint()
+        }
+    }
+
+    fun handleRTMessage(@Suppress("UNUSED_PARAMETER") sender: Any, message: RTMsg) {
+        if (message.msg is RobotCoreActedResults) {
+            val results = message.msg as RobotCoreActedResults
+            synchronized(drawPathLock) {
+                drawPaths = results.globalPlannerPaths
+            }
+            val subResults = results.subconcResults
+            synchronized(odoLock) {
+                odoLocs.add(subResults.pilotPoses.odoPose)
+            }
+            synchronized(realLock) {
+                val simPoses = subResults.pilotPoses
+                if (simPoses is SimPilotPoses) {
+                    realLocs.add(simPoses.realPose)
+                }
+            }
+            synchronized(drawPlanLock) {
+                drawPlan = subResults.plan
+            }
+
+            synchronized(drawManeuversLock) {
+                drawManeuvers = results.maneuvers
+            }
+            synchronized(drawFeatLock) {
+                drawFeatures = results.features
+            }
+            synchronized(drawPartLock) {
+                drawParticlePoses = results.particlePoses
+            }
+            synchronized(drawObsLock) {
+                drawObstacles = results.obstacles
+            }
         }
     }
 
