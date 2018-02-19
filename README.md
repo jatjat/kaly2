@@ -9,15 +9,15 @@ Development is in-progress.
 You can explore its currently exposed functionality [on my website](http://www.joelathiessen.ca)
 
 #### Completed:
-- FastSLAM localization
+- FastSLAM localization (algorithm & unit tests)
 - websocket intermediated control using Jetty
-- low-level object avoidance (algorithm & unit tests only)
-- Split-and-Merge feature detection (algorithm & unit tests only)
-- Linear RRT\* global planner (algorithm & some unit tests only)
+- Persistent obstacle map using mostly the Exposed ORM, with H2/MySQL (impl. & unit tests)
+- low-level object avoidance (algorithm & unit tests)
+- Split-and-Merge feature detection (algorithm & unit tests)
+- Linear RRT\* global planner (algorithm & some unit tests)
 
 #### Todo:
   - write a super simple IC2 "driver" for a laser distance sensor
-  - implement a persistent obstacle map (perhaps using [requery](https://github.com/requery/requery)?)
   - incorporate a high-level obstacle avoidance algorithm such as the S-RRT\* implementation I wrote
   - do more sophisticated data association (e.g. MHT, JCBB, PDAF)
   - implement a high-level "goal decider"
@@ -45,3 +45,5 @@ To build the Docker image and load it into Docker as `kaly2:local`:
 ```
 bazel run //:image_load
 ```
+
+To preview functionality not yet available on the website, you can run an acceptance test such as `MainLoopDemo` in `MainLoopView.kt` from an IDE or by writing a custom Gradle configuration.
