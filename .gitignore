@@ -2,4 +2,5 @@ build/
 out/
 .gradle
 .idea
-out/
+*.iml
+local.properties
