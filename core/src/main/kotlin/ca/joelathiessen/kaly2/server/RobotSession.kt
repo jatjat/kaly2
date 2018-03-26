@@ -42,11 +42,22 @@ import kotlin.concurrent.thread
 
 class SlamSettings(val numParticles: Int, val sensorAngVar: Float, val sensorDistVar: Float, val sessionID: Long) : ItrActorMsg()
 
-class RobotSession(val rid: Long, private val sessionStoppedWithNoSubscribersHandler: () -> Unit,
-                   private val startPose: RobotPose, initialGoal: RobotPose, robotPilot: RobotPilot, spinner: Spinnable,
-                   sensor: Kaly2Sensor, featureDetector: FeatureDetector, minSubcMeasTime: Long, map: GlobalMap,
-                   robotStorage: RobotStorage, slam: FastSLAM, localPlanner: LocalPlanner,
-                   globalPathPlanner: GlobalPathPlanner) {
+class RobotSession(
+    val rid: Long,
+    private val sessionStoppedWithNoSubscribersHandler: () -> Unit,
+    private val startPose: RobotPose,
+    initialGoal: RobotPose,
+    robotPilot: RobotPilot,
+    spinner: Spinnable,
+    sensor: Kaly2Sensor,
+    featureDetector: FeatureDetector,
+    minSubcMeasTime: Long,
+    map: GlobalMap,
+    robotStorage: RobotStorage,
+    slam: FastSLAM,
+    localPlanner: LocalPlanner,
+    globalPathPlanner: GlobalPathPlanner
+) {
 
     private val SUBCONC_INPUT_SIZE = 0
     private val PLANNER_INPUT_SIZE = 0
@@ -142,8 +153,14 @@ class RobotSession(val rid: Long, private val sessionStoppedWithNoSubscribersHan
         }
     }
 
-    private fun sendUpdateEvent(truePos: Pose, odoPos: Pose, particlePoses: List<Pose>, featuresForRT: List<Feature>,
-        realLandmarks: ArrayList<xyPnt>, results: RobotCoreActedResults) {
+    private fun sendUpdateEvent(
+        truePos: Pose,
+        odoPos: Pose,
+        particlePoses: List<Pose>,
+        featuresForRT: List<Feature>,
+        realLandmarks: ArrayList<xyPnt>,
+        results: RobotCoreActedResults
+    ) {
 
         // send non-blocking events:
         updateExecutor.execute {

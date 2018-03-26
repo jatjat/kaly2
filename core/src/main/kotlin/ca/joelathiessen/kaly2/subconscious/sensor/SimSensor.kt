@@ -5,10 +5,16 @@ import ca.joelathiessen.util.FloatMath
 import ca.joelathiessen.util.FloatRandom
 import lejos.robotics.geometry.Point
 
-class SimSensor(private val osGrid: Array<Array<Point?>>,
-    private val gridWidth: Int, private val gridHeight: Int, private val maxSensorRange: Float,
-    private val sensorDistStdev: Float = 0.0f, private val sensorAngStdev: Float = 0.0f,
-    private val spinner: SimSpinner, private val simPilot: SimulatedPilot) : Kaly2Sensor {
+class SimSensor(
+    private val osGrid: Array<Array<Point?>>,
+    private val gridWidth: Int,
+    private val gridHeight: Int,
+    private val maxSensorRange: Float,
+    private val sensorDistStdev: Float = 0.0f,
+    private val sensorAngStdev: Float = 0.0f,
+    private val spinner: SimSpinner,
+    private val simPilot: SimulatedPilot
+) : Kaly2Sensor {
     val DIST_INCR = 0.5f
     private val random = FloatRandom(0)
 
@@ -30,8 +36,8 @@ class SimSensor(private val osGrid: Array<Array<Point?>>,
                     sample[offset] = robotPose.distanceTo(next) + (random.nextGaussian() * sensorDistStdev)
 
                     // assume angle is obtained using a reference frame set by a compass:
-                    sample[offset + 1] = (FloatMath.atan2(next.y - robotPose.y, next.x - robotPose.x)
-                        + (random.nextGaussian() * sensorAngStdev))
+                    sample[offset + 1] = (FloatMath.atan2(next.y - robotPose.y, next.x - robotPose.x) +
+                        (random.nextGaussian() * sensorAngStdev))
                     cont = false
                 }
                 dist += DIST_INCR

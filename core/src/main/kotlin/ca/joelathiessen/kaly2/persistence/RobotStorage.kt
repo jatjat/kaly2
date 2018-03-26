@@ -20,8 +20,13 @@ import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import kotlin.coroutines.experimental.buildSequence
 
-class RobotStorage(val histid: Long, private val serverUUID: UUID,
-                   dbUser: String, dbPassword: String, dbUrl: String) {
+class RobotStorage(
+    val histid: Long,
+    private val serverUUID: UUID,
+    dbUser: String,
+    dbPassword: String,
+    dbUrl: String
+) {
     private val dbPool = Executors.newSingleThreadExecutor()!!
     private val jdbcConnection: Connection
 
@@ -163,8 +168,13 @@ class RobotStorage(val histid: Long, private val serverUUID: UUID,
         }
     }
 
-    private fun setMesInPreparedStatements(measurements: List<Measurement>, itrID: Long,
-                                           stmt: PreparedStatement, start: Int, end: Int) {
+    private fun setMesInPreparedStatements(
+        measurements: List<Measurement>,
+        itrID: Long,
+        stmt: PreparedStatement,
+        start: Int,
+        end: Int
+    ) {
         var stmtPos = 1
         for (i in start until end) {
             val mes = measurements[i]

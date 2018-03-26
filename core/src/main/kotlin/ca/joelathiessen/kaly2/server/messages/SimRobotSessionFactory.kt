@@ -22,20 +22,34 @@ import lejos.robotics.geometry.Point
 import org.joda.time.DateTime
 import java.util.Collections
 
-class SimRobotSessionFactory(private val odoAngStdDev: Float, private val odoDistStdDev: Float,
-                             private val stepDist: Float, private val maxPilotDist: Float,
-                             private val maxPilotRot: Float, private val sensorStartAng: Float,
-                             private val sensorEndAng: Float, private val sensorAngIncr: Float,
-                             private val mapImage: AndroidJVMImage, private val maxSensorRange: Float,
-                             private val sensorDistStdDev: Float, private val sensorAngStdDev: Float,
-                             private val lineThreshold: Float, private val checkWithinAngle: Float,
-                             private val maxRatio: Float, private val localPlannerRotStep: Float,
-                             private val localPlannerDistStep: Float, private val localPlannerGridStep: Float,
-                             private val localPlannerGridSize: Float, private val obstacleSize: Float,
-                             private val globalPlannerSearchDist: Float, private val globalPlannerStepDist: Float,
-                             private val globalPlannerItrs: Int, private val mapRemoveInvalidObsInterval: Int,
-                             private val minSubcMeasTime: Long, private val nnAsocThreshold: Float,
-                             private val persistentStorage: PersistentStorage
+class SimRobotSessionFactory(
+    private val odoAngStdDev: Float,
+    private val odoDistStdDev: Float,
+    private val stepDist: Float,
+    private val maxPilotDist: Float,
+    private val maxPilotRot: Float,
+    private val sensorStartAng: Float,
+    private val sensorEndAng: Float,
+    private val sensorAngIncr: Float,
+    private val mapImage: AndroidJVMImage,
+    private val maxSensorRange: Float,
+    private val sensorDistStdDev: Float,
+    private val sensorAngStdDev: Float,
+    private val lineThreshold: Float,
+    private val checkWithinAngle: Float,
+    private val maxRatio: Float,
+    private val localPlannerRotStep: Float,
+    private val localPlannerDistStep: Float,
+    private val localPlannerGridStep: Float,
+    private val localPlannerGridSize: Float,
+    private val obstacleSize: Float,
+    private val globalPlannerSearchDist: Float,
+    private val globalPlannerStepDist: Float,
+    private val globalPlannerItrs: Int,
+    private val mapRemoveInvalidObsInterval: Int,
+    private val minSubcMeasTime: Long,
+    private val nnAsocThreshold: Float,
+    private val persistentStorage: PersistentStorage
 ) : RobotSessionFactory {
     private val ROBOT_NAME = "simRobot"
     private val MAP_NAME = "defaultMap"
@@ -79,8 +93,12 @@ class SimRobotSessionFactory(private val odoAngStdDev: Float, private val odoDis
                 simSensor, featureDetector, minSubcMeasTime, map, robotStorage, slam, localPlanner, globalPathPlanner)
     }
 
-    private data class MapImageData(val startPose: RobotPose, val goalPose: RobotPose,
-                                    val obstaclePoints: ArrayList<Point>, val obstacleGrid: Array<Array<Point?>>)
+    private data class MapImageData(
+        val startPose: RobotPose,
+        val goalPose: RobotPose,
+        val obstaclePoints: ArrayList<Point>,
+        val obstacleGrid: Array<Array<Point?>>
+    )
     private fun extractDataFromMapImage(mapImage: AndroidJVMImage): MapImageData {
         var x = mapImage.width / 2f
         var y = mapImage.height / 2f

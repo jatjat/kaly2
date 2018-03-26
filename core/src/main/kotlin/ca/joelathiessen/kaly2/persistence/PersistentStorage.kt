@@ -17,10 +17,14 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
 import java.util.UUID
 
-class PersistentStorage(private val serverUUID: UUID, private val canAssumeRobotUnownedTimeout: Long = 10000L,
-                        private val dbInit: DbInitTypes = DbInitTypes.FILE_DB,
-                        private val user: String = "", private val password: String = "",
-                        dropTablesFirst: Boolean = false) {
+class PersistentStorage(
+    private val serverUUID: UUID,
+    private val canAssumeRobotUnownedTimeout: Long = 10000L,
+    private val dbInit: DbInitTypes = DbInitTypes.FILE_DB,
+    private val user: String = "",
+    private val password: String = "",
+    dropTablesFirst: Boolean = false
+) {
 
     enum class DbInitTypes(val dbUrl: String, val dbDriver: String) {
         IN_MEMORY_DB("jdbc:h2:mem:kaly2db;DB_CLOSE_DELAY=-1", "org.h2.Driver"),
@@ -30,7 +34,7 @@ class PersistentStorage(private val serverUUID: UUID, private val canAssumeRobot
     }
 
     init {
-       Database.connect(dbInit.dbUrl, driver = dbInit.dbDriver, user = user, password = password)
+        Database.connect(dbInit.dbUrl, driver = dbInit.dbDriver, user = user, password = password)
 
         transaction {
             if (dropTablesFirst) {
@@ -40,8 +44,13 @@ class PersistentStorage(private val serverUUID: UUID, private val canAssumeRobot
         }
     }
 
-    fun getOrMakeRobotStorage(histid: Long, robotName: String, isReal: Boolean, mapName: String,
-                              historyStartDate: DateTime): RobotStorage {
+    fun getOrMakeRobotStorage(
+        histid: Long,
+        robotName: String,
+        isReal: Boolean,
+        mapName: String,
+        historyStartDate: DateTime
+    ): RobotStorage {
         var storage: RobotStorage? = null
         transaction {
             storage = getRobotStorage(histid)

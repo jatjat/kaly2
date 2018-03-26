@@ -2,8 +2,10 @@ package ca.joelathiessen.kaly2.server
 
 import java.util.HashMap
 
-class RobotSessionManager(private val realRobotSessionFactory: RobotSessionFactory?,
-                          private val simRobotSessionFactory: RobotSessionFactory?) {
+class RobotSessionManager(
+    private val realRobotSessionFactory: RobotSessionFactory?,
+    private val simRobotSessionFactory: RobotSessionFactory?
+) {
     private val robotSessions = HashMap<Long, RobotSession>()
     private var nextSID = 1L
 

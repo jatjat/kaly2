@@ -5,8 +5,10 @@ import java.util.ArrayList
 /**
  * For a containing class, allows exposing a public event for subscription while keeping its invocation private
  */
-class EventContainer<T>(onHandlerAdded: (() -> Unit)? = null,
-                        onHandlerRemoved: (() -> Unit)? = null) {
+class EventContainer<T>(
+    onHandlerAdded: (() -> Unit)? = null,
+    onHandlerRemoved: (() -> Unit)? = null
+) {
     private val handlers = arrayListOf<(sender: Any, eventArgs: T) -> Unit>()
     val event: Event<T> = EventImpl(handlers, onHandlerAdded, onHandlerRemoved)
 
@@ -15,9 +17,11 @@ class EventContainer<T>(onHandlerAdded: (() -> Unit)? = null,
         handlers.forEach { it(sender, eventArgs) }
     }
 
-    private class EventImpl<T>(private val handlers: ArrayList<(sender: Any, eventArgs: T) -> Unit>,
-                               private val onHandlerAdded: (() -> Unit)? = null,
-                               private val onHandlerRemoved: (() -> Unit)? = null)
+    private class EventImpl<T>(
+        private val handlers: ArrayList<(sender: Any, eventArgs: T) -> Unit>,
+        private val onHandlerAdded: (() -> Unit)? = null,
+        private val onHandlerRemoved: (() -> Unit)? = null
+    )
         : Event<T> {
         @Synchronized
         override operator fun plusAssign(handler: (sender: Any, eventArgs: T) -> Unit) {

@@ -9,9 +9,13 @@ import lejos.robotics.navigation.Pose
 import java.util.ArrayList
 import java.util.concurrent.ConcurrentLinkedQueue
 
-class Subconscious(private val sensor: Kaly2Sensor, private val pilot: MovePilot,
-    private val odometry: OdometryPoseProvider, private val spinner: Spinner,
-    private val sweeps: ConcurrentLinkedQueue<ArrayList<Measurement>>) : Runnable {
+class Subconscious(
+    private val sensor: Kaly2Sensor,
+    private val pilot: MovePilot,
+    private val odometry: OdometryPoseProvider,
+    private val spinner: Spinner,
+    private val sweeps: ConcurrentLinkedQueue<ArrayList<Measurement>>
+) : Runnable {
 
     // probable maximum number of measurements we will get per
     // 360 degree spin of the distance detector:

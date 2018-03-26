@@ -2,8 +2,15 @@ package ca.joelathiessen.kaly2.featuredetector
 
 import ca.joelathiessen.kaly2.Measurement
 
-class SplitAndMergeFeature(sensorX: Float, sensorY: Float, distance: Float, angle: Float, deltaX: Float, deltaY: Float,
-    stdDev: Float = 0.0f) : Feature(sensorX, sensorY, distance, angle, deltaX, deltaY, stdDev) {
+class SplitAndMergeFeature(
+    sensorX: Float,
+    sensorY: Float,
+    distance: Float,
+    angle: Float,
+    deltaX: Float,
+    deltaY: Float,
+    stdDev: Float = 0.0f
+) : Feature(sensorX, sensorY, distance, angle, deltaX, deltaY, stdDev) {
 
     constructor(measurement: Measurement) : this(measurement.probPose.x, measurement.probPose.y, measurement.distance,
         measurement.probAngle, measurement.deltaX, measurement.deltaY)

@@ -17,14 +17,9 @@ android {
     }
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
-        debug {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-        }
-
     }
 
     packagingOptions {
@@ -34,9 +29,6 @@ android {
         abortOnError false
     }
     buildToolsVersion '27.0.3'
-    dexOptions {
-        incremental false
-    }
 }
 
 

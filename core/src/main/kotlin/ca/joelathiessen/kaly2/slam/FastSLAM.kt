@@ -10,8 +10,12 @@ import lejos.robotics.navigation.Pose
 import java.util.ArrayList
 import java.util.Random
 
-class FastSLAM(val startPose: RobotPose, private val carMotionModel: CarModel, private val dataAssoc: DataAssociator,
-    private val partResamp: ParticleResampler) : Slam {
+class FastSLAM(
+    val startPose: RobotPose,
+    private val carMotionModel: CarModel,
+    private val dataAssoc: DataAssociator,
+    private val partResamp: ParticleResampler
+) : Slam {
     private val ADD_REMOVE_SEED = 1L
     val DEFAULT_NUM_PARTICLES = 20
     val DEFAULT_DIST_VARIANCE = 1.0f
