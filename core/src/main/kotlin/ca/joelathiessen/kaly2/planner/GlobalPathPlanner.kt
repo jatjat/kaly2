@@ -15,10 +15,16 @@ import java.util.Random
  * "Incremental sampling-based algorithms for optimal motion planning."
  * Robotics Science and Systems VI 104 (2010).
  **/
-class GlobalPathPlanner(private val pathFactory: PathSegmentRootFactory, private var obstacles: MapTree,
-    private val obsSize: Float, private val searchDist: Float, private val stepDist: Float,
-    startPose: RobotPose, endPose: RobotPose,
-    private val defaultNumItrs: Int = 1000) {
+class GlobalPathPlanner(
+    private val pathFactory: PathSegmentRootFactory,
+    private var obstacles: MapTree,
+    private val obsSize: Float,
+    private val searchDist: Float,
+    private val stepDist: Float,
+    startPose: RobotPose,
+    endPose: RobotPose,
+    private val defaultNumItrs: Int = 1000
+) {
     val paths: ArrayList<PathSegmentInfo>
         get() {
             return ArrayList(pathList)

@@ -112,7 +112,7 @@ class KalyServer(private val mapImage: AndroidJVMImage? = null) {
 
         val MIN_MES_TIME = 160L
 
-        val DB_INIT = if(isAndroid()) PersistentStorage.DbInitTypes.ANDROID_FILE_DB
+        val DB_INIT = if (isAndroid()) PersistentStorage.DbInitTypes.ANDROID_FILE_DB
         else PersistentStorage.DbInitTypes.FILE_DB
 
         val persistentStorage = PersistentStorage(SERVER_UUID, dbInit = DB_INIT, dropTablesFirst = true)

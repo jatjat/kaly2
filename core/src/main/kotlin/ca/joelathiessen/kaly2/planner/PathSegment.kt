@@ -9,9 +9,16 @@ abstract class PathSegment(val x: Float, val y: Float, parentIn: PathSegment?, c
     var parent: PathSegment? = parentIn
         protected set
 
-    abstract fun makeChild(xChild: Float, yChild: Float, obstacles: MapTree = MapTree(),
-        obsSize: Float = 0f): PathSegment?
+    abstract fun makeChild(
+        xChild: Float,
+        yChild: Float,
+        obstacles: MapTree = MapTree(),
+        obsSize: Float = 0f
+    ): PathSegment?
 
-    abstract fun changeParentIfCheaper(posNewParent: PathSegment, obstacles: MapTree = MapTree(),
-        obsSize: Float = 0f)
+    abstract fun changeParentIfCheaper(
+        posNewParent: PathSegment,
+        obstacles: MapTree = MapTree(),
+        obsSize: Float = 0f
+    )
 }

@@ -53,22 +53,21 @@ configurations {
     ktlint
 }
 
-
-task ktlint(type: JavaExec) {
-    main = "com.github.shyiko.ktlint.Main"
+task ktlint(type: JavaExec, group: "verification") {
+    description = "Check Kotlin code style."
     classpath = configurations.ktlint
+    main = "com.github.shyiko.ktlint.Main"
     args "src/**/*.kt"
-
 }
+check.dependsOn ktlint
 
-//check.dependsOn ktlint
-
-task ktlintFormat(type: JavaExec) {
-    main = "com.github.shyiko.ktlint.Main"
+task ktlintFormat(type: JavaExec, group: "formatting") {
+    description = "Fix Kotlin code style deviations."
     classpath = configurations.ktlint
+    main = "com.github.shyiko.ktlint.Main"
     args "-F", "src/**/*.kt"
-
 }
+
 
 dependencies {
     implementation 'gov.nist.math:jama:1.0.3'
@@ -89,10 +88,11 @@ dependencies {
     implementation "org.eclipse.jetty:jetty-util:$jetty_version"
     implementation "org.eclipse.jetty:jetty-webapp:$jetty_version"
     implementation "org.eclipse.jetty:jetty-xml:$jetty_version"
-
     implementation "org.eclipse.jetty:jetty-websocket:$jetty_version"
 
     testCompile 'junit:junit:4.12'
     testCompile 'org.mockito:mockito-core:2.8.9'
     testCompile 'com.nhaarman:mockito-kotlin:1.5.0'
+
+    ktlint "com.github.shyiko:ktlint:0.20.0"
 }

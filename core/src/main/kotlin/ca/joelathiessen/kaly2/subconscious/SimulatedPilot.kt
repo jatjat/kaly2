@@ -4,9 +4,14 @@ import ca.joelathiessen.kaly2.odometry.RobotPose
 import ca.joelathiessen.util.FloatRandom
 import ca.joelathiessen.util.rotate
 
-class SimulatedPilot(private val odoAngStdDev: Float, private val odoDistStdDev: Float, private val stepDist: Float,
-                     startPose: RobotPose, override val maxRot: Float,
-                     override val maxDist: Float) : RobotPilot {
+class SimulatedPilot(
+    private val odoAngStdDev: Float,
+    private val odoDistStdDev: Float,
+    private val stepDist: Float,
+    startPose: RobotPose,
+    override val maxRot: Float,
+    override val maxDist: Float
+) : RobotPilot {
 
     private val random = FloatRandom(1)
 

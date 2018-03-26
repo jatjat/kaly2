@@ -53,8 +53,14 @@ class LinearPathSegment(x: Float, y: Float, parent: PathSegment?, cost: Float) :
         return lines
     }
 
-    private fun collides(obstacles: MapTree, obsSize: Float, xChild: Float, yChild: Float,
-        xParent: Float, yParent: Float): Boolean {
+    private fun collides(
+        obstacles: MapTree,
+        obsSize: Float,
+        xChild: Float,
+        yChild: Float,
+        xParent: Float,
+        yParent: Float
+    ): Boolean {
         val deltaX = xChild - xParent
         val deltaY = yChild - yParent
         val mag = FloatMath.sqrt((deltaX * deltaX) + (deltaY * deltaY))

@@ -6,8 +6,11 @@ import ca.joelathiessen.util.itractor.ItrActorChannel
 import ca.joelathiessen.util.itractor.ItrActorMsg
 import ca.joelathiessen.util.itractor.StopMsg
 
-class SubconsciousActor(private val subconscious: SubconsciousActed, inputChannel: ItrActorChannel,
-    private val outputChannel: ItrActorChannel) : ItrActor(inputChannel) {
+class SubconsciousActor(
+    private val subconscious: SubconsciousActed,
+    inputChannel: ItrActorChannel,
+    private val outputChannel: ItrActorChannel
+) : ItrActor(inputChannel) {
 
     override fun act() {
         while (true) {

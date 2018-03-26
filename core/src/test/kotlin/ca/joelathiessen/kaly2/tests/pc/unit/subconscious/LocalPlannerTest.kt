@@ -16,8 +16,11 @@ class LocalPlannerTest {
     val DEFAULT_SENSOR_X = 0f
     val DEFAULT_SENSOR_Y = 0f
 
-    fun makeMeasurement(x: Float, y: Float,
-        sensorPos: RobotPose = RobotPose(0, 0f, DEFAULT_SENSOR_X, DEFAULT_SENSOR_Y, 0f)): Measurement {
+    fun makeMeasurement(
+        x: Float,
+        y: Float,
+        sensorPos: RobotPose = RobotPose(0, 0f, DEFAULT_SENSOR_X, DEFAULT_SENSOR_Y, 0f)
+    ): Measurement {
         val deltaX = x - sensorPos.x
         val deltaY = y - sensorPos.y
         val dist = FloatMath.sqrt((deltaX * deltaX) + (deltaY * deltaY))

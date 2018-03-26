@@ -3,9 +3,15 @@ package ca.joelathiessen.kaly2.featuredetector
 import Jama.Matrix
 import ca.joelathiessen.util.FloatMath
 
-open class Feature(val sensorX: Float, val sensorY: Float, val distance: Float, val angle: Float,
-    val deltaX: Float = FloatMath.cos(angle) * distance, val deltaY: Float = FloatMath.sin(angle) * distance,
-    val stdDev: Float) {
+open class Feature(
+    val sensorX: Float,
+    val sensorY: Float,
+    val distance: Float,
+    val angle: Float,
+    val deltaX: Float = FloatMath.cos(angle) * distance,
+    val deltaY: Float = FloatMath.sin(angle) * distance,
+    val stdDev: Float
+) {
 
     val x = deltaX + sensorX
     val y = deltaY + sensorY

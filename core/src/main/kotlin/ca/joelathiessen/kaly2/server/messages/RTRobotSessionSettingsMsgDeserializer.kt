@@ -9,8 +9,11 @@ import java.lang.reflect.Type
 class RTRobotSessionSettingsMsgDeserializer : JsonDeserializer<RTRobotSessionSettingsReqMsg> {
 
     @Throws(JsonParseException::class)
-    override fun deserialize(json: JsonElement, type: Type,
-                             context: JsonDeserializationContext): RTRobotSessionSettingsReqMsg {
+    override fun deserialize(
+        json: JsonElement,
+        type: Type,
+        context: JsonDeserializationContext
+    ): RTRobotSessionSettingsReqMsg {
         val jsonObject = json.asJsonObject
         val sessionID: JsonElement? = jsonObject.get("sessionID")
 

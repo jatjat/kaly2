@@ -18,16 +18,28 @@ import lejos.robotics.navigation.Pose
 import java.util.ArrayList
 import java.util.Random
 
-data class RobotCoreActedResults(val timestamp: Long, val features: List<Feature>, val obstacles: List<Point>,
-    val slamPose: RobotPose, val maneuvers: List<RobotPose>, val globalPlannerPaths: List<PathSegmentInfo>,
+data class RobotCoreActedResults(
+    val timestamp: Long,
+    val features: List<Feature>,
+    val obstacles: List<Point>,
+    val slamPose: RobotPose,
+    val maneuvers: List<RobotPose>,
+    val globalPlannerPaths: List<PathSegmentInfo>,
     val subconcResults: SubconsciousActedResults,
-    val particlePoses: List<Pose>, val numItrs: Long) : RTRobotMsg {
+    val particlePoses: List<Pose>,
+    val numItrs: Long
+) : RTRobotMsg {
     override val MSG_TYPE: String = "RobotCoreActedResults"
 }
 
-class RobotCoreActed(private val initialGoal: RobotPose, private val accurateOdo: AccurateSlamOdometry,
-    private val slam: Slam, private val featureDetector: FeatureDetector, private val map: GlobalMap,
-    private val robotStorage: RobotStorage) {
+class RobotCoreActed(
+    private val initialGoal: RobotPose,
+    private val accurateOdo: AccurateSlamOdometry,
+    private val slam: Slam,
+    private val featureDetector: FeatureDetector,
+    private val map: GlobalMap,
+    private val robotStorage: RobotStorage
+) {
 
     private val REQ_MAN_INTERVAL = 5
     private val UPDATE_PLAN_START_POSE_INTERVAL = 10

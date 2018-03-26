@@ -2,8 +2,15 @@ package ca.joelathiessen.util
 
 import ca.joelathiessen.kaly2.featuredetector.Feature
 
-fun getFeatureForPosition(robotX: Float, robotY: Float, @Suppress("UNUSED_PARAMETER") robotTheta: Float,
-    featureX: Float, featureY: Float, angStdDev: Float = 0.0f, distStdDev: Float = 0.0f): Feature {
+fun getFeatureForPosition(
+    robotX: Float,
+    robotY: Float,
+    @Suppress("UNUSED_PARAMETER") robotTheta: Float,
+    featureX: Float,
+    featureY: Float,
+    angStdDev: Float = 0.0f,
+    distStdDev: Float = 0.0f
+): Feature {
     val random = FloatRandom(2)
 
     // assume that the angle from the sensor is obtained accurately (e.g. with compass and or average particle pose)

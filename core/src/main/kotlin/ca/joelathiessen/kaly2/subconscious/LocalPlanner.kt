@@ -7,18 +7,36 @@ import ca.joelathiessen.util.array2d
 import ca.joelathiessen.util.rotate
 import java.util.ArrayList
 
-data class LocalPlan(val angle: Float, val distance: Float, val startX: Float, val startY: Float, val startAngle: Float,
-    val endX: Float, val endY: Float)
+data class LocalPlan(
+    val angle: Float,
+    val distance: Float,
+    val startX: Float,
+    val startY: Float,
+    val startAngle: Float,
+    val endX: Float,
+    val endY: Float
+)
 
-class LocalPlanner(val robotSize: Float, val rotStep: Float, val distStep: Float, val gridStep: Float,
-    val gridSize: Float, val staticObstacleSize: Float) {
+class LocalPlanner(
+    val robotSize: Float,
+    val rotStep: Float,
+    val distStep: Float,
+    val gridStep: Float,
+    val gridSize: Float,
+    val staticObstacleSize: Float
+) {
     private val halfGridSize = gridSize / 2
     private val numSteps = (gridSize / gridStep).toInt()
 
     private data class GridPoint(val x: Float, val y: Float)
 
-    fun makePlan(staticObstacles: List<Measurement>, startPose: RobotPose, maxRot: Float,
-        maxDist: Float, desiredPath: List<RobotPose>): LocalPlan {
+    fun makePlan(
+        staticObstacles: List<Measurement>,
+        startPose: RobotPose,
+        maxRot: Float,
+        maxDist: Float,
+        desiredPath: List<RobotPose>
+    ): LocalPlan {
         val searchGrid = array2d<ArrayList<GridPoint>>(numSteps, numSteps, { ArrayList() })
         val checkDist = robotSize + staticObstacleSize
 
