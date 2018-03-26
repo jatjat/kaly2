@@ -6,7 +6,6 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        //classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.1.4-3"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
@@ -16,8 +15,6 @@ apply plugin: 'kotlin'
 apply plugin: 'idea'
 apply plugin: 'application'
 
-//1sourceCompatibility = JavaVersion.VERSION_1_8
-//1targetCompatibility = JavaVersion.VERSION_1_8
 sourceCompatibility = JavaVersion.VERSION_1_8
 targetCompatibility = JavaVersion.VERSION_1_8
 
@@ -31,7 +28,7 @@ repositories {
     }
 }
 
-/*
+
 jar {
     manifest {
         attributes 'Main-Class': 'ca.joelathiessen.kaly2.server.KalyServer'
@@ -42,7 +39,7 @@ jar {
     }
     exclude 'META-INF/*.RSA', 'META-INF/*.SF','META-INF/*.DSA'
 }
-*/
+
 sourceSets {
     test {
         resources {
@@ -74,57 +71,26 @@ task ktlintFormat(type: JavaExec) {
 }
 
 dependencies {
-    compile 'gov.nist.math:jama:1.0.3'
-    compile files("lib/leJOS_EV3_0.9.1-beta/lib/ev3/ev3classes.jar")
-    compile 'com.google.code.gson:gson:2.7'
-    compile 'com.github.salomonbrys.kotson:kotson:2.3.0'
-    compile 'com.h2database:h2:1.4.196'
-    compile 'mysql:mysql-connector-java:5.1.6'
-    compile 'org.jetbrains.exposed:exposed:0.8.6'
+    implementation 'gov.nist.math:jama:1.0.3'
+    implementation files("lib/leJOS_EV3_0.9.1-beta/lib/ev3/ev3classes.jar")
+    implementation 'com.google.code.gson:gson:2.7'
+    implementation 'com.github.salomonbrys.kotson:kotson:2.3.0'
+    implementation 'com.h2database:h2:1.4.196'
+    implementation 'mysql:mysql-connector-java:5.1.6'
+    implementation 'org.jetbrains.exposed:exposed:0.8.6'
 
-    // Jetty versions 8+ are incompatible with Android, so use the last 7x release
-/*
-    compile 'org.eclipse.jetty:jetty-server:7.6.19.v20160209'
-    compile 'org.eclipse.jetty:jetty-servlet:7.6.19.v20160209'
-    compile 'org.eclipse.jetty:jetty-http:7.6.19.v20160209'
-    compile 'org.eclipse.jetty:jetty-websocket:7.6.19.v20160209'
-*/
+    String jetty_version = '7.5.4.v20111024'
+    implementation "org.eclipse.jetty:jetty-continuation:$jetty_version"
+    implementation "org.eclipse.jetty:jetty-http:$jetty_version"
+    implementation "org.eclipse.jetty:jetty-io:$jetty_version"
+    implementation "org.eclipse.jetty:jetty-security:$jetty_version"
+    implementation "org.eclipse.jetty:jetty-server:$jetty_version"
+    implementation "org.eclipse.jetty:jetty-servlet:$jetty_version"
+    implementation "org.eclipse.jetty:jetty-util:$jetty_version"
+    implementation "org.eclipse.jetty:jetty-webapp:$jetty_version"
+    implementation "org.eclipse.jetty:jetty-xml:$jetty_version"
 
-    //1compile group: 'org.eclipse.jetty', name: 'jetty-server', version: '9.2.22.v20170606'
-    //1compile group: 'org.eclipse.jetty.websocket', name: 'websocket-common', version: '9.2.22.v20170606'
-    //1compile group: 'org.eclipse.jetty.websocket', name: 'websocket-server', version: '9.2.22.v20170606'
-    compile group: 'org.eclipse.jetty', name: 'jetty-server', version: '9.2.22.v20170606'
-    compile group: 'org.eclipse.jetty.websocket', name: 'websocket-common', version: '9.2.22.v20170606'
-    compile group: 'org.eclipse.jetty.websocket', name: 'websocket-server', version: '9.2.22.v20170606'
-
-    compile group: 'org.eclipse.jetty', name: 'jetty-util', version: '9.2.22.v20170606'
-    compile 'org.eclipse.jetty:jetty-http:9.2.22.v20170606'
-    compile 'org.eclipse.jetty:jetty-servlet:9.2.22.v20170606'
-
-    //compile 'org.eclipse.jetty:jetty-server:7.6.19.v20160209'
-    //compile 'org.eclipse.jetty:jetty-websocket:7.6.19.v20160209'
-
-
-    //compile 'org.eclipse.jetty:jetty-server:7.6.19.v20160209'
-    //compile 'org.eclipse.jetty:jetty-servlet:7.6.19.v20160209'
-    //compile 'org.eclipse.jetty:jetty-http:7.6.19.v20160209'
-    //compile 'org.eclipse.jetty:jetty-websocket:7.6.19.v20160209'
-
-
-    /*
-    compile 'org.eclipse.jetty:jetty-continuation-7.3.0'
-
-    compile 'org.eclipse.jetty:jetty-http-7.3.0'
-
-    compile 'org.eclipse.jetty:jetty-io-7.3.0'
-
-    compile 'org.eclipse.jetty:jetty-server-7.3.0'
-
-    compile 'org.eclipse.jetty:jetty-util-7.3.0'
-
-    compile 'org.eclipse.jetty:servlet-api-2.5'
-
-    */
+    implementation "org.eclipse.jetty:jetty-websocket:$jetty_version"
 
     testCompile 'junit:junit:4.12'
     testCompile 'org.mockito:mockito-core:2.8.9'

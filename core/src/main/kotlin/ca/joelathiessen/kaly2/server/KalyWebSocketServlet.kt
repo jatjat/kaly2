@@ -1,25 +1,38 @@
 package ca.joelathiessen.kaly2.server
 
-import org.eclipse.jetty.websocket.servlet.WebSocketServlet
-import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory
-import org.eclipse.jetty.websocket.servlet.ServletUpgradeResponse
-import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest
-import org.eclipse.jetty.websocket.servlet.WebSocketCreator
+import org.eclipse.jetty.websocket.WebSocket
+import org.eclipse.jetty.websocket.WebSocketFactory
+import javax.servlet.http.HttpServlet
+import javax.servlet.http.HttpServletRequest
+import javax.servlet.http.HttpServletResponse
+import javax.servlet.ServletException
 
 
-class CustomWebSocketCreator(private val robotSessionManager: RobotSessionManager) : WebSocketCreator {
 
-    override fun createWebSocket(req: ServletUpgradeRequest, resp: ServletUpgradeResponse): Any {
-        return KalyWebSocket(robotSessionManager)
-    }
-}
+class KalyWebSocketServlet() : HttpServlet() {
+    private lateinit var robotSessionManager: RobotSessionManager
 
-
-class KalyWebSocketServlet : WebSocketServlet() {
-    override fun configure(factory: WebSocketServletFactory?) {
-        factory!!.creator = CustomWebSocketCreator(robotSessionManager)
-        factory.register(KalyWebSocket::class.java)
+    @Throws(ServletException::class)
+    override fun init() {
+        robotSessionManager = servletContext.getAttribute("robotSessionManager") as RobotSessionManager
     }
 
-    private val robotSessionManager by lazy { servletContext.getAttribute("robotSessionManager") as RobotSessionManager }
+    override fun doGet(request: HttpServletRequest, response: HttpServletResponse) {
+
+        val webSocketFactory = WebSocketFactory(object : WebSocketFactory.Acceptor {
+            override fun checkOrigin(request: HttpServletRequest, origin: String?): Boolean {
+                return true
+            }
+
+            override fun doWebSocketConnect(request: HttpServletRequest, protocol: String?): WebSocket? {
+                return KalyWebSocket(robotSessionManager)
+            }
+        })
+
+        if (webSocketFactory.acceptWebSocket(request, response)) {
+            return
+        }
+        response.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE,
+            "WebSocket connections only")
+    }
 }
