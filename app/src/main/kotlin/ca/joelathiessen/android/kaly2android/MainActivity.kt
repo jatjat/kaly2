@@ -7,7 +7,6 @@ import android.support.v7.app.AppCompatActivity
 import ca.joelathiessen.kaly2.server.KalyServer
 import ca.joelathiessen.util.image.android.AndroidImage
 import kotlinx.android.synthetic.main.activity_main.*
-import kotlin.concurrent.thread
 
 
 class MainActivity : AppCompatActivity() {
@@ -33,14 +32,12 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        print("heheeee")
         val mapImage = AndroidImage(BitmapFactory.decodeResource(
                 applicationContext.resources, R.drawable.square_filled))
 
-        thread {
+
             val server = KalyServer(mapImage)
             server.serve()
-        }
 
 
         setContentView(R.layout.activity_main)

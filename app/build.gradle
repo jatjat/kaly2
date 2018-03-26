@@ -37,12 +37,6 @@ android {
     dexOptions {
         incremental false
     }
-    compileOptions {
-        //1sourceCompatibility JavaVersion.VERSION_1_6
-        //1targetCompatibility JavaVersion.VERSION_1_6
-        sourceCompatibility JavaVersion.VERSION_1_6
-        targetCompatibility JavaVersion.VERSION_1_6
-    }
 }
 
 

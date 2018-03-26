@@ -18,19 +18,19 @@ import org.joda.time.DateTime
 import java.util.UUID
 
 class PersistentStorage(private val serverUUID: UUID, private val canAssumeRobotUnownedTimeout: Long = 10000L,
-                        private val dbInit: DbInitTypes = DbInitTypes.IN_MEMORY_DB,
+                        private val dbInit: DbInitTypes = DbInitTypes.FILE_DB,
                         private val user: String = "", private val password: String = "",
                         dropTablesFirst: Boolean = false) {
 
     enum class DbInitTypes(val dbUrl: String, val dbDriver: String) {
         IN_MEMORY_DB("jdbc:h2:mem:kaly2db;DB_CLOSE_DELAY=-1", "org.h2.Driver"),
         FILE_DB("jdbc:h2:~/kaly2db2", "org.h2.Driver"),
-        //FILE_DB("jdbc:h2:/data/data/ca.joelathiessen.android.kaly2android/kaly2db2", "org.h2.Driver"),
+        ANDROID_FILE_DB("jdbc:h2:/data/data/ca.joelathiessen.android.kaly2android/kaly2db", "org.h2.Driver"),
         MYSQL_DB("jdbc:mysql://localhost/test?rewriteBatchedStatements=true", "com.mysql.jdbc.Driver")
     }
 
     init {
-        Database.connect(dbInit.dbUrl, driver = dbInit.dbDriver, user = user, password = password)
+       Database.connect(dbInit.dbUrl, driver = dbInit.dbDriver, user = user, password = password)
 
         transaction {
             if (dropTablesFirst) {

@@ -4,11 +4,15 @@ import ca.joelathiessen.kaly2.persistence.PersistentStorage
 import ca.joelathiessen.util.FloatMath
 import ca.joelathiessen.util.image.AndroidJVMImage
 import ca.joelathiessen.util.image.jvm.JVMImage
+import ca.joelathiessen.util.isAndroid
 import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.server.handler.HandlerList
 import org.eclipse.jetty.servlet.DefaultServlet
 import org.eclipse.jetty.servlet.ServletContextHandler
+import org.eclipse.jetty.util.log.Log
+import org.eclipse.jetty.util.log.StdErrLog
 import java.util.UUID
+import kotlin.concurrent.thread
 
 class KalyServer(private val mapImage: AndroidJVMImage? = null) {
 
@@ -18,9 +22,10 @@ class KalyServer(private val mapImage: AndroidJVMImage? = null) {
 
     val SERVER_UUID = UUID.randomUUID()
     val PORT = 9000
-    val WEBSOCKET_API_ROBOT_PATH = "/api/ws/robot/*"
+    val WEBSOCKET_API_ROBOT_PATH = "/api/ws/robot"
     val REST_API_ROBOT_PATH = "/api/rest/robot"
     val ROOT_PATH = "/"
+    val ERR_SLEEP = 5000L
 
     companion object {
         @JvmStatic
@@ -35,23 +40,31 @@ class KalyServer(private val mapImage: AndroidJVMImage? = null) {
     }
 
     fun serve() {
-        val servletContextHandler = ServletContextHandler()
-        servletContextHandler.addServlet(KalyWebSocketServlet::class.java, WEBSOCKET_API_ROBOT_PATH)
-        servletContextHandler.addServlet(RestApiServlet::class.java, REST_API_ROBOT_PATH)
-        servletContextHandler.addServlet(DefaultServlet::class.java, ROOT_PATH)
-        servletContextHandler.setAttribute("robotSessionManager", robotSessionManager)
+        thread {
+            val logger = StdErrLog()
+            logger.level = StdErrLog.LEVEL_DEBUG
+            Log.setLog(logger)
 
-        val contexts = HandlerList()
-        contexts.handlers = arrayOf(servletContextHandler)
+            val servletContextHandler = ServletContextHandler()
+            servletContextHandler.setAttribute("robotSessionManager", robotSessionManager)
+            servletContextHandler.addServlet(KalyWebSocketServlet::class.java, WEBSOCKET_API_ROBOT_PATH)
+            servletContextHandler.addServlet(RestApiServlet::class.java, REST_API_ROBOT_PATH)
+            servletContextHandler.addServlet(DefaultServlet::class.java, ROOT_PATH)
 
-        while (true) {
-            try {
-                val webserver = Server(PORT)
-                webserver.handler = contexts
-                webserver.start()
-                webserver.join()
-            } catch (e: Throwable) {
-                e.printStackTrace()
+            val contexts = HandlerList()
+            contexts.handlers = arrayOf(servletContextHandler)
+
+            while (true) {
+                try {
+                    val webserver = Server(PORT)
+                    webserver.handler = contexts
+                    webserver.start()
+                    webserver.dump(System.err)
+                    webserver.join()
+                } catch (e: Throwable) {
+                    e.printStackTrace(System.err)
+                    Thread.sleep(ERR_SLEEP)
+                }
             }
         }
     }
@@ -99,8 +112,10 @@ class KalyServer(private val mapImage: AndroidJVMImage? = null) {
 
         val MIN_MES_TIME = 160L
 
-        val persistentStorage = PersistentStorage(SERVER_UUID, dbInit = PersistentStorage.DbInitTypes.FILE_DB,
-                dropTablesFirst = true)
+        val DB_INIT = if(isAndroid()) PersistentStorage.DbInitTypes.ANDROID_FILE_DB
+        else PersistentStorage.DbInitTypes.FILE_DB
+
+        val persistentStorage = PersistentStorage(SERVER_UUID, dbInit = DB_INIT, dropTablesFirst = true)
         return SimRobotSessionFactory(ODO_ANG_STD_DEV, ODO_DIST_STD_DEV, STEP_DIST, PILOT_MAX_DIST, PILOT_MAX_ROT,
                 SENSOR_START_ANG, SENSOR_END_ANG, SENSOR_ANG_INCR, image, MAX_SENSOR_RANGE, SENSOR_DIST_STDEV,
                 SENSOR_ANG_STDEV, LINE_THRESHOLD, CHECK_WITHIN_ANGLE, MAX_RATIO, LCL_PLN_ROT_STEP, LCL_PLN_DIST_STEP,
