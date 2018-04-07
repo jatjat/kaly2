@@ -5,7 +5,7 @@
     android:id="@+id/container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="ca.joelathiessen.android.kaly2android.MainActivity">
+    tools:context="ca.joelathiessen.android.kaly2android.ui.main.MainActivity">
 
     <TextView
         android:id="@+id/message"
