@@ -19,9 +19,3 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
--keepattributes InnerClasses
--dontoptimize
--keepattributes *Annotation*
-
--keep class kotlin.** { *; }
--keep class org.jetbrains.** { *; }

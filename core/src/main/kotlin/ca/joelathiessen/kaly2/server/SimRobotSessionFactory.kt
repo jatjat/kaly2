@@ -15,9 +15,9 @@ import ca.joelathiessen.kaly2.subconscious.LocalPlanner
 import ca.joelathiessen.kaly2.subconscious.SimulatedPilot
 import ca.joelathiessen.kaly2.subconscious.sensor.SimSensor
 import ca.joelathiessen.kaly2.subconscious.sensor.SimSpinner
-import ca.joelathiessen.util.image.Color
 import ca.joelathiessen.util.array2d
 import ca.joelathiessen.util.image.AndroidJVMImage
+import ca.joelathiessen.util.image.Color
 import lejos.robotics.geometry.Point
 import org.joda.time.DateTime
 import java.util.Collections

@@ -8,7 +8,6 @@ import ca.joelathiessen.kaly2.server.KalyServer
 import ca.joelathiessen.util.image.android.AndroidImage
 import kotlinx.android.synthetic.main.activity_main.*
 
-
 class MainActivity : AppCompatActivity() {
 
     private val mOnNavigationItemSelectedListener = BottomNavigationView.OnNavigationItemSelectedListener { item ->
@@ -31,16 +30,13 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
 
         val mapImage = AndroidImage(BitmapFactory.decodeResource(
-                applicationContext.resources, R.drawable.square_filled))
+            applicationContext.resources, R.drawable.square_filled))
 
-
-            val server = KalyServer(mapImage)
-            server.serve()
-
-
-        setContentView(R.layout.activity_main)
+        val server = KalyServer(mapImage)
+        server.serve()
 
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener)
     }
