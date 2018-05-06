@@ -85,13 +85,12 @@ class RobotCoreActed(
         paths = newPaths
     }
 
-    fun onSettings(newSettings: SlamSettings): SlamSettings {
+    fun onSettings(newSettings: SlamSettings) {
         if (slam is FastSLAM) {
             slam.changeAngleVariance(newSettings.sensorAngVar)
             slam.changeDistanceVariance(newSettings.sensorDistVar)
             slam.changeNumParticles(newSettings.numParticles)
         }
-        return newSettings
     }
 
     fun iterate(curResults: SubconsciousActedResults): RobotCoreActedResults {

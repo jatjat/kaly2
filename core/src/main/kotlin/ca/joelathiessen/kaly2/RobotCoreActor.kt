@@ -38,7 +38,7 @@ class RobotCoreActor(
                 is PlannerManeuversMsg -> robotCore.onManeuverResults(msg.maneuvers)
                 is PlannerPathsMsg -> robotCore.onPaths(msg.paths)
                 is SubconscRsltsMsg -> outputChannel.addMsg(RobotCoreRsltsMsg(robotCore.iterate(msg.results)))
-                is SlamSettings -> outputChannel.addMsg(robotCore.onSettings(msg))
+                is SlamSettings -> robotCore.onSettings(msg)
             }
         }
     }

@@ -40,7 +40,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.collections.ArrayList
 import kotlin.concurrent.thread
 
-class SlamSettings(val numParticles: Int, val sensorAngVar: Float, val sensorDistVar: Float, val sessionID: Long) : ItrActorMsg()
+class SlamSettings(val numParticles: Int, val sensorAngVar: Float, val sensorDistVar: Float) : ItrActorMsg()
 
 class RobotSession(
     val rid: Long,
@@ -262,7 +262,7 @@ class RobotSession(
 
     @Synchronized
     fun applySlamSettings(settingsMsg: RTSlamSettingsMsg) {
-        robotCoreInput.addMsg(SlamSettings(settingsMsg.numParticles, settingsMsg.sensorAngVar, settingsMsg.sensorDistVar, settingsMsg.sessionID))
+        robotCoreInput.addMsg(SlamSettings(settingsMsg.numParticles, settingsMsg.sensorAngVar, settingsMsg.sensorDistVar))
     }
 
     @Synchronized
