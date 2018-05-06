@@ -9,9 +9,7 @@ class JVMImage(filePath: String) : AndroidJVMImage {
     private var image: BufferedImage?
 
     init {
-        try { image = ImageIO.read(javaClass.getResource(filePath)) } catch (e: Exception) {
-        }
-        image = null
+        image = ImageIO.read(javaClass.getResource(filePath))
     }
 
     override val width: Int
