@@ -74,8 +74,8 @@ class KalyServer(private val mapImage: AndroidJVMImage? = null) {
     }
 
     fun configureSimFactory(mapImage: AndroidJVMImage?): RobotSessionFactory {
-        val IMAGE_LOC = "/core/images/squareFIlled.png"
-        val image = mapImage ?: JVMImage(IMAGE_LOC)
+        val IMAGE_LOC = "/images/squareFIlled.png"
+        val image: AndroidJVMImage = mapImage ?: JVMImage(IMAGE_LOC)
 
         val LINE_THRESHOLD = 10.0f
         val CHECK_WITHIN_ANGLE = 0.3f
