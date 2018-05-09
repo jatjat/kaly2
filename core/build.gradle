@@ -69,6 +69,40 @@ task ktlintFormat(type: JavaExec, group: "formatting") {
 }
 
 
+task testJar(type: Jar) {
+    classifier = "tests"
+    from sourceSets.test.output + sourceSets.test.allSource + sourceSets.test.resources
+}
+
+task testFastSLAMView(type: JavaExec) {
+    description = "Visualize FastSLAM mapping and localization algorithm"
+    dependsOn 'testJar'
+    classpath = sourceSets.test.runtimeClasspath
+    main = 'ca.joelathiessen.kaly2.tests.pc.acceptance.FastSLAMDemo'
+}
+
+task testFeatureDetectorView(type: JavaExec) {
+    description = "Visualize split-and-merge feature detection algorithm"
+    dependsOn 'testJar'
+    classpath = sourceSets.test.runtimeClasspath
+    main = 'ca.joelathiessen.kaly2.tests.pc.acceptance.FeatureDetectorDemo'
+}
+
+task testMainLoopView(type: JavaExec) {
+    description = "Visualize all algorithms working together"
+    dependsOn 'testJar'
+    classpath = sourceSets.test.runtimeClasspath
+    main = 'ca.joelathiessen.kaly2.tests.pc.acceptance.MainLoopDemo'
+}
+
+task testRRTStarView(type: JavaExec) {
+    description = "Visualize RRT* pathing algorithm"
+    dependsOn 'testJar'
+    classpath = sourceSets.test.runtimeClasspath
+    main = 'ca.joelathiessen.kaly2.tests.pc.acceptance.RRTStarDemo'
+}
+
+
 dependencies {
     implementation 'gov.nist.math:jama:1.0.3'
     implementation files("lib/leJOS_EV3_0.9.1-beta/lib/ev3/ev3classes.jar")
