@@ -11,6 +11,8 @@ class LandmarksTree() : AssociatableLandmarks {
     private val sqEucDistFunc = SquareEuclideanDistanceFunction()
 
     private var kdTree = KdTree<Landmark>(DIMENSIONS, BUCKET_CAPACITY)
+    private var list = ArrayList<Landmark>(BUCKET_CAPACITY)
+
     private val landmarksForInsert = HashSet<Landmark>()
     private val landmarksForDelete = HashSet<Landmark>()
     private var kdTreeCopy: KdTree<Landmark>? = null
@@ -43,6 +45,7 @@ class LandmarksTree() : AssociatableLandmarks {
 
     fun markForInsertOnCopy(landmark: Landmark) {
         landmarksForInsert += landmark
+        list.add(landmark)
     }
 
     override fun getNearestNeighbor(point: Point): Landmark? {
@@ -52,5 +55,9 @@ class LandmarksTree() : AssociatableLandmarks {
                 1, sqEucDistFunc).max
         }
         return nearest
+    }
+
+    fun getList(): List<Landmark> {
+        return list
     }
 }

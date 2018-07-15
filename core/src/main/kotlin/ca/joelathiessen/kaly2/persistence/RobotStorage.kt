@@ -2,11 +2,18 @@ package ca.joelathiessen.kaly2.persistence
 
 import ca.joelathiessen.kaly2.Measurement
 import ca.joelathiessen.kaly2.RobotCoreActedResults
+import ca.joelathiessen.kaly2.featuredetector.Feature
 import ca.joelathiessen.kaly2.odometry.RobotPose
+import ca.joelathiessen.kaly2.persistence.tables.FeatureTable
 import ca.joelathiessen.kaly2.persistence.tables.HistoryEntity
 import ca.joelathiessen.kaly2.persistence.tables.HistoryTable
 import ca.joelathiessen.kaly2.persistence.tables.IterationTable
 import ca.joelathiessen.kaly2.persistence.tables.MeasurementTable
+import ca.joelathiessen.kaly2.persistence.tables.ParticleTable
+import ca.joelathiessen.kaly2.slam.Particle
+import ca.joelathiessen.kaly2.subconscious.SimPilotPoses
+import lejos.robotics.navigation.Pose
+import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.math.BigDecimal
@@ -27,44 +34,89 @@ class RobotStorage(
     dbPassword: String,
     dbUrl: String
 ) {
+    private val MAX_INSERTS = 2000
     private val dbPool = Executors.newSingleThreadExecutor()!!
     private val jdbcConnection: Connection
 
     var released = false
         private set
 
-    private val mesInsertSeq = buildSequence {
-        val insertStr = "insert into measurements(iteration, mes_num, mes_time, distance, angle," +
-                "guessed_pose_x, guessed_pose_y, guessed_pose_heading, odo_pose_x, odo_pose_y, odo_pose_heading)" +
-                "values"
-        val valStr = "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-        var insertQuery = insertStr + valStr
-        yield(insertQuery + ";")
-        while (true) {
-            insertQuery = insertQuery + ", " + valStr
+    fun makeInsertSeq(tableName: String, columnNames: List<String>): Sequence<String> {
+        val seq = buildSequence {
+            val insertStr = "insert into ${tableName}(${columnNames.joinToString()}) values"
+            val questionMarks = (0 until columnNames.size).map { "?" }
+            val valStr = "(${questionMarks.joinToString()})"
+            var insertQuery = insertStr + valStr
             yield(insertQuery + ";")
+            while (true) {
+                insertQuery = insertQuery + ", " + valStr
+                yield(insertQuery + ";")
+            }
+        }
+        return seq
+    }
+
+
+    open class BatchPSInsertableValue
+    class LongInsertable(val value: Long): BatchPSInsertableValue()
+    class BigDecimalInsertable(valIn: Float): BatchPSInsertableValue() {
+        val value = BigDecimal(valIn.toDouble())
+    }
+
+    class BatchPreparedStatement(val size: Int, val preparedStatement: PreparedStatement, var used: Boolean = false) {
+        fun addBatch(valuesToInsert: List<BatchPSInsertableValue>) {
+            valuesToInsert.forEachIndexed { index, ele ->
+                when (ele) {
+                    is LongInsertable -> {
+                        preparedStatement.setLong(index + 1, ele.value)
+                    }
+                    is BigDecimalInsertable -> {
+                        preparedStatement.setBigDecimal(index + 1, ele.value)
+                    }
+                }
+            }
+            preparedStatement.addBatch()
+            used = true
+        }
+
+        fun executeBatch() {
+            preparedStatement.executeBatch()
         }
     }
 
-    private val singleAmt = 1
-    private val singleStr = makeMesInsertQueryStr(mesInsertSeq, singleAmt)
-    private val singleStmt: PreparedStatement
+    // expects batchPreparedStatement to be sorted by size descending:
+    fun insertIntoTable(valuesToInsert: List<BatchPSInsertableValue>, batchPreparedStatement: List<BatchPreparedStatement>) {
+        var remaining = valuesToInsert.size
+        while (remaining > 0) {
+            for (stmt in batchPreparedStatement) {
+                while (remaining >= stmt.size) {
+                    val prevRemaining = remaining
+                    remaining -= stmt.size
+                    val start = valuesToInsert.size - prevRemaining
+                    val end = valuesToInsert.size - remaining
+                    val valuesToInsertWithBatch = valuesToInsert.subList(start, end)
+                    stmt.addBatch(valuesToInsertWithBatch)
+                }
+            }
+        }
 
-    private val smallAmt = 10
-    private val smallStr = makeMesInsertQueryStr(mesInsertSeq, smallAmt)
-    private val smallStmt: PreparedStatement
+        batchPreparedStatement.forEach {
+            if (it.used) {
+                it.executeBatch()
+            }
+        }
+    }
 
-    private val medAmt = 50
-    private val medStr = makeMesInsertQueryStr(mesInsertSeq, medAmt)
-    private val medStmt: PreparedStatement
-
-    private val lrgAmt = 360
-    private val largeStr = makeMesInsertQueryStr(mesInsertSeq, lrgAmt)
-    private val largeStmt: PreparedStatement
-
-    private val itrStr = "insert into iterations(history, itr_num, itr_time, slam_pose_x, slam_pose_y, slam_pose_heading) " +
-            "values(?, ?, ?, ?, ?, ?)"
+    private val itrStr = "insert into iterations(history, itr_num, itr_time, " +
+            "slam_pose_x, slam_pose_y, slam_pose_heading, " +
+            "real_pose_x, real_pose_y, real_pose_heading, " +
+            "odo_pose_x, odo_pose_y, odo_pose_heading) " +
+            "values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     private val itrStmt: PreparedStatement
+
+    private val measurementStatements: List<BatchPreparedStatement>
+    private val particleStatements: List<BatchPreparedStatement>
+    private val featureStatements: List<BatchPreparedStatement>
 
     init {
         transaction {
@@ -78,15 +130,34 @@ class RobotStorage(
         jdbcConnection = DriverManager.getConnection(dbUrl, props)
         jdbcConnection.autoCommit = false
 
-        singleStmt = jdbcConnection.prepareStatement(singleStr)
-        smallStmt = jdbcConnection.prepareStatement(smallStr)
-        medStmt = jdbcConnection.prepareStatement(medStr)
-        largeStmt = jdbcConnection.prepareStatement(largeStr)
+        measurementStatements = addPreparedStatements(jdbcConnection, "measurements",
+                arrayListOf("iteration", "mes_num", "mes_time", "distance", "angle",
+                        "guessed_pose_x", "guessed_pose_y", "guessed_pose_heading",
+                        "odo_pose_x", "odo_pose_y", "odo_pose_heading"
+                ))
+
+        particleStatements = addPreparedStatements(jdbcConnection, "particles",
+                arrayListOf("iteration", "x", "y", "heading"))
+
+        featureStatements = addPreparedStatements(jdbcConnection, "features",
+                arrayListOf("iteration","sensor_x", "sensor_y", "distance", "angle", "std_dev"))
+
         itrStmt = jdbcConnection.prepareStatement(itrStr, PreparedStatement.RETURN_GENERATED_KEYS)
     }
 
-    private fun makeMesInsertQueryStr(seq: Sequence<String>, amt: Int): String {
-        return seq.take(amt).last()
+    private fun addPreparedStatements(connection: Connection, tableName: String, columnNames: List<String>): List<BatchPreparedStatement> {
+        val statementSql = makeInsertSeq(tableName, columnNames)
+        val statements = ArrayList<BatchPreparedStatement>()
+        var numInserts = 1
+        while (numInserts < MAX_INSERTS) {
+            val stmt = statementSql.take(numInserts).last()
+
+            val prepStmt = connection.prepareStatement(stmt)
+            statements.add(BatchPreparedStatement(numInserts * columnNames.size, prepStmt))
+
+            numInserts *= 2
+        }
+        return statements.reversed()
     }
 
     private fun <T> doIfNotReleased(toDo: () -> T): Future<T> {
@@ -98,14 +169,12 @@ class RobotStorage(
         }) as Future<T>
     }
 
-    fun saveTimeStep(results: RobotCoreActedResults) {
+    fun saveTimeStep(results: RobotCoreActedResults): Future<*> {
         val measurements = results.subconcResults.measurements
-        var singleStmtUsed = false
-        var smallStmtUsed = false
-        var medStmtUsed = false
-        var largeStmtUsed = false
+        val odoPose = results.subconcResults.pilotPoses.odoPose
+        val realPose = (results.subconcResults.pilotPoses as? SimPilotPoses)?.realPose
 
-        doIfNotReleased {
+        return doIfNotReleased {
             transaction {
                 itrStmt.setLong(1, histid)
                 itrStmt.setLong(2, results.numItrs)
@@ -115,87 +184,65 @@ class RobotStorage(
                 itrStmt.setBigDecimal(5, BigDecimal(results.slamPose.y.toString()))
                 itrStmt.setBigDecimal(6, BigDecimal(results.slamPose.heading.toString()))
 
+                if(realPose != null) {
+                    itrStmt.setBigDecimal(7, BigDecimal(realPose.x.toString()))
+                    itrStmt.setBigDecimal(8, BigDecimal(realPose.y.toString()))
+                    itrStmt.setBigDecimal(9, BigDecimal(realPose.heading.toString()))
+                }
+
+                itrStmt.setBigDecimal(10, BigDecimal(odoPose.x.toString()))
+                itrStmt.setBigDecimal(11, BigDecimal(odoPose.y.toString()))
+                itrStmt.setBigDecimal(12, BigDecimal(odoPose.heading.toString()))
+
                 itrStmt.executeUpdate()
                 val rs = itrStmt.generatedKeys
                 rs.next()
+                val iteration = LongInsertable(rs.getLong(1))
                 connection.commit()
 
-                var remaining = measurements.size
-                while (remaining > 0) {
-                    when {
-                        remaining > lrgAmt -> {
-                            val prevRemaining = remaining
-                            remaining -= lrgAmt
-                            setMesInPreparedStatements(measurements, rs.getLong(1), largeStmt, remaining, prevRemaining)
-                            largeStmtUsed = true
-                        }
-                        remaining > medAmt -> {
-                            val prevRemaining = remaining
-                            remaining -= medAmt
-                            setMesInPreparedStatements(measurements, rs.getLong(1), medStmt, remaining, prevRemaining)
+                var idx = 0L
+                val mesValsToInsert = measurements.flatMap { mes ->
+                    val mesNum = LongInsertable(idx)
+                    val mesTime = LongInsertable(mes.time)
+                    val distance = BigDecimalInsertable(mes.distance)
+                    val angle = BigDecimalInsertable(mes.probAngle)
+                    val guessedPoseX = BigDecimalInsertable(mes.probPose.x)
+                    val guessedPoseY = BigDecimalInsertable(mes.probPose.y)
+                    val guessedPoseHeading = BigDecimalInsertable(mes.probPose.heading)
+                    val odoPoseX = BigDecimalInsertable(mes.odoPose.x)
+                    val odoPoseY = BigDecimalInsertable(mes.odoPose.y)
+                    val odoPoseHeading = BigDecimalInsertable(mes.odoPose.heading)
 
-                            medStmtUsed = true
-                        }
-                        remaining > smallAmt -> {
-                            val prevRemaining = remaining
-                            remaining -= smallAmt
-                            setMesInPreparedStatements(measurements, rs.getLong(1), smallStmt, remaining, prevRemaining)
-                            smallStmtUsed = true
-                        }
-                        else -> {
-                            val prevRemaining = remaining
-                            remaining -= singleAmt
-                            setMesInPreparedStatements(measurements, rs.getLong(1), singleStmt, remaining, prevRemaining)
-                            singleStmtUsed = true
-                        }
-                    }
-                }
+                    idx++
 
-                if (largeStmtUsed) {
-                    largeStmt.executeBatch()
+                    arrayListOf(iteration, mesNum, mesTime, distance, angle,
+                            guessedPoseX, guessedPoseY, guessedPoseHeading, odoPoseX, odoPoseY, odoPoseHeading)
                 }
-                if (medStmtUsed) {
-                    medStmt.executeBatch()
+                insertIntoTable(mesValsToInsert, measurementStatements)
+
+                val particleValsToInsert = results.particlePoses.flatMap {partPose ->
+                    val particlePoseX = BigDecimalInsertable(partPose.x)
+                    val particlePoseY = BigDecimalInsertable(partPose.y)
+                    val particlePoseHeading = BigDecimalInsertable(partPose.heading)
+
+                    arrayListOf(iteration, particlePoseX, particlePoseY, particlePoseHeading)
                 }
-                if (smallStmtUsed) {
-                    smallStmt.executeBatch()
+                insertIntoTable(particleValsToInsert, particleStatements)
+
+                val featureValsToInsert = results.features.flatMap {feat ->
+                    val featureSensorX = BigDecimalInsertable(feat.sensorX)
+                    val featureSensorY = BigDecimalInsertable(feat.sensorY)
+                    val featureSensorDist = BigDecimalInsertable(feat.distance)
+                    val featureSensorAng = BigDecimalInsertable(feat.angle)
+                    val featureSensorStdDev = BigDecimalInsertable(feat.stdDev)
+
+                    arrayListOf(iteration, featureSensorX, featureSensorY, featureSensorDist, featureSensorAng, featureSensorStdDev)
                 }
-                if (singleStmtUsed) {
-                    singleStmt.executeBatch()
-                }
+                insertIntoTable(featureValsToInsert, featureStatements)
+                
                 jdbcConnection.commit()
             }
         }
-    }
-
-    private fun setMesInPreparedStatements(
-        measurements: List<Measurement>,
-        itrID: Long,
-        stmt: PreparedStatement,
-        start: Int,
-        end: Int
-    ) {
-        var stmtPos = 1
-        for (i in start until end) {
-            val mes = measurements[i]
-            stmt.setLong(stmtPos, itrID)
-            stmt.setLong(stmtPos + 1, i.toLong())
-            stmt.setLong(stmtPos + 2, mes.time)
-
-            stmt.setBigDecimal(stmtPos + 3, BigDecimal(mes.distance.toDouble()))
-            stmt.setBigDecimal(stmtPos + 4, BigDecimal(mes.probAngle.toDouble()))
-
-            stmt.setBigDecimal(stmtPos + 5, BigDecimal(mes.probPose.x.toDouble()))
-            stmt.setBigDecimal(stmtPos + 6, BigDecimal(mes.probPose.y.toDouble()))
-            stmt.setBigDecimal(stmtPos + 7, BigDecimal(mes.probPose.heading.toDouble()))
-
-            stmt.setBigDecimal(stmtPos + 8, BigDecimal(mes.odoPose.x.toDouble()))
-            stmt.setBigDecimal(stmtPos + 9, BigDecimal(mes.odoPose.y.toDouble()))
-            stmt.setBigDecimal(stmtPos + 10, BigDecimal(mes.odoPose.heading.toDouble()))
-
-            stmtPos += 11
-        }
-        stmt.addBatch()
     }
 
     fun getHistory(): HistoryEntity {
@@ -211,9 +258,11 @@ class RobotStorage(
         val pairs = ArrayList<MesSlamPair>()
 
         transaction {
+            val history = HistoryEntity.findById(histid)!!
+
             val allItrs = IterationTable
                 .innerJoin(HistoryTable)
-                .select { IterationTable.history eq HistoryTable.id }
+                .select { IterationTable.history eq history.id }
                 .orderBy(IterationTable.itrNum, false)
                 .toList()
 
@@ -273,5 +322,97 @@ class RobotStorage(
             }
             released = true
         }.get()
+    }
+
+    class Iteration(val itrNum: Long, val timestamp: Long, val slamPose: RobotPose, val odoPose: RobotPose,
+                    val measurements: List<Measurement>, val features: List<Feature>, val realPose: RobotPose?,
+                    val particles: List<Particle>)
+    fun getIterations(firstItr: Long?, lastItr: Long?): List<Iteration> {
+        val itrs = ArrayList<Iteration>()
+
+        transaction {
+            val history = HistoryEntity.findById(histid)!!
+            val robot = history.robot
+
+            val allItrs = IterationTable
+                    .innerJoin(HistoryTable)
+                    .select {
+                        (IterationTable.history eq history.id)
+                            .and (IterationTable.itrNum greaterEq firstItr)
+                            .and (IterationTable.itrTime lessEq lastItr)
+                    }
+                    .orderBy(IterationTable.itrNum, false)
+                    .toList()
+
+            allItrs.forEach {
+                val foundNMeasurements = MeasurementTable
+                        .innerJoin(IterationTable)
+                        .select { MeasurementTable.iteration eq it[IterationTable.id] }
+                        .orderBy(MeasurementTable.mesNum)
+                        .toList()
+
+                val measurements = foundNMeasurements.map {
+                    val probPose = RobotPose(it[MeasurementTable.mesTime], 0f,
+                            it[MeasurementTable.guessedPoseX].toFloat(), it[MeasurementTable.guessedPoseY].toFloat(),
+                            it[MeasurementTable.guessedPoseHeading].toFloat())
+                    val odoPose = RobotPose(it[MeasurementTable.mesTime], 0f,
+                            it[MeasurementTable.odoPoseX].toFloat(), it[MeasurementTable.odoPoseY].toFloat(),
+                            it[MeasurementTable.odoPoseHeading].toFloat())
+
+                    Measurement(it[MeasurementTable.distance].toFloat(), it[MeasurementTable.angle].toFloat(),
+                            probPose, odoPose, it[MeasurementTable.mesTime])
+                }
+                val slamPose = RobotPose(it[IterationTable.itrTime], 0f, it[IterationTable.slamPoseX].toFloat(),
+                        it[IterationTable.slamPoseY].toFloat(), it[IterationTable.slamPoseHeading].toFloat())
+
+                var realPose: RobotPose? = null
+                if (robot.physical == false) {
+                    val realPoseX = it[IterationTable.realPoseX]
+                    val realPoseY = it[IterationTable.realPoseY]
+                    val realPoseHeading = it[IterationTable.realPoseHeading]
+
+                    if(realPoseX != null && realPoseY != null && realPoseHeading != null) {
+                        realPose = RobotPose(it[IterationTable.itrTime], 0f, realPoseX.toFloat(),
+                                realPoseY.toFloat(), realPoseHeading.toFloat())
+                    }
+
+                }
+
+                val odoPose = RobotPose(it[IterationTable.itrTime], 0f, it[IterationTable.odoPoseX].toFloat(),
+                        it[IterationTable.odoPoseY].toFloat(), it[IterationTable.odoPoseHeading].toFloat())
+
+                val timestamp = it[IterationTable.itrTime]
+
+                val foundParticles = ParticleTable
+                        .innerJoin(IterationTable)
+                        .select { ParticleTable.iteration eq it[IterationTable.id] }
+                        .toList()
+                val particles = foundParticles.map {
+                    val x = it[ParticleTable.x].toFloat()
+                    val y = it[ParticleTable.y].toFloat()
+                    val heading = it[ParticleTable.heading].toFloat()
+
+                    Particle(Pose(x, y, heading))
+                }
+
+                val foundFeatures = FeatureTable
+                        .innerJoin(IterationTable)
+                        .select { FeatureTable.iteration eq it[IterationTable.id] }
+                        .toList()
+                val features = foundFeatures.map {
+                    val sensorX = it[FeatureTable.sensorX].toFloat()
+                    val sensorY = it[FeatureTable.sensorY].toFloat()
+                    val distance = it[FeatureTable.distance].toFloat()
+                    val angle = it[FeatureTable.angle].toFloat()
+                    val stdDev = it[FeatureTable.stdDev].toFloat()
+
+                    Feature(sensorX, sensorY, distance, angle, stdDev = stdDev)
+                }
+
+                itrs.add(Iteration(it[IterationTable.itrNum], timestamp, slamPose, odoPose, measurements, features, realPose, particles))
+            }
+        }
+
+        return itrs
     }
 }

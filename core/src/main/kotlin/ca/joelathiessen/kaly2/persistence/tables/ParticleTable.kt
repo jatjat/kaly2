@@ -7,18 +7,18 @@ import org.jetbrains.exposed.dao.LongEntity
 import org.jetbrains.exposed.dao.LongEntityClass
 import org.jetbrains.exposed.dao.LongIdTable
 
-object NRobotPoses : LongIdTable("robot_poses") {
+object ParticleTable : LongIdTable("particles") {
+    val iteration = reference("iteration", IterationTable)
+
     val x = decimal("x", DEC_FOR_FLT_PREC, DEC_FOR_FLT_SCALE)
     val y = decimal("y", DEC_FOR_FLT_PREC, DEC_FOR_FLT_SCALE)
     val heading = decimal("heading", DEC_FOR_FLT_PREC, DEC_FOR_FLT_SCALE)
-    val poseTime = long("pose_time")
 }
 
-class NRobotPose(id: EntityID<Long>) : LongEntity(id) {
-    companion object : LongEntityClass<NRobotPose>(NRobotPoses)
+class ParticlesEntity(id: EntityID<Long>) : LongEntity(id) {
+    companion object : LongEntityClass<ParticlesEntity>(ParticleTable)
 
-    var x by NRobotPoses.x
-    var y by NRobotPoses.y
-    var heading by NRobotPoses.heading
-    var poseTime by NRobotPoses.poseTime
+    var x by ParticleTable.x
+    var y by ParticleTable.y
+    var heading by ParticleTable.heading
 }
