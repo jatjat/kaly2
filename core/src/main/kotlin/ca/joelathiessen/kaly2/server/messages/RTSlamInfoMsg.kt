@@ -42,7 +42,7 @@ class RTLandmark(
     val y: Float,
     val stdDev: Float
 ) {
-    constructor(landmark: Landmark): this(landmark.x, landmark.y, Math.sqrt(landmark.covariance.get(0,0)).toFloat())
+    constructor(landmark: Landmark): this(landmark.x, landmark.y, Math.sqrt(landmark.covariance.get(0, 0)).toFloat())
 }
 
 class RTParticle(

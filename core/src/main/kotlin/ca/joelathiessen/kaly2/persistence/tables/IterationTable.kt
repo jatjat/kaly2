@@ -23,7 +23,7 @@ object IterationTable : LongIdTable("iterations") {
 
     val odoPoseX = decimal("odo_pose_x", DEC_FOR_FLT_PREC, DEC_FOR_FLT_SCALE)
     val odoPoseY = decimal("odo_pose_y", DEC_FOR_FLT_PREC, DEC_FOR_FLT_SCALE)
-    val odoPoseHeading = decimal("odo_pose_heading", DEC_FOR_FLT_PREC, DEC_FOR_FLT_SCALE)}
+    val odoPoseHeading = decimal("odo_pose_heading", DEC_FOR_FLT_PREC, DEC_FOR_FLT_SCALE) }
 
 class IterationEntity(id: EntityID<Long>) : LongEntity(id) {
     companion object : LongEntityClass<IterationEntity>(IterationTable)

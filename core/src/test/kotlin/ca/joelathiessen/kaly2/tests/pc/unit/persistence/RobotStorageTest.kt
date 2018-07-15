@@ -67,10 +67,8 @@ class RobotStorageTest {
 
     @Test
     fun testSaveResultsGetIterations() {
-        val timeout = 1L
-
         val persist = PersistentStorage(UUID(10L, 10L),
-                dbInit = PersistentStorage.DbInitTypes.IN_MEMORY_DB, canAssumeRobotUnownedTimeout = timeout)
+                dbInit = PersistentStorage.DbInitTypes.IN_MEMORY_DB)
 
         val robot = persist.makeRobotStorage("robotname", false, "mapName",
                 DateTime())
@@ -106,7 +104,7 @@ class RobotStorageTest {
 
         val pilotPoses = SimPilotPoses(realPos, odoPose)
 
-        val plan = LocalPlan(0f, 1f, 2f, 3f, 4f , 5f, 6f)
+        val plan = LocalPlan(0f, 1f, 2f, 3f, 4f, 5f, 6f)
 
         val subconcResults = SubconsciousActedResults(measurements, pilotPoses, plan)
 
@@ -121,7 +119,7 @@ class RobotStorageTest {
         val timeStepFuture = robot.saveTimeStep(results)
         timeStepFuture.get()
 
-        val itrs = robot.getIterations(0,1)
+        val itrs = robot.getIterations(0, 1)
 
         assertEquals(itrs.size, 1)
 
