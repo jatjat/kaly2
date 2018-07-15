@@ -43,7 +43,7 @@ class RobotStorage(
 
     fun makeInsertSeq(tableName: String, columnNames: List<String>): Sequence<String> {
         val seq = buildSequence {
-            val insertStr = "insert into ${tableName}(${columnNames.joinToString()}) values"
+            val insertStr = "insert into $tableName(${columnNames.joinToString()}) values"
             val questionMarks = (0 until columnNames.size).map { "?" }
             val valStr = "(${questionMarks.joinToString()})"
             var insertQuery = insertStr + valStr
@@ -56,10 +56,9 @@ class RobotStorage(
         return seq
     }
 
-
     open class BatchPSInsertableValue
-    class LongInsertable(val value: Long): BatchPSInsertableValue()
-    class BigDecimalInsertable(valIn: Float): BatchPSInsertableValue() {
+    class LongInsertable(val value: Long) : BatchPSInsertableValue()
+    class BigDecimalInsertable(valIn: Float) : BatchPSInsertableValue() {
         val value = BigDecimal(valIn.toDouble())
     }
 
@@ -140,7 +139,7 @@ class RobotStorage(
                 arrayListOf("iteration", "x", "y", "heading"))
 
         featureStatements = addPreparedStatements(jdbcConnection, "features",
-                arrayListOf("iteration","sensor_x", "sensor_y", "distance", "angle", "std_dev"))
+                arrayListOf("iteration", "sensor_x", "sensor_y", "distance", "angle", "std_dev"))
 
         itrStmt = jdbcConnection.prepareStatement(itrStr, PreparedStatement.RETURN_GENERATED_KEYS)
     }
@@ -184,7 +183,7 @@ class RobotStorage(
                 itrStmt.setBigDecimal(5, BigDecimal(results.slamPose.y.toString()))
                 itrStmt.setBigDecimal(6, BigDecimal(results.slamPose.heading.toString()))
 
-                if(realPose != null) {
+                if (realPose != null) {
                     itrStmt.setBigDecimal(7, BigDecimal(realPose.x.toString()))
                     itrStmt.setBigDecimal(8, BigDecimal(realPose.y.toString()))
                     itrStmt.setBigDecimal(9, BigDecimal(realPose.heading.toString()))
@@ -220,7 +219,7 @@ class RobotStorage(
                 }
                 insertIntoTable(mesValsToInsert, measurementStatements)
 
-                val particleValsToInsert = results.particlePoses.flatMap {partPose ->
+                val particleValsToInsert = results.particlePoses.flatMap { partPose ->
                     val particlePoseX = BigDecimalInsertable(partPose.x)
                     val particlePoseY = BigDecimalInsertable(partPose.y)
                     val particlePoseHeading = BigDecimalInsertable(partPose.heading)
@@ -229,7 +228,7 @@ class RobotStorage(
                 }
                 insertIntoTable(particleValsToInsert, particleStatements)
 
-                val featureValsToInsert = results.features.flatMap {feat ->
+                val featureValsToInsert = results.features.flatMap { feat ->
                     val featureSensorX = BigDecimalInsertable(feat.sensorX)
                     val featureSensorY = BigDecimalInsertable(feat.sensorY)
                     val featureSensorDist = BigDecimalInsertable(feat.distance)
@@ -239,7 +238,7 @@ class RobotStorage(
                     arrayListOf(iteration, featureSensorX, featureSensorY, featureSensorDist, featureSensorAng, featureSensorStdDev)
                 }
                 insertIntoTable(featureValsToInsert, featureStatements)
-                
+
                 jdbcConnection.commit()
             }
         }
@@ -324,9 +323,16 @@ class RobotStorage(
         }.get()
     }
 
-    class Iteration(val itrNum: Long, val timestamp: Long, val slamPose: RobotPose, val odoPose: RobotPose,
-                    val measurements: List<Measurement>, val features: List<Feature>, val realPose: RobotPose?,
-                    val particles: List<Particle>)
+    class Iteration(
+        val itrNum: Long,
+        val timestamp: Long,
+        val slamPose: RobotPose,
+        val odoPose: RobotPose,
+        val measurements: List<Measurement>,
+        val features: List<Feature>,
+        val realPose: RobotPose?,
+        val particles: List<Particle>
+    )
     fun getIterations(firstItr: Long?, lastItr: Long?): List<Iteration> {
         val itrs = ArrayList<Iteration>()
 
@@ -371,11 +377,10 @@ class RobotStorage(
                     val realPoseY = it[IterationTable.realPoseY]
                     val realPoseHeading = it[IterationTable.realPoseHeading]
 
-                    if(realPoseX != null && realPoseY != null && realPoseHeading != null) {
+                    if (realPoseX != null && realPoseY != null && realPoseHeading != null) {
                         realPose = RobotPose(it[IterationTable.itrTime], 0f, realPoseX.toFloat(),
                                 realPoseY.toFloat(), realPoseHeading.toFloat())
                     }
-
                 }
 
                 val odoPose = RobotPose(it[IterationTable.itrTime], 0f, it[IterationTable.odoPoseX].toFloat(),

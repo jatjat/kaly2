@@ -71,7 +71,7 @@ class SimRobotSessionFactory(
         val simSensor = SimSensor(mapData.obstacleGrid, mapImage.width, mapImage.height,
                 maxSensorRange, sensorDistStdDev, sensorAngStdDev, simSpinner, simPilot)
 
-        val rid = robotStorage?.histid // TODO: distinguish meaningfully between rid/histid/sid
+        val rid = robotStorage.histid // TODO: distinguish meaningfully between rid/histid/sid
 
         val featureDetector = SplitAndMerge(lineThreshold, checkWithinAngle, maxRatio)
 

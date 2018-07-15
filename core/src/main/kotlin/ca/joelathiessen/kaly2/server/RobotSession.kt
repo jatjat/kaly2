@@ -13,13 +13,11 @@ import ca.joelathiessen.kaly2.persistence.RobotStorage
 import ca.joelathiessen.kaly2.planner.GlobalPathPlanner
 import ca.joelathiessen.kaly2.planner.PlannerActor
 import ca.joelathiessen.kaly2.server.messages.RTFeature
-import ca.joelathiessen.kaly2.server.messages.RTLandmark
 import ca.joelathiessen.kaly2.server.messages.RTMsg
 import ca.joelathiessen.kaly2.server.messages.RTParticle
 import ca.joelathiessen.kaly2.server.messages.RTPastSlamInfosMsg
 import ca.joelathiessen.kaly2.server.messages.RTPastSlamInfosReqMsg
 import ca.joelathiessen.kaly2.server.messages.RTPose
-import ca.joelathiessen.kaly2.server.messages.RTRobotMsg
 import ca.joelathiessen.kaly2.server.messages.RTRobotSessionSettingsReqMsg
 import ca.joelathiessen.kaly2.server.messages.RTRobotSessionSettingsRespMsg
 import ca.joelathiessen.kaly2.server.messages.RTSlamInfoMsg
@@ -36,7 +34,6 @@ import ca.joelathiessen.util.EventContainer
 import ca.joelathiessen.util.itractor.ItrActorChannel
 import ca.joelathiessen.util.itractor.ItrActorMsg
 import ca.joelathiessen.util.itractor.ItrActorThreadedHost
-import com.google.gson.annotations.Expose
 import lejos.robotics.navigation.Pose
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
@@ -299,7 +296,7 @@ class RobotSession(
             val slamPose = RTPose(sInfo.slamPose)
             val odoPose = RTPose(sInfo.odoPose)
 
-            val realPose = if( sInfo.realPose != null) RTPose(sInfo.realPose) else null
+            val realPose = if ( sInfo.realPose != null) RTPose(sInfo.realPose) else null
             RTSlamInfoMsg(rid, sInfo.itrNum, sInfo.timestamp, particles, features, slamPose, odoPose, realPose)
         }
 
