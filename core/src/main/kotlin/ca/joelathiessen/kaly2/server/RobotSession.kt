@@ -16,7 +16,10 @@ import ca.joelathiessen.kaly2.server.messages.RTFeature
 import ca.joelathiessen.kaly2.server.messages.RTLandmark
 import ca.joelathiessen.kaly2.server.messages.RTMsg
 import ca.joelathiessen.kaly2.server.messages.RTParticle
+import ca.joelathiessen.kaly2.server.messages.RTPastSlamInfosMsg
+import ca.joelathiessen.kaly2.server.messages.RTPastSlamInfosReqMsg
 import ca.joelathiessen.kaly2.server.messages.RTPose
+import ca.joelathiessen.kaly2.server.messages.RTRobotMsg
 import ca.joelathiessen.kaly2.server.messages.RTRobotSessionSettingsReqMsg
 import ca.joelathiessen.kaly2.server.messages.RTRobotSessionSettingsRespMsg
 import ca.joelathiessen.kaly2.server.messages.RTSlamInfoMsg
@@ -33,6 +36,7 @@ import ca.joelathiessen.util.EventContainer
 import ca.joelathiessen.util.itractor.ItrActorChannel
 import ca.joelathiessen.util.itractor.ItrActorMsg
 import ca.joelathiessen.util.itractor.ItrActorThreadedHost
+import com.google.gson.annotations.Expose
 import lejos.robotics.navigation.Pose
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
@@ -53,7 +57,7 @@ class RobotSession(
     featureDetector: FeatureDetector,
     minSubcMeasTime: Long,
     map: GlobalMap,
-    robotStorage: RobotStorage,
+    private val robotStorage: RobotStorage,
     slam: FastSLAM,
     localPlanner: LocalPlanner,
     globalPathPlanner: GlobalPathPlanner
@@ -76,8 +80,6 @@ class RobotSession(
     private var results: RobotCoreActedResults? = null
 
     private data class xyPnt(val x: Float, val y: Float)
-
-    private val realObjectLocs = ArrayList<xyPnt>()
 
     private val rtEventSubscriptionLock = Any()
 
@@ -129,7 +131,7 @@ class RobotSession(
                 val simPilotPoses = localResults.subconcResults.pilotPoses as SimPilotPoses
 
                 sendUpdateEvent(simPilotPoses.realPose, simPilotPoses.odoPose, localResults.particlePoses,
-                        localResults.features, realObjectLocs, localResults)
+                        localResults.features, localResults.numItrs, localResults)
 
                 if (shouldPause.get() == true) {
                     println("Robot $rid attempting to pause")
@@ -158,7 +160,7 @@ class RobotSession(
         odoPos: Pose,
         particlePoses: List<Pose>,
         featuresForRT: List<Feature>,
-        realLandmarks: ArrayList<xyPnt>,
+        iteration: Long,
         results: RobotCoreActedResults
     ) {
 
@@ -170,7 +172,6 @@ class RobotSession(
             val rtFeatures = featuresForRT.map { RTFeature(it.distance, it.angle, it.stdDev) }
             val rtOdoPos = RTPose(odoPos.x, odoPos.y, odoPos.heading)
             val rtTruePos = RTPose(truePos.x, truePos.y, truePos.heading)
-            val rtTrueLandmarks = realLandmarks.map { RTLandmark(it.x, it.y, 0.0f) }
 
             var sumX = 0.0f
             var sumY = 0.0f
@@ -183,8 +184,8 @@ class RobotSession(
             val rtBestPose = RTPose(sumX / particlePoses.size, sumY / particlePoses.size,
                     sumHeading / particlePoses.size)
 
-            val rtMsg = RTMsg(RTSlamInfoMsg(rid, System.currentTimeMillis(), rtParticlePoses, rtFeatures, rtBestPose,
-                    rtOdoPos, rtTruePos, rtTrueLandmarks))
+            val rtMsg = RTMsg(RTSlamInfoMsg(rid, iteration, System.currentTimeMillis(), rtParticlePoses, rtFeatures, rtBestPose,
+                    rtOdoPos, rtTruePos))
 
             val rtFullMsg = RTMsg(results, requestingNoNetworkSend = true)
 
@@ -283,5 +284,25 @@ class RobotSession(
         synchronized(rtEventSubscriptionLock) {
             rtUpdateEventCont(this, RTMsg(RTRobotSessionSettingsRespMsg(rid, !shouldPause.get(), !shouldRun.get())))
         }
+    }
+
+    @Synchronized
+    fun getPastIterations(pastItrsReq: RTPastSlamInfosReqMsg): RTPastSlamInfosMsg {
+        val itrs = robotStorage.getIterations(pastItrsReq.firstItr, pastItrsReq.lastItr)
+        val slamInfos = itrs.map { sInfo ->
+            val particles = sInfo.particles.map { part ->
+                RTParticle(part)
+            }
+            val features = sInfo.features.map { feat ->
+                RTFeature(feat)
+            }
+            val slamPose = RTPose(sInfo.slamPose)
+            val odoPose = RTPose(sInfo.odoPose)
+
+            val realPose = if( sInfo.realPose != null) RTPose(sInfo.realPose) else null
+            RTSlamInfoMsg(rid, sInfo.itrNum, sInfo.timestamp, particles, features, slamPose, odoPose, realPose)
+        }
+
+        return RTPastSlamInfosMsg(slamInfos)
     }
 }

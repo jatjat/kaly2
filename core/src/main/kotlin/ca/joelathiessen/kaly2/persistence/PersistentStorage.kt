@@ -1,12 +1,13 @@
 package ca.joelathiessen.kaly2.persistence
 
+import ca.joelathiessen.kaly2.persistence.tables.FeatureTable
 import ca.joelathiessen.kaly2.persistence.tables.HistoryEntity
 import ca.joelathiessen.kaly2.persistence.tables.HistoryTable
 import ca.joelathiessen.kaly2.persistence.tables.IterationTable
 import ca.joelathiessen.kaly2.persistence.tables.MapEntity
 import ca.joelathiessen.kaly2.persistence.tables.MapTable
 import ca.joelathiessen.kaly2.persistence.tables.MeasurementTable
-import ca.joelathiessen.kaly2.persistence.tables.NRobotPoses
+import ca.joelathiessen.kaly2.persistence.tables.ParticleTable
 import ca.joelathiessen.kaly2.persistence.tables.ObstacleTable
 import ca.joelathiessen.kaly2.persistence.tables.RobotEntity
 import ca.joelathiessen.kaly2.persistence.tables.RobotTable
@@ -38,9 +39,9 @@ class PersistentStorage(
 
         transaction {
             if (dropTablesFirst) {
-                drop(MapTable, RobotTable, NRobotPoses, HistoryTable, ObstacleTable, IterationTable, MeasurementTable)
+                drop(MapTable, RobotTable, ParticleTable, HistoryTable, ObstacleTable, IterationTable, MeasurementTable, FeatureTable)
             }
-            create(MapTable, RobotTable, NRobotPoses, HistoryTable, ObstacleTable, IterationTable, MeasurementTable)
+            create(MapTable, RobotTable, ParticleTable, HistoryTable, ObstacleTable, IterationTable, MeasurementTable, FeatureTable)
         }
     }
 

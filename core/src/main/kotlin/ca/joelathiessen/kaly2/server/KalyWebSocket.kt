@@ -1,6 +1,7 @@
 package ca.joelathiessen.kaly2.server
 
 import ca.joelathiessen.kaly2.server.messages.RTMsg
+import ca.joelathiessen.kaly2.server.messages.RTPastSlamInfosReqMsg
 import ca.joelathiessen.kaly2.server.messages.RTRobotSessionSettingsMsgDeserializer
 import ca.joelathiessen.kaly2.server.messages.RTRobotSessionSettingsReqMsg
 import ca.joelathiessen.kaly2.server.messages.RTSlamSettingsMsg
@@ -48,6 +49,13 @@ class KalyWebSocket(private val robotSessionManager: RobotSessionManager) : WebS
             val settings = gson.fromJson<RTSlamSettingsMsg>(msg)
             updateRobotSession(settings.sessionID)
             this.robotSession?.applySlamSettings(settings)
+        } else if (msgType == RTPastSlamInfosReqMsg.MSG_TYPE_NAME) {
+            val ses = robotSession
+            if (ses != null) {
+                val pastIterationsReq = gson.fromJson<RTPastSlamInfosReqMsg>(msg)
+                val pastIterations = ses.getPastIterations(pastIterationsReq)
+                connection.sendMessage(gson.toJson(pastIterations))
+            }
         }
     }
 

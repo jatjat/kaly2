@@ -16,7 +16,14 @@ object IterationTable : LongIdTable("iterations") {
     val slamPoseX = decimal("slam_pose_x", DEC_FOR_FLT_PREC, DEC_FOR_FLT_SCALE)
     val slamPoseY = decimal("slam_pose_y", DEC_FOR_FLT_PREC, DEC_FOR_FLT_SCALE)
     val slamPoseHeading = decimal("slam_pose_heading", DEC_FOR_FLT_PREC, DEC_FOR_FLT_SCALE)
-}
+
+    val realPoseX = decimal("real_pose_x", DEC_FOR_FLT_PREC, DEC_FOR_FLT_SCALE).nullable()
+    val realPoseY = decimal("real_pose_y", DEC_FOR_FLT_PREC, DEC_FOR_FLT_SCALE).nullable()
+    val realPoseHeading = decimal("real_pose_heading", DEC_FOR_FLT_PREC, DEC_FOR_FLT_SCALE).nullable()
+
+    val odoPoseX = decimal("odo_pose_x", DEC_FOR_FLT_PREC, DEC_FOR_FLT_SCALE)
+    val odoPoseY = decimal("odo_pose_y", DEC_FOR_FLT_PREC, DEC_FOR_FLT_SCALE)
+    val odoPoseHeading = decimal("odo_pose_heading", DEC_FOR_FLT_PREC, DEC_FOR_FLT_SCALE)}
 
 class IterationEntity(id: EntityID<Long>) : LongEntity(id) {
     companion object : LongEntityClass<IterationEntity>(IterationTable)
@@ -29,4 +36,12 @@ class IterationEntity(id: EntityID<Long>) : LongEntity(id) {
     var slamPoseX by IterationTable.slamPoseX
     var slamPoseY by IterationTable.slamPoseY
     var slamPoseHeading by IterationTable.slamPoseHeading
+
+    var realPoseX by IterationTable.realPoseX
+    var realPoseY by IterationTable.realPoseY
+    var realPoseHeading by IterationTable.realPoseHeading
+
+    var odoPoseX by IterationTable.odoPoseX
+    var odoPoseY by IterationTable.odoPoseY
+    var odoPoseHeading by IterationTable.odoPoseHeading
 }
