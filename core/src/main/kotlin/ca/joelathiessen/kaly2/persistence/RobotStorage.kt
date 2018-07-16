@@ -28,7 +28,7 @@ import java.util.concurrent.Future
 import kotlin.coroutines.experimental.buildSequence
 
 class RobotStorage(
-    val histid: Long,
+    val sid: Long,
     private val serverUUID: UUID,
     dbUser: String,
     dbPassword: String,
@@ -119,7 +119,7 @@ class RobotStorage(
 
     init {
         transaction {
-            SessionHistoryEntity.findById(histid)
+            SessionHistoryEntity.findById(sid)
                     ?: throw IllegalArgumentException("RobotStorage requires a sessionHistory row to already exist")
         }
 
@@ -175,7 +175,7 @@ class RobotStorage(
 
         return doIfNotReleased {
             transaction {
-                itrStmt.setLong(1, histid)
+                itrStmt.setLong(1, sid)
                 itrStmt.setLong(2, results.numItrs)
                 itrStmt.setLong(3, results.timestamp)
 
@@ -246,7 +246,7 @@ class RobotStorage(
 
     fun getSessionHistory(): SessionHistoryEntity {
         val ans = doIfNotReleased {
-            transaction { SessionHistoryEntity.findById(histid)!! }
+            transaction { SessionHistoryEntity.findById(sid)!! }
         }
         return ans.get()
     }
@@ -257,7 +257,7 @@ class RobotStorage(
         val pairs = ArrayList<MesSlamPair>()
 
         transaction {
-            val sessionHistory = SessionHistoryEntity.findById(histid)!!
+            val sessionHistory = SessionHistoryEntity.findById(sid)!!
 
             val allItrs = IterationTable
                 .innerJoin(SessionHistoryTable)
@@ -296,7 +296,7 @@ class RobotStorage(
     fun saveHeartbeat() {
         doIfNotReleased {
             transaction {
-                val sessionHistory = SessionHistoryEntity.findById(histid)!!
+                val sessionHistory = SessionHistoryEntity.findById(sid)!!
                 if (sessionHistory.ownerServer != serverUUID) {
                     throw IllegalArgumentException(
                         "RobotStorage can only save a heartbeat to a sessionHistory that its server owns"
@@ -310,7 +310,7 @@ class RobotStorage(
     fun releaseSessionHistory() {
         doIfNotReleased {
             transaction {
-                val sessionHistory = SessionHistoryEntity.findById(histid)!!
+                val sessionHistory = SessionHistoryEntity.findById(sid)!!
                 if (sessionHistory.ownerServer != serverUUID) {
                     throw IllegalStateException(
                         "RobotStorage can only release a sessionHistory that its server already owns"
@@ -337,7 +337,7 @@ class RobotStorage(
         val itrs = ArrayList<Iteration>()
 
         transaction {
-            val sessionHistory = SessionHistoryEntity.findById(histid)!!
+            val sessionHistory = SessionHistoryEntity.findById(sid)!!
             val robot = sessionHistory.robot
 
             val allItrs = IterationTable
