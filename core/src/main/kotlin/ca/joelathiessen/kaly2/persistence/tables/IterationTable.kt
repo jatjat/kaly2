@@ -8,7 +8,7 @@ import org.jetbrains.exposed.dao.LongEntityClass
 import org.jetbrains.exposed.dao.LongIdTable
 
 object IterationTable : LongIdTable("iterations") {
-    val history = reference("history", HistoryTable)
+    val sessionHistory = reference("sessionHistory", SessionHistoryTable)
 
     val itrNum = long("itr_num")
     val itrTime = long("itr_time")
@@ -28,7 +28,7 @@ object IterationTable : LongIdTable("iterations") {
 class IterationEntity(id: EntityID<Long>) : LongEntity(id) {
     companion object : LongEntityClass<IterationEntity>(IterationTable)
 
-    var history by HistoryEntity referencedOn IterationTable.history
+    var sessionHistory by SessionHistoryEntity referencedOn IterationTable.sessionHistory
 
     var itrNum by IterationTable.itrNum
     var itrTime by IterationTable.itrTime
