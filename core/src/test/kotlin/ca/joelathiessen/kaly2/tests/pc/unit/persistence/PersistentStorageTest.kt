@@ -33,13 +33,13 @@ class PersistentStorageTest {
 
         assertEquals(robot.released, false)
 
-        val history = robot.getHistory()
+        val sessionHistory = robot.getSessionHistory()
 
-        robot.releaseHistory()
+        robot.releaseSessionHistory()
 
-        val secondRobot = persist.getRobotStorage(history.id.value)
+        val secondRobot = persist.getRobotStorage(sessionHistory.id.value)
 
         assertNotNull(secondRobot)
-        assertEquals(history.id, secondRobot!!.getHistory().id)
+        assertEquals(sessionHistory.id, secondRobot!!.getSessionHistory().id)
     }
 }

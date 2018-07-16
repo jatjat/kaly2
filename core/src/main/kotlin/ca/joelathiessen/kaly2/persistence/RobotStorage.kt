@@ -5,8 +5,8 @@ import ca.joelathiessen.kaly2.RobotCoreActedResults
 import ca.joelathiessen.kaly2.featuredetector.Feature
 import ca.joelathiessen.kaly2.odometry.RobotPose
 import ca.joelathiessen.kaly2.persistence.tables.FeatureTable
-import ca.joelathiessen.kaly2.persistence.tables.HistoryEntity
-import ca.joelathiessen.kaly2.persistence.tables.HistoryTable
+import ca.joelathiessen.kaly2.persistence.tables.SessionHistoryEntity
+import ca.joelathiessen.kaly2.persistence.tables.SessionHistoryTable
 import ca.joelathiessen.kaly2.persistence.tables.IterationTable
 import ca.joelathiessen.kaly2.persistence.tables.MeasurementTable
 import ca.joelathiessen.kaly2.persistence.tables.ParticleTable
@@ -106,7 +106,7 @@ class RobotStorage(
         }
     }
 
-    private val itrStr = "insert into iterations(history, itr_num, itr_time, " +
+    private val itrStr = "insert into iterations(sessionHistory, itr_num, itr_time, " +
             "slam_pose_x, slam_pose_y, slam_pose_heading, " +
             "real_pose_x, real_pose_y, real_pose_heading, " +
             "odo_pose_x, odo_pose_y, odo_pose_heading) " +
@@ -119,8 +119,8 @@ class RobotStorage(
 
     init {
         transaction {
-            HistoryEntity.findById(histid)
-                    ?: throw IllegalArgumentException("RobotStorage requires a history row to already exist")
+            SessionHistoryEntity.findById(histid)
+                    ?: throw IllegalArgumentException("RobotStorage requires a sessionHistory row to already exist")
         }
 
         val props = Properties()
@@ -162,7 +162,7 @@ class RobotStorage(
     private fun <T> doIfNotReleased(toDo: () -> T): Future<T> {
         return dbPool.submit(Callable {
             if (released) {
-                throw IllegalStateException("RobotStorage can only save to a history that it has not released")
+                throw IllegalStateException("RobotStorage can only save to a sessionHistory that it has not released")
             }
             toDo()
         }) as Future<T>
@@ -244,9 +244,9 @@ class RobotStorage(
         }
     }
 
-    fun getHistory(): HistoryEntity {
+    fun getSessionHistory(): SessionHistoryEntity {
         val ans = doIfNotReleased {
-            transaction { HistoryEntity.findById(histid)!! }
+            transaction { SessionHistoryEntity.findById(histid)!! }
         }
         return ans.get()
     }
@@ -257,11 +257,11 @@ class RobotStorage(
         val pairs = ArrayList<MesSlamPair>()
 
         transaction {
-            val history = HistoryEntity.findById(histid)!!
+            val sessionHistory = SessionHistoryEntity.findById(histid)!!
 
             val allItrs = IterationTable
-                .innerJoin(HistoryTable)
-                .select { IterationTable.history eq history.id }
+                .innerJoin(SessionHistoryTable)
+                .select { IterationTable.sessionHistory eq sessionHistory.id }
                 .orderBy(IterationTable.itrNum, false)
                 .toList()
 
@@ -296,28 +296,28 @@ class RobotStorage(
     fun saveHeartbeat() {
         doIfNotReleased {
             transaction {
-                val history = HistoryEntity.findById(histid)!!
-                if (history.ownerServer != serverUUID) {
+                val sessionHistory = SessionHistoryEntity.findById(histid)!!
+                if (sessionHistory.ownerServer != serverUUID) {
                     throw IllegalArgumentException(
-                        "RobotStorage can only save a heartbeat to a history that its server owns"
+                        "RobotStorage can only save a heartbeat to a sessionHistory that its server owns"
                     )
                 }
-                history.lastHeartbeat = System.currentTimeMillis()
+                sessionHistory.lastHeartbeat = System.currentTimeMillis()
             }
         }.get()
     }
 
-    fun releaseHistory() {
+    fun releaseSessionHistory() {
         doIfNotReleased {
             transaction {
-                val history = HistoryEntity.findById(histid)!!
-                if (history.ownerServer != serverUUID) {
+                val sessionHistory = SessionHistoryEntity.findById(histid)!!
+                if (sessionHistory.ownerServer != serverUUID) {
                     throw IllegalStateException(
-                        "RobotStorage can only release a history that its server already owns"
+                        "RobotStorage can only release a sessionHistory that its server already owns"
                     )
                 }
-                history.lastHeartbeat = System.currentTimeMillis()
-                history.owned = false
+                sessionHistory.lastHeartbeat = System.currentTimeMillis()
+                sessionHistory.owned = false
             }
             released = true
         }.get()
@@ -337,13 +337,13 @@ class RobotStorage(
         val itrs = ArrayList<Iteration>()
 
         transaction {
-            val history = HistoryEntity.findById(histid)!!
-            val robot = history.robot
+            val sessionHistory = SessionHistoryEntity.findById(histid)!!
+            val robot = sessionHistory.robot
 
             val allItrs = IterationTable
-                    .innerJoin(HistoryTable)
+                    .innerJoin(SessionHistoryTable)
                     .select {
-                        (IterationTable.history eq history.id)
+                        (IterationTable.sessionHistory eq sessionHistory.id)
                             .and (IterationTable.itrNum greaterEq firstItr)
                             .and (IterationTable.itrTime lessEq lastItr)
                     }

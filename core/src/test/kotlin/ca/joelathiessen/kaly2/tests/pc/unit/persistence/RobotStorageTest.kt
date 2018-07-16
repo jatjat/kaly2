@@ -36,11 +36,11 @@ class RobotStorageTest {
         val robot = persist.makeRobotStorage("robotname", false, "mapName",
             DateTime())
 
-        val history = robot.getHistory()
+        val sessionHistory = robot.getSessionHistory()
 
         robot.saveHeartbeat()
 
-        val invalidRobot = persist.getRobotStorage(histid = history.id.value)
+        val invalidRobot = persist.getRobotStorage(histid = sessionHistory.id.value)
 
         Assert.assertEquals(null, invalidRobot)
     }
@@ -55,11 +55,11 @@ class RobotStorageTest {
         val robot = persist.makeRobotStorage("robotname", false, "mapName",
             DateTime())
 
-        val history = robot.getHistory()
+        val sessionHistory = robot.getSessionHistory()
 
         Thread.sleep(timeout * 2)
 
-        val validRobot = persist.getRobotStorage(histid = history.id.value)
+        val validRobot = persist.getRobotStorage(histid = sessionHistory.id.value)
 
         // the robot's been "abandoned" by its server, so we can get it
         Assert.assertNotNull(validRobot)

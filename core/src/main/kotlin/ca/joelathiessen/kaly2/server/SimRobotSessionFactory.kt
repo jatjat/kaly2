@@ -71,7 +71,7 @@ class SimRobotSessionFactory(
         val simSensor = SimSensor(mapData.obstacleGrid, mapImage.width, mapImage.height,
                 maxSensorRange, sensorDistStdDev, sensorAngStdDev, simSpinner, simPilot)
 
-        val rid = robotStorage.histid // TODO: distinguish meaningfully between rid/histid/sid
+        val histid = robotStorage.histid // TODO: distinguish meaningfully between rid/histid/sid
 
         val featureDetector = SplitAndMerge(lineThreshold, checkWithinAngle, maxRatio)
 
@@ -89,7 +89,7 @@ class SimRobotSessionFactory(
 
         val map = GlobalMap(obstacleSize, obstacleSize, mapRemoveInvalidObsInterval)
 
-        return RobotSession(rid, sessionStoppedWithNoSubscribersHandler, mapData.startPose, initalGoalPose, simPilot, simSpinner,
+        return RobotSession(histid, sessionStoppedWithNoSubscribersHandler, mapData.startPose, initalGoalPose, simPilot, simSpinner,
                 simSensor, featureDetector, minSubcMeasTime, map, robotStorage, slam, localPlanner, globalPathPlanner)
     }
 

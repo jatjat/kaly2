@@ -1,8 +1,8 @@
 package ca.joelathiessen.kaly2.persistence
 
 import ca.joelathiessen.kaly2.persistence.tables.FeatureTable
-import ca.joelathiessen.kaly2.persistence.tables.HistoryEntity
-import ca.joelathiessen.kaly2.persistence.tables.HistoryTable
+import ca.joelathiessen.kaly2.persistence.tables.SessionHistoryEntity
+import ca.joelathiessen.kaly2.persistence.tables.SessionHistoryTable
 import ca.joelathiessen.kaly2.persistence.tables.IterationTable
 import ca.joelathiessen.kaly2.persistence.tables.MapEntity
 import ca.joelathiessen.kaly2.persistence.tables.MapTable
@@ -39,9 +39,9 @@ class PersistentStorage(
 
         transaction {
             if (dropTablesFirst) {
-                drop(MapTable, RobotTable, ParticleTable, HistoryTable, ObstacleTable, IterationTable, MeasurementTable, FeatureTable)
+                drop(MapTable, RobotTable, ParticleTable, SessionHistoryTable, ObstacleTable, IterationTable, MeasurementTable, FeatureTable)
             }
-            create(MapTable, RobotTable, ParticleTable, HistoryTable, ObstacleTable, IterationTable, MeasurementTable, FeatureTable)
+            create(MapTable, RobotTable, ParticleTable, SessionHistoryTable, ObstacleTable, IterationTable, MeasurementTable, FeatureTable)
         }
     }
 
@@ -50,19 +50,19 @@ class PersistentStorage(
         robotName: String,
         isReal: Boolean,
         mapName: String,
-        historyStartDate: DateTime
+        sessionHistoryStartDate: DateTime
     ): RobotStorage {
         var storage: RobotStorage? = null
         transaction {
             storage = getRobotStorage(histid)
             if (storage == null) {
-                storage = makeRobotStorage(robotName, isReal, mapName, historyStartDate)
+                storage = makeRobotStorage(robotName, isReal, mapName, sessionHistoryStartDate)
             }
         }
         return checkNotNull(storage) { "Failed to get or create Robot Storage" }
     }
 
-    fun makeRobotStorage(robotName: String, isReal: Boolean, mapName: String, historyStartDate: DateTime): RobotStorage {
+    fun makeRobotStorage(robotName: String, isReal: Boolean, mapName: String, sessionHistoryStartDate: DateTime): RobotStorage {
         var histid = 0L
         transaction {
             val newRobot = RobotEntity.new {
@@ -74,16 +74,16 @@ class PersistentStorage(
                 name = mapName
             }
 
-            val history = HistoryEntity.new {
+            val sessionHistory = SessionHistoryEntity.new {
                 map = newMap
                 robot = newRobot
-                startDate = historyStartDate
+                startDate = sessionHistoryStartDate
                 owned = true
-                lastHeartbeat = historyStartDate.millis
+                lastHeartbeat = sessionHistoryStartDate.millis
                 ownerServer = serverUUID
             }
 
-            histid = history.id.value
+            histid = sessionHistory.id.value
         }
 
         return RobotStorage(histid, serverUUID, user, password, dbInit.dbUrl)
@@ -95,20 +95,20 @@ class PersistentStorage(
         var shouldCreate = false
 
         transaction {
-            val history = HistoryEntity.findById(histid)
-            if (history != null) {
+            val sessionHistory = SessionHistoryEntity.findById(histid)
+            if (sessionHistory != null) {
                 val curTime = System.currentTimeMillis()
-                val timedOut = curTime - history.lastHeartbeat > canAssumeRobotUnownedTimeout
-                if (history.owned == false || timedOut == true) {
-                    history.owned = true
-                    history.lastHeartbeat = curTime
-                    history.ownerServer = serverUUID
+                val timedOut = curTime - sessionHistory.lastHeartbeat > canAssumeRobotUnownedTimeout
+                if (sessionHistory.owned == false || timedOut == true) {
+                    sessionHistory.owned = true
+                    sessionHistory.lastHeartbeat = curTime
+                    sessionHistory.ownerServer = serverUUID
                     shouldCreate = true
                 }
             }
         }
 
-        // Create RobotStorage once its history is committed:
+        // Create RobotStorage once its sessionHistory is committed:
         if (shouldCreate == true) {
             robotStorage = RobotStorage(histid, serverUUID, user, password, dbInit.dbUrl)
         }
