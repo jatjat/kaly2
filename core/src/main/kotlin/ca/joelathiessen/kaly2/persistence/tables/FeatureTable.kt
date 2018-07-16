@@ -21,7 +21,7 @@ class FeaturesEntity(id: EntityID<Long>) : LongEntity(id) {
     companion object : LongEntityClass<FeaturesEntity>(FeatureTable)
 
     var sensorX by FeatureTable.sensorX
-    var sensoY by FeatureTable.sensorY
+    var sensorY by FeatureTable.sensorY
     var distance by FeatureTable.distance
     var angle by FeatureTable.angle
     var stdDev by FeatureTable.stdDev
