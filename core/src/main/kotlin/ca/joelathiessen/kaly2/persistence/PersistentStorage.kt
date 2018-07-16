@@ -46,7 +46,7 @@ class PersistentStorage(
     }
 
     fun getOrMakeRobotStorage(
-        histid: Long,
+        sid: Long,
         robotName: String,
         isReal: Boolean,
         mapName: String,
@@ -54,7 +54,7 @@ class PersistentStorage(
     ): RobotStorage {
         var storage: RobotStorage? = null
         transaction {
-            storage = getRobotStorage(histid)
+            storage = getRobotStorage(sid)
             if (storage == null) {
                 storage = makeRobotStorage(robotName, isReal, mapName, sessionHistoryStartDate)
             }
@@ -63,7 +63,7 @@ class PersistentStorage(
     }
 
     fun makeRobotStorage(robotName: String, isReal: Boolean, mapName: String, sessionHistoryStartDate: DateTime): RobotStorage {
-        var histid = 0L
+        var sid = 0L
         transaction {
             val newRobot = RobotEntity.new {
                 name = robotName
@@ -83,19 +83,19 @@ class PersistentStorage(
                 ownerServer = serverUUID
             }
 
-            histid = sessionHistory.id.value
+            sid = sessionHistory.id.value
         }
 
-        return RobotStorage(histid, serverUUID, user, password, dbInit.dbUrl)
+        return RobotStorage(sid, serverUUID, user, password, dbInit.dbUrl)
     }
 
     // get robot storage if it's unowned or has timed out
-    fun getRobotStorage(histid: Long): RobotStorage? {
+    fun getRobotStorage(sid: Long): RobotStorage? {
         var robotStorage: RobotStorage? = null
         var shouldCreate = false
 
         transaction {
-            val sessionHistory = SessionHistoryEntity.findById(histid)
+            val sessionHistory = SessionHistoryEntity.findById(sid)
             if (sessionHistory != null) {
                 val curTime = System.currentTimeMillis()
                 val timedOut = curTime - sessionHistory.lastHeartbeat > canAssumeRobotUnownedTimeout
@@ -110,7 +110,7 @@ class PersistentStorage(
 
         // Create RobotStorage once its sessionHistory is committed:
         if (shouldCreate == true) {
-            robotStorage = RobotStorage(histid, serverUUID, user, password, dbInit.dbUrl)
+            robotStorage = RobotStorage(sid, serverUUID, user, password, dbInit.dbUrl)
         }
         return robotStorage
     }

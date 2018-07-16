@@ -44,7 +44,7 @@ import kotlin.concurrent.thread
 class SlamSettings(val numParticles: Int, val sensorAngVar: Float, val sensorDistVar: Float) : ItrActorMsg()
 
 class RobotSession(
-    val rid: Long,
+    val sid: Long,
     private val sessionStoppedWithNoSubscribersHandler: () -> Unit,
     private val startPose: RobotPose,
     initialGoal: RobotPose,
@@ -116,7 +116,7 @@ class RobotSession(
             plannerActorHost.start()
             robotCoreActorHost.start()
 
-            println("Robot $rid started...")
+            println("Robot $sid started...")
 
             while (shouldRun.get()) {
                 val localResults = (robotCoreOutput.takeMsg() as RobotCoreRsltsMsg).results
@@ -131,7 +131,7 @@ class RobotSession(
                         localResults.features, localResults.numItrs, localResults)
 
                 if (shouldPause.get() == true) {
-                    println("Robot $rid attempting to pause")
+                    println("Robot $sid attempting to pause")
                     subConscActorHost.stop()
                     plannerActorHost.stop()
                     robotCoreActorHost.stop()
@@ -142,13 +142,13 @@ class RobotSession(
                     subConscActorHost.start()
                     plannerActorHost.start()
                     robotCoreActorHost.start()
-                    println("Robot $rid unpaused")
+                    println("Robot $sid unpaused")
                 }
             }
             subConscActorHost.stop()
             plannerActorHost.stop()
             robotCoreActorHost.stop()
-            println("...Robot $rid stopped")
+            println("...Robot $sid stopped")
         }
     }
 
@@ -181,7 +181,7 @@ class RobotSession(
             val rtBestPose = RTPose(sumX / particlePoses.size, sumY / particlePoses.size,
                     sumHeading / particlePoses.size)
 
-            val rtMsg = RTMsg(RTSlamInfoMsg(rid, iteration, System.currentTimeMillis(), rtParticlePoses, rtFeatures, rtBestPose,
+            val rtMsg = RTMsg(RTSlamInfoMsg(sid, iteration, System.currentTimeMillis(), rtParticlePoses, rtFeatures, rtBestPose,
                     rtOdoPos, rtTruePos))
 
             val rtFullMsg = RTMsg(results, requestingNoNetworkSend = true)
@@ -279,7 +279,7 @@ class RobotSession(
             pauseRobot()
         }
         synchronized(rtEventSubscriptionLock) {
-            rtUpdateEventCont(this, RTMsg(RTRobotSessionSettingsRespMsg(rid, !shouldPause.get(), !shouldRun.get())))
+            rtUpdateEventCont(this, RTMsg(RTRobotSessionSettingsRespMsg(sid, !shouldPause.get(), !shouldRun.get())))
         }
     }
 
@@ -297,7 +297,7 @@ class RobotSession(
             val odoPose = RTPose(sInfo.odoPose)
 
             val realPose = if ( sInfo.realPose != null) RTPose(sInfo.realPose) else null
-            RTSlamInfoMsg(rid, sInfo.itrNum, sInfo.timestamp, particles, features, slamPose, odoPose, realPose)
+            RTSlamInfoMsg(sid, sInfo.itrNum, sInfo.timestamp, particles, features, slamPose, odoPose, realPose)
         }
 
         return RTPastSlamInfosMsg(slamInfos)

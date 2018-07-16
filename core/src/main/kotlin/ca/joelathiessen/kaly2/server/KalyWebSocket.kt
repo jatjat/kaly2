@@ -60,7 +60,7 @@ class KalyWebSocket(private val robotSessionManager: RobotSessionManager) : WebS
     }
 
     private fun updateRobotSession(sessionID: Long?) {
-        val shouldReplace = sessionID != null && sessionID != robotSession?.rid
+        val shouldReplace = sessionID != null && sessionID != robotSession?.sid
         val shouldStart = robotSession == null && sessionID == null
         if (shouldReplace || shouldStart) {
             robotSession?.unsubscribeFromRTEvents(handleRTMessageCaller)
