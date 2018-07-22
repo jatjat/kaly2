@@ -3,7 +3,7 @@ package ca.joelathiessen.kaly2.server.messages
 import com.google.gson.annotations.Expose
 
 class RTRobotSessionSettingsReqMsg(
-    val sessionID: Long?,
+    val sessionID: Long,
     val shouldRun: Boolean,
     val shouldReset: Boolean
 ) : RTRobotMsg {

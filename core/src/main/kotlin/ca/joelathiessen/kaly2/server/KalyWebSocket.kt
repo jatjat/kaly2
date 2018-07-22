@@ -2,8 +2,11 @@ package ca.joelathiessen.kaly2.server
 
 import ca.joelathiessen.kaly2.server.messages.RTMsg
 import ca.joelathiessen.kaly2.server.messages.RTPastSlamInfosReqMsg
-import ca.joelathiessen.kaly2.server.messages.RTRobotSessionSettingsMsgDeserializer
 import ca.joelathiessen.kaly2.server.messages.RTRobotSessionSettingsReqMsg
+import ca.joelathiessen.kaly2.server.messages.RTRobotSessionSubscribeReqMsg
+import ca.joelathiessen.kaly2.server.messages.RTRobotSessionSubscribeRespMsg
+import ca.joelathiessen.kaly2.server.messages.RTRobotSessionUnsubscribeReqMsg
+import ca.joelathiessen.kaly2.server.messages.RTRobotSessionUnsubscribeRespMsg
 import ca.joelathiessen.kaly2.server.messages.RTSlamSettingsMsg
 import com.github.salomonbrys.kotson.fromJson
 import com.github.salomonbrys.kotson.obj
@@ -20,18 +23,15 @@ class KalyWebSocket(private val robotSessionManager: RobotSessionManager) : WebS
     val MSG_LABEL = "msg"
     private val connectionExecutor = Executors.newSingleThreadExecutor()!!
     private lateinit var connection: WebSocket.Connection
-    private var robotSession: RobotSession? = null
     private val handleRTMessageCaller = { sender: Any, msg: RTMsg -> handleRTMessage(sender, msg) } // can't pass handleRTMessage directly
     private val gson = {
         val builder = GsonBuilder()
-        builder.registerTypeAdapter(RTRobotSessionSettingsReqMsg::class.java, RTRobotSessionSettingsMsgDeserializer())
         builder.create()
     }()
     private var closedLock = Any()
 
     override fun onOpen(connection: WebSocket.Connection) {
         this.connection = connection
-        robotSession?.subscribeToRTEvents(handleRTMessageCaller)
     }
 
     override fun onMessage(data: String) {
@@ -41,38 +41,52 @@ class KalyWebSocket(private val robotSessionManager: RobotSessionManager) : WebS
         val msgType = dataJson[MSG_TYPE].string
         val msg = dataJson[MSG_LABEL]
 
-        if (msgType == RTRobotSessionSettingsReqMsg.MSG_TYPE_NAME) {
+        if (msgType == RTRobotSessionSubscribeReqMsg.MSG_TYPE_NAME) {
+            var subscribed = false
+            val sessionReq = gson.fromJson<RTRobotSessionSubscribeReqMsg>(msg)
+            val robotSession = robotSessionManager.getHandler(sessionReq.sessionID)
+            if (robotSession != null) {
+                robotSession.subscribeToRTEvents(handleRTMessageCaller)
+                subscribed = true
+            }
+            val successMsg = RTRobotSessionSubscribeRespMsg(sessionReq.sessionID, subscribed)
+            connection.sendMessage(gson.toJson(successMsg))
+        } else if (msgType == RTRobotSessionUnsubscribeReqMsg.MSG_TYPE_NAME) {
+            var unsubscribed = false
+            val sessionRelReq = gson.fromJson<RTRobotSessionUnsubscribeReqMsg>(msg)
+            val robotSession = robotSessionManager.getHandler(sessionRelReq.sessionID)
+            if (robotSession != null) {
+                robotSession.unsubscribeFromRTEvents(handleRTMessageCaller)
+                unsubscribed = true
+            }
+            val successMsg = RTRobotSessionUnsubscribeRespMsg(sessionRelReq.sessionID, unsubscribed)
+            connection.sendMessage(gson.toJson(successMsg))
+        } else if (msgType == RTRobotSessionSettingsReqMsg.MSG_TYPE_NAME) {
             val settings = gson.fromJson<RTRobotSessionSettingsReqMsg>(msg)
-            updateRobotSession(settings.sessionID)
-            this.robotSession?.applyRobotSessionSettings(settings)
+            val robotSession = robotSessionManager.getHandler(settings.sessionID)
+            if (robotSession != null) {
+                robotSession.applyRobotSessionSettings(settings)
+            }
         } else if (msgType == RTSlamSettingsMsg.MSG_TYPE_NAME) {
             val settings = gson.fromJson<RTSlamSettingsMsg>(msg)
-            updateRobotSession(settings.sessionID)
-            this.robotSession?.applySlamSettings(settings)
+            val robotSession = robotSessionManager.getHandler(settings.sessionID)
+            if (robotSession != null) {
+                robotSession.applySlamSettings(settings)
+            }
         } else if (msgType == RTPastSlamInfosReqMsg.MSG_TYPE_NAME) {
-            val ses = robotSession
-            if (ses != null) {
-                val pastIterationsReq = gson.fromJson<RTPastSlamInfosReqMsg>(msg)
-                val pastIterations = ses.getPastIterations(pastIterationsReq)
+            val pastIterationsReq = gson.fromJson<RTPastSlamInfosReqMsg>(msg)
+            val robotSession = robotSessionManager.getHandler(pastIterationsReq.sessionID)
+            if (robotSession != null) {
+                val pastIterations = robotSession.getPastIterations(pastIterationsReq)
                 connection.sendMessage(gson.toJson(pastIterations))
             }
         }
     }
 
-    private fun updateRobotSession(sessionID: Long?) {
-        val shouldReplace = sessionID != null && sessionID != robotSession?.sid
-        val shouldStart = robotSession == null && sessionID == null
-        if (shouldReplace || shouldStart) {
-            robotSession?.unsubscribeFromRTEvents(handleRTMessageCaller)
-            robotSession = robotSessionManager.getHandler(sessionID ?: robotSessionManager.getUnspecifiedSID())
-            robotSession?.subscribeToRTEvents(handleRTMessageCaller)
-        }
-    }
-
     override fun onClose(closeCode: Int, message: String?) {
-        robotSession?.unsubscribeFromRTEvents(handleRTMessageCaller)
+        robotSessionManager.unsubscribeHandlerFromAllRTEvents(handleRTMessageCaller)
         synchronized(closedLock) {
-            connectionExecutor.shutdownNow()
+            connectionExecutor.shutdown()
             connectionExecutor.awaitTermination(TERMINATION_TIMOUT_SECONDS, TimeUnit.SECONDS)
         }
     }
