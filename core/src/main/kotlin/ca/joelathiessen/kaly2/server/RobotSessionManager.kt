@@ -1,5 +1,6 @@
 package ca.joelathiessen.kaly2.server
 
+import ca.joelathiessen.kaly2.server.messages.RTMsg
 import java.util.HashMap
 
 class RobotSessionManager(
@@ -13,7 +14,7 @@ class RobotSessionManager(
      * Gets a robot session, or creates it if it does not already exist
      */
     @Synchronized
-    fun getHandler(sid: Long): RobotSession {
+    fun getHandler(sid: Long): RobotSession? {
         if (!robotSessions.containsKey(sid)) {
             val factory: RobotSessionFactory
             if (sid == 0L) {
@@ -25,10 +26,13 @@ class RobotSessionManager(
                     "No factory to create a session with a simulated robot was provided"
                 }
             }
-            robotSessions[sid] = factory.makeRobotSession(sid, { handleSessionStoppedWithNoSubscribers(sid) })
+            val session = factory.makeRobotSession(sid, { handleSessionStoppedWithNoSubscribers(sid) })
+            if (session != null) {
+                robotSessions[sid] = session
+            }
         }
         printManagingMsg()
-        return robotSessions[sid]!!
+        return robotSessions[sid]
     }
 
     @Synchronized
@@ -47,6 +51,13 @@ class RobotSessionManager(
         val sid = nextSID
         nextSID++
         return sid
+    }
+
+    @Synchronized
+    fun unsubscribeHandlerFromAllRTEvents(handler: (sender: Any, eventArgs: RTMsg) -> Unit) {
+        robotSessions.values.forEach {
+            it.unsubscribeFromRTEvents(handler)
+        }
     }
 
     private fun printManagingMsg() {

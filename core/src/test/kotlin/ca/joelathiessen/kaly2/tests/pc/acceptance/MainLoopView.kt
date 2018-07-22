@@ -67,14 +67,11 @@ class MainLoopView : JPanel() {
     init {
         this.setSize(MIN_WIDTH.toInt(), MIN_WIDTH.toInt())
 
-        print("joel wuz hr")
         try {
             val server = KalyServer()
-            //thread {
             server.serve()
-            //}
 
-            val robotSession = server.inprocessAPI.getRobotSession(0)
+            val robotSession = server.inprocessAPI.getRobotSession(0)!!
             robotSession.subscribeToRTEvents(handleRTMessageCaller)
             robotSession.startRobot()
 

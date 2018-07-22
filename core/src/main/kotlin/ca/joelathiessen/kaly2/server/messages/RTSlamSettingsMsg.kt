@@ -3,7 +3,7 @@ package ca.joelathiessen.kaly2.server.messages
 import com.google.gson.annotations.Expose
 
 class RTSlamSettingsMsg(
-    val sessionID: Long?,
+    val sessionID: Long,
     val numParticles: Int,
     val sensorDistVar: Float,
     val sensorAngVar: Float
