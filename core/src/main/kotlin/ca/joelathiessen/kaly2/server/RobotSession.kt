@@ -45,7 +45,7 @@ class SlamSettings(val numParticles: Int, val sensorAngVar: Float, val sensorDis
 
 class RobotSession(
     val sid: Long,
-    private val sessionStoppedWithNoSubscribersHandler: () -> Unit,
+    private val sessionStoppedWithNoSubscribersHandler: (stopSid: Long) -> Unit,
     private val startPose: RobotPose,
     initialGoal: RobotPose,
     robotPilot: RobotPilot,
@@ -206,7 +206,7 @@ class RobotSession(
             rtUpdateEvent -= handler
             if (rtUpdateEvent.length == 0) {
                 stopRobot() // just stop immediately for now...
-                sessionStoppedWithNoSubscribersHandler()
+                sessionStoppedWithNoSubscribersHandler(sid)
             }
         }
     }

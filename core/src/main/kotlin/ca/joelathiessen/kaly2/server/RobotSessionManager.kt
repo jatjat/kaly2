@@ -14,8 +14,8 @@ class RobotSessionManager(
      * Gets a robot session, or creates it if it does not already exist
      */
     @Synchronized
-    fun getHandler(sid: Long): RobotSession? {
-        if (!robotSessions.containsKey(sid)) {
+    fun getHandler(sid: Long?): RobotSession? {
+        if (sid == null || !robotSessions.containsKey(sid)) {
             val factory: RobotSessionFactory
             if (sid == 0L) {
                 factory = checkNotNull(realRobotSessionFactory) {
@@ -26,9 +26,9 @@ class RobotSessionManager(
                     "No factory to create a session with a simulated robot was provided"
                 }
             }
-            val session = factory.makeRobotSession(sid, { handleSessionStoppedWithNoSubscribers(sid) })
+            val session = factory.makeRobotSession(sid, { stopSid: Long -> handleSessionStoppedWithNoSubscribers(stopSid) })
             if (session != null) {
-                robotSessions[sid] = session
+                robotSessions[session.sid] = session
             }
         }
         printManagingMsg()

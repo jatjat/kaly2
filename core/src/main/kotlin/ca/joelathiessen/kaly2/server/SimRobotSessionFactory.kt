@@ -54,43 +54,45 @@ class SimRobotSessionFactory(
     private val ROBOT_NAME = "simRobot"
     private val MAP_NAME = "defaultMap"
 
-    override fun makeRobotSession(sid: Long, sessionStoppedWithNoSubscribersHandler: () -> Unit): RobotSession {
-        val initalGoalPose = RobotPose(0L, 0f, 0f, 0f, 0f)
-
+    override fun makeRobotSession(sid: Long?, sessionStoppedWithNoSubscribersHandler: (stopSid: Long) -> Unit): RobotSession? {
         val currentDate = DateTime()
 
         val robotStorage = persistentStorage.getOrMakeRobotStorage(sid, ROBOT_NAME, false, MAP_NAME, currentDate)
 
-        val mapData = extractDataFromMapImage(mapImage)
+        if (robotStorage == null || (sid != null && robotStorage.sid != sid)) {
+            return null
+        } else {
+            val initalGoalPose = RobotPose(0L, 0f, 0f, 0f, 0f)
 
-        val obstacles = MapTree()
-        mapData.obstaclePoints.forEach { obstacles.add(it) }
+            val mapData = extractDataFromMapImage(mapImage)
 
-        val simPilot = SimulatedPilot(odoAngStdDev, odoDistStdDev, stepDist, mapData.startPose, maxPilotRot, maxPilotDist)
-        val simSpinner = SimSpinner(sensorStartAng, sensorEndAng, sensorAngIncr)
-        val simSensor = SimSensor(mapData.obstacleGrid, mapImage.width, mapImage.height,
-                maxSensorRange, sensorDistStdDev, sensorAngStdDev, simSpinner, simPilot)
+            val obstacles = MapTree()
+            mapData.obstaclePoints.forEach { obstacles.add(it) }
 
-        val sid = robotStorage.sid
+            val simPilot = SimulatedPilot(odoAngStdDev, odoDistStdDev, stepDist, mapData.startPose, maxPilotRot, maxPilotDist)
+            val simSpinner = SimSpinner(sensorStartAng, sensorEndAng, sensorAngIncr)
+            val simSensor = SimSensor(mapData.obstacleGrid, mapImage.width, mapImage.height,
+                    maxSensorRange, sensorDistStdDev, sensorAngStdDev, simSpinner, simPilot)
 
-        val featureDetector = SplitAndMerge(lineThreshold, checkWithinAngle, maxRatio)
+            val featureDetector = SplitAndMerge(lineThreshold, checkWithinAngle, maxRatio)
 
-        val motionModel = CarModel()
-        val dataAssoc = NNDataAssociator(nnAsocThreshold)
-        val partResamp = FastUnbiasedResampler()
-        val slam = FastSLAM(mapData.startPose, motionModel, dataAssoc, partResamp)
+            val motionModel = CarModel()
+            val dataAssoc = NNDataAssociator(nnAsocThreshold)
+            val partResamp = FastUnbiasedResampler()
+            val slam = FastSLAM(mapData.startPose, motionModel, dataAssoc, partResamp)
 
-        val localPlanner = LocalPlanner(0f, localPlannerRotStep, localPlannerDistStep, localPlannerGridStep,
-                localPlannerGridSize, obstacleSize)
+            val localPlanner = LocalPlanner(0f, localPlannerRotStep, localPlannerDistStep, localPlannerGridStep,
+                    localPlannerGridSize, obstacleSize)
 
-        val factory = LinearPathSegmentRootFactory()
-        val globalPathPlanner = GlobalPathPlanner(factory, obstacles, obstacleSize, globalPlannerSearchDist, globalPlannerStepDist,
-                mapData.startPose, initalGoalPose, globalPlannerItrs)
+            val factory = LinearPathSegmentRootFactory()
+            val globalPathPlanner = GlobalPathPlanner(factory, obstacles, obstacleSize, globalPlannerSearchDist, globalPlannerStepDist,
+                    mapData.startPose, initalGoalPose, globalPlannerItrs)
 
-        val map = GlobalMap(obstacleSize, obstacleSize, mapRemoveInvalidObsInterval)
+            val map = GlobalMap(obstacleSize, obstacleSize, mapRemoveInvalidObsInterval)
 
-        return RobotSession(sid, sessionStoppedWithNoSubscribersHandler, mapData.startPose, initalGoalPose, simPilot, simSpinner,
-                simSensor, featureDetector, minSubcMeasTime, map, robotStorage, slam, localPlanner, globalPathPlanner)
+            return RobotSession(robotStorage.sid, sessionStoppedWithNoSubscribersHandler, mapData.startPose, initalGoalPose, simPilot, simSpinner,
+                    simSensor, featureDetector, minSubcMeasTime, map, robotStorage, slam, localPlanner, globalPathPlanner)
+        }
     }
 
     private data class MapImageData(

@@ -46,20 +46,21 @@ class PersistentStorage(
     }
 
     fun getOrMakeRobotStorage(
-        sid: Long,
+        sid: Long?,
         robotName: String,
         isReal: Boolean,
         mapName: String,
         sessionHistoryStartDate: DateTime
-    ): RobotStorage {
+    ): RobotStorage? {
         var storage: RobotStorage? = null
         transaction {
-            storage = getRobotStorage(sid)
-            if (storage == null) {
+            if (sid != null) {
+                storage = getRobotStorage(sid)
+            } else {
                 storage = makeRobotStorage(robotName, isReal, mapName, sessionHistoryStartDate)
             }
         }
-        return checkNotNull(storage) { "Failed to get or create Robot Storage" }
+        return storage
     }
 
     fun makeRobotStorage(robotName: String, isReal: Boolean, mapName: String, sessionHistoryStartDate: DateTime): RobotStorage {
