@@ -3,13 +3,10 @@ package ca.joelathiessen.kaly2.tests.pc.unit.persistence
 import ca.joelathiessen.kaly2.persistence.PersistentStorage
 import org.joda.time.DateTime
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.mockito.runners.MockitoJUnitRunner
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import java.util.UUID
 
-@RunWith(MockitoJUnitRunner::class)
 class PersistentStorageTest {
 
     @Test
