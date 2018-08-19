@@ -26,11 +26,11 @@ You can explore its currently exposed functionality [on my website](http://www.j
 ### Running & Testing
 To run as a webserver, invoke either:
 ```
-./gradlew run
+./gradlew core:run
 ```
 or:
 ```
-./gradlew build && java -jar build/libs/kaly2-0.1.jar
+./gradlew core:installDist && ./core/build/install/bin/core
 ```
 
 To run the JUnit tests:
