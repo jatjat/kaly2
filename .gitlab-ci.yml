@@ -83,7 +83,7 @@ deploy-production:
   image: registry.joelathiessen.ca/kaly2/joelathiessen.ca/jbuild
   variables:
     KALY2_SERVICE_NAME: "kaly2-prod"
-    KALY2_TATEFUL_SET_NAME: "kaly2-stateful-set-prod"
+    KALY2_STATEFUL_SET_NAME: "kaly2-stateful-set-prod"
     KALY2_CONTAINER_NAME: "kaly2-container-prod"
     KALY2_APP_LABEL: "kaly2-backend-prod"
   <<: *common-deploy-script
