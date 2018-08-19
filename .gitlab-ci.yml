@@ -1,0 +1,94 @@
+services:
+  - docker:dind
+
+stages:
+  - build
+  - release
+  - staging
+  - production
+
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_HOST: "tcp://localhost:2375"
+
+before_script:
+  - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
+
+build:
+  stage: build
+  image: docker:stable
+  script:
+    - docker build --pull -t $CI_REGISTRY_IMAGE:$CI_BUILD_REF .
+    - docker push $CI_REGISTRY_IMAGE:$CI_BUILD_REF
+  except:
+    - tags
+
+release-name:
+  stage: release
+  image: docker:stable
+  script:
+    - docker pull $CI_REGISTRY_IMAGE:$CI_BUILD_REF
+    - docker tag $CI_REGISTRY_IMAGE:$CI_BUILD_REF $CI_REGISTRY_IMAGE:$CI_BUILD_REF_NAME
+    - docker push $CI_REGISTRY_IMAGE:$CI_BUILD_REF
+  except:
+    - master
+
+release-master:
+  stage: release
+  image: docker:stable
+  script:
+    - docker pull $CI_REGISTRY_IMAGE:$CI_BUILD_REF
+    - docker tag $CI_REGISTRY_IMAGE:$CI_BUILD_REF $CI_REGISTRY_IMAGE:latest
+    - docker push $CI_REGISTRY_IMAGE:latest
+  only:
+    - master
+
+.common-deploy-script: &common-deploy-script
+  script:
+    # Rollback enabled:
+    - echo "$CI_REGISTRY_IMAGE"
+    - echo "$CI_BUILD_REF"
+    - sed -i "s|__KALY2_IMAGE_NAME__|$CI_REGISTRY_IMAGE:$CI_BUILD_REF|" core/statefulset.yml
+    - sed -i "s|__KALY2_STATEFUL_SET_NAME__|$KALY2_STATEFUL_SET_NAME|" core/statefulset.yml
+    - sed -i "s|__KALY2_CONTAINER_NAME__|$KALY2_CONTAINER_NAME|" core/statefulset.yml
+    - sed -i "s|__KALY2_APP_LABEL__|$KALY2_APP_LABEL|" core/statefulset.yml core/service.yml
+    - sed -i "s|__KALY2_SERVICE_NAME__|$KALY2_SERVICE_NAME|" core/statefulset.yml core/service.yml
+    - kubectl apply -f core/service.yml
+    - kubectl apply -f core/statefulset.yml
+    - |
+      if kubectl apply -f core/statefulset.yml | grep -q unchanged; then
+        echo "Forcing image update by patching statefulset"
+        kubectl patch -f core/statefulset.yml -p "{\"spec\":{\"template\":{\"metadata\":{\"annotations\":{\"ci-last-updated\":\"$(date +'%s')\"}}}}}"
+      else
+        echo "Applying statefulset caused succesful image update"
+      fi
+
+deploy-staging:
+  stage: staging
+  image: registry.kaly2athiessen.ca/kaly2/kaly2athiessen.ca/jbuild
+  variables:
+    KALY2_SERVICE_NAME: "kaly2-staging"
+    KALY2_DEPLOYMENT_NAME: "kaly2-deployment-staging"
+    KALY2_CONTAINER_NAME: "kaly2-container-staging"
+    KALY2_APP_LABEL: "kaly2-backend-staging"
+  <<: *common-deploy-script
+  environment:
+    name: staging
+    url: https://staging.joelathiessen.ca
+  except:
+    - master
+
+deploy-production:
+  stage: production
+  image: registry.kaly2athiessen.ca/kaly2/kaly2athiessen.ca/jbuild
+  variables:
+    KALY2_SERVICE_NAME: "kaly2-prod"
+    KALY2_DEPLOYMENT_NAME: "kaly2-deployment-prod"
+    KALY2_CONTAINER_NAME: "kaly2-container-prod"
+    KALY2_APP_LABEL: "kaly2-backend-prod"
+  <<: *common-deploy-script
+  environment:
+    name: production
+    url: https://prod.joelathiessen.ca
+  only:
+    - master
