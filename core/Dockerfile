@@ -1,7 +1,6 @@
 FROM openjdk:8-jdk-alpine AS build
 WORKDIR /app/server
 COPY gradle ./gradle
-COPY .gradle ./.gradle
 COPY gradlew .
 COPY build.gradle .
 COPY gradle.properties .
