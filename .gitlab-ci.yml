@@ -65,7 +65,7 @@ release-master:
 
 deploy-staging:
   stage: staging
-  image: registry.kaly2athiessen.ca/kaly2/kaly2athiessen.ca/jbuild
+  image: registry.joelathiessen.ca/kaly2/joelathiessen.ca/jbuild
   variables:
     KALY2_SERVICE_NAME: "kaly2-staging"
     KALY2_DEPLOYMENT_NAME: "kaly2-deployment-staging"
@@ -80,7 +80,7 @@ deploy-staging:
 
 deploy-production:
   stage: production
-  image: registry.kaly2athiessen.ca/kaly2/kaly2athiessen.ca/jbuild
+  image: registry.joelathiessen.ca/kaly2/joelathiessen.ca/jbuild
   variables:
     KALY2_SERVICE_NAME: "kaly2-prod"
     KALY2_DEPLOYMENT_NAME: "kaly2-deployment-prod"
