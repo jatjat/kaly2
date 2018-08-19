@@ -45,9 +45,6 @@ release-master:
 
 .common-deploy-script: &common-deploy-script
   script:
-    # Rollback enabled:
-    - echo "$CI_REGISTRY_IMAGE"
-    - echo "$CI_BUILD_REF"
     - sed -i "s|__KALY2_IMAGE_NAME__|$CI_REGISTRY_IMAGE:$CI_BUILD_REF|" core/statefulset.yml
     - sed -i "s|__KALY2_STATEFUL_SET_NAME__|$KALY2_STATEFUL_SET_NAME|" core/statefulset.yml
     - sed -i "s|__KALY2_CONTAINER_NAME__|$KALY2_CONTAINER_NAME|" core/statefulset.yml
