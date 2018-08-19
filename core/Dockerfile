@@ -14,4 +14,4 @@ FROM openjdk:8-jre-alpine
 WORKDIR /app/server
 COPY --from=build /app/server/build/install/server .
 EXPOSE 9000
-ENTRYPOINT ["./bin/core"]
+ENTRYPOINT ["./bin/server"]
