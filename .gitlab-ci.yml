@@ -18,7 +18,7 @@ build:
   stage: build
   image: docker:stable
   script:
-    - docker build --pull -t $CI_REGISTRY_IMAGE:$CI_BUILD_REF core
+    - docker build --pull -t $CI_REGISTRY_IMAGE:$CI_BUILD_REF core --cache-from $CI_REGISTRY_IMAGE:latest
     - docker push $CI_REGISTRY_IMAGE:$CI_BUILD_REF
   except:
     - tags

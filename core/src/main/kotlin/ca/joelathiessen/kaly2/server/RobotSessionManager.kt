@@ -15,9 +15,10 @@ class RobotSessionManager(
      */
     @Synchronized
     fun getHandler(sid: Long?): RobotSession? {
-        if (sid == null || !robotSessions.containsKey(sid)) {
+        var chosenSid = sid
+        if (chosenSid == null || !robotSessions.containsKey(chosenSid)) {
             val factory: RobotSessionFactory
-            if (sid == 0L) {
+            if (chosenSid == 0L) {
                 factory = checkNotNull(realRobotSessionFactory) {
                     "No factory to create a session with a real robot was provided"
                 }
@@ -28,11 +29,12 @@ class RobotSessionManager(
             }
             val session = factory.makeRobotSession(sid, { stopSid: Long -> handleSessionStoppedWithNoSubscribers(stopSid) })
             if (session != null) {
-                robotSessions[session.sid] = session
+                chosenSid = session.sid
+                robotSessions[chosenSid] = session
             }
         }
         printManagingMsg()
-        return robotSessions[sid]
+        return robotSessions[chosenSid]
     }
 
     @Synchronized
