@@ -1,5 +1,6 @@
 package ca.joelathiessen.kaly2.server
 
+import ca.joelathiessen.kaly2.server.messages.RTConnectionOpenMsg
 import ca.joelathiessen.kaly2.server.messages.RTMsg
 import ca.joelathiessen.kaly2.server.messages.RTPastSlamInfosReqMsg
 import ca.joelathiessen.kaly2.server.messages.RTRobotSessionSettingsReqMsg
@@ -32,6 +33,7 @@ class KalyWebSocket(private val robotSessionManager: RobotSessionManager) : WebS
 
     override fun onOpen(connection: WebSocket.Connection) {
         this.connection = connection
+        connection.sendMessage(gson.toJson(RTMsg(RTConnectionOpenMsg())))
     }
 
     override fun onMessage(data: String) {
