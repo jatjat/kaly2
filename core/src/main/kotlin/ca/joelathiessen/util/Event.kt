@@ -33,6 +33,11 @@ class EventContainer<T>(
             onHandlerRemoved?.invoke()
         }
 
+        @Synchronized
+        override fun clear() {
+            handlers.clear()
+        }
+
         override val length: Int
             @Synchronized
             get() = handlers.size
@@ -42,5 +47,6 @@ class EventContainer<T>(
 interface Event<T> {
     operator fun plusAssign(handler: (sender: Any, eventArgs: T) -> Unit)
     operator fun minusAssign(handler: (sender: Any, eventArgs: T) -> Unit)
+    fun clear()
     val length: Int
 }

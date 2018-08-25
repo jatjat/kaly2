@@ -2,13 +2,25 @@ package ca.joelathiessen.kaly2.server
 
 import ca.joelathiessen.kaly2.server.messages.RTMsg
 import java.util.HashMap
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.concurrent.thread
 
 class RobotSessionManager(
     private val realRobotSessionFactory: RobotSessionFactory?,
     private val simRobotSessionFactory: RobotSessionFactory?
 ) {
+    private val HEARTBEAT_TIME = 250L
     private val robotSessions = HashMap<Long, RobotSession>()
-    private var nextSID = 1L
+    private val shouldPerformHeartbeats = AtomicBoolean()
+
+    init {
+        thread {
+            while (shouldPerformHeartbeats.get()) {
+                attemptHeartbeats()
+                Thread.sleep(HEARTBEAT_TIME)
+            }
+        }
+    }
 
     /**
      * Gets a robot session, or creates it if it does not already exist
@@ -16,7 +28,7 @@ class RobotSessionManager(
     @Synchronized
     fun getHandler(sid: Long?): RobotSession? {
         var chosenSid = sid
-        if (chosenSid == null || !robotSessions.containsKey(chosenSid)) {
+        if (chosenSid == null || robotSessions.containsKey(chosenSid) == false) {
             val factory: RobotSessionFactory
             if (chosenSid == 0L) {
                 factory = checkNotNull(realRobotSessionFactory) {
@@ -49,17 +61,28 @@ class RobotSessionManager(
     }
 
     @Synchronized
-    fun getUnspecifiedSID(): Long {
-        val sid = nextSID
-        nextSID++
-        return sid
-    }
-
-    @Synchronized
     fun unsubscribeHandlerFromAllRTEvents(handler: (sender: Any, eventArgs: RTMsg) -> Unit) {
         robotSessions.values.forEach {
             it.unsubscribeFromRTEvents(handler)
         }
+    }
+
+    @Synchronized
+    private fun attemptHeartbeats() {
+        robotSessions.forEach {
+            if (it.value.attemptHeartBeat() == false) {
+                it.value.unsubscribeFromRTEvents()
+            }
+        }
+    }
+
+    @Synchronized
+    fun shutDown() {
+        robotSessions.values.forEach {
+            it.unsubscribeFromRTEvents()
+            removeSession(it.sid)
+        }
+        shouldPerformHeartbeats.set(false)
     }
 
     private fun printManagingMsg() {

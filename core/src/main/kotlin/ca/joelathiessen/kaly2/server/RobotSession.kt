@@ -76,8 +76,6 @@ class RobotSession(
     private val resultsLock = Any()
     private var results: RobotCoreActedResults? = null
 
-    private data class xyPnt(val x: Float, val y: Float)
-
     private val rtEventSubscriptionLock = Any()
 
     private val subconscInput = ItrActorChannel(SUBCONC_INPUT_SIZE)
@@ -201,9 +199,13 @@ class RobotSession(
     }
 
     @Synchronized
-    fun unsubscribeFromRTEvents(handler: (sender: Any, eventArgs: RTMsg) -> Unit) {
+    fun unsubscribeFromRTEvents(handler: ((sender: Any, eventArgs: RTMsg) -> Unit)? = null) {
         synchronized(rtEventSubscriptionLock) {
-            rtUpdateEvent -= handler
+            if (handler != null) {
+                rtUpdateEvent -= handler
+            } else {
+                rtUpdateEvent.clear()
+            }
             if (rtUpdateEvent.length == 0) {
                 stopRobot() // just stop immediately for now...
                 sessionStoppedWithNoSubscribersHandler(sid)
@@ -301,5 +303,10 @@ class RobotSession(
         }
 
         return RTPastSlamInfosMsg(slamInfos)
+    }
+
+    @Synchronized
+    fun attemptHeartBeat(): Boolean {
+        return robotStorage.saveHeartbeat()
     }
 }
