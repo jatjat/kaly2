@@ -293,18 +293,18 @@ class RobotStorage(
         return pairs
     }
 
-    fun saveHeartbeat() {
+    fun saveHeartbeat(): Boolean {
+        var success = false
         doIfNotReleased {
             transaction {
                 val sessionHistory = SessionHistoryEntity.findById(sid)!!
-                if (sessionHistory.ownerServer != serverUUID) {
-                    throw IllegalArgumentException(
-                        "RobotStorage can only save a heartbeat to a sessionHistory that its server owns"
-                    )
+                if (sessionHistory.ownerServer == serverUUID) {
+                    sessionHistory.lastHeartbeat = System.currentTimeMillis()
+                    success = true
                 }
-                sessionHistory.lastHeartbeat = System.currentTimeMillis()
             }
         }.get()
+        return success
     }
 
     fun releaseSessionHistory() {
