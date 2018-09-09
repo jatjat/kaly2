@@ -16,10 +16,9 @@ import org.jetbrains.exposed.sql.SchemaUtils.create
 import org.jetbrains.exposed.sql.SchemaUtils.drop
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
-import java.util.UUID
 
 class PersistentStorage(
-    private val serverUUID: UUID,
+    private val serverName: String,
     private val canAssumeRobotUnownedTimeout: Long = 10000L,
     private val dbInit: DbInitTypes = DbInitTypes.FILE_DB,
     private val user: String = "",
@@ -43,6 +42,15 @@ class PersistentStorage(
             }
             create(MapTable, RobotTable, ParticleTable, SessionHistoryTable, ObstacleTable, IterationTable, MeasurementTable, FeatureTable)
         }
+    }
+
+    fun getServerAddress(sid: Long): String? {
+        var address: String? = null
+        transaction {
+            val sessionHistory = SessionHistoryEntity.findById(sid)
+            address = sessionHistory?.ownerServer
+        }
+        return address
     }
 
     fun getOrMakeRobotStorage(
@@ -81,13 +89,13 @@ class PersistentStorage(
                 startDate = sessionHistoryStartDate
                 owned = true
                 lastHeartbeat = sessionHistoryStartDate.millis
-                ownerServer = serverUUID
+                ownerServer = serverName
             }
 
             sid = sessionHistory.id.value
         }
 
-        return RobotStorage(sid, serverUUID, user, password, dbInit.dbUrl)
+        return RobotStorage(sid, serverName, user, password, dbInit.dbUrl)
     }
 
     // get robot storage if it's unowned or has timed out
@@ -103,7 +111,7 @@ class PersistentStorage(
                 if (sessionHistory.owned == false || timedOut == true) {
                     sessionHistory.owned = true
                     sessionHistory.lastHeartbeat = curTime
-                    sessionHistory.ownerServer = serverUUID
+                    sessionHistory.ownerServer = serverName
                     shouldCreate = true
                 }
             }
@@ -111,7 +119,7 @@ class PersistentStorage(
 
         // Create RobotStorage once its sessionHistory is committed:
         if (shouldCreate == true) {
-            robotStorage = RobotStorage(sid, serverUUID, user, password, dbInit.dbUrl)
+            robotStorage = RobotStorage(sid, serverName, user, password, dbInit.dbUrl)
         }
         return robotStorage
     }

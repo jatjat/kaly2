@@ -11,7 +11,7 @@ import org.eclipse.jetty.servlet.DefaultServlet
 import org.eclipse.jetty.servlet.ServletContextHandler
 import org.eclipse.jetty.util.log.Log
 import org.eclipse.jetty.util.log.StdErrLog
-import java.util.UUID
+import java.net.InetAddress
 import kotlin.concurrent.thread
 
 class KalyServer(private val mapImage: AndroidJVMImage? = null) {
@@ -20,7 +20,6 @@ class KalyServer(private val mapImage: AndroidJVMImage? = null) {
 
     val inprocessAPI: ApplicationAPI
 
-    val SERVER_UUID = UUID.randomUUID()
     val PORT = 9000
     val WEBSOCKET_API_ROBOT_PATH = "/api/ws/robot"
     val REST_API_ROBOT_PATH = "/api/rest/robot"
@@ -115,7 +114,14 @@ class KalyServer(private val mapImage: AndroidJVMImage? = null) {
         val DB_INIT = if (isAndroid()) PersistentStorage.DbInitTypes.ANDROID_FILE_DB
         else PersistentStorage.DbInitTypes.FILE_DB
 
-        val persistentStorage = PersistentStorage(SERVER_UUID, dbInit = DB_INIT, dropTablesFirst = true)
+        val serverDNSName = {
+            val ipAddress = byteArrayOf(127, 0, 0, 1)
+            val address = InetAddress.getByAddress(ipAddress)
+
+            address.canonicalHostName
+        }()
+
+        val persistentStorage = PersistentStorage(serverDNSName, dbInit = DB_INIT, dropTablesFirst = true)
         return SimRobotSessionFactory(ODO_ANG_STD_DEV, ODO_DIST_STD_DEV, STEP_DIST, PILOT_MAX_DIST, PILOT_MAX_ROT,
                 SENSOR_START_ANG, SENSOR_END_ANG, SENSOR_ANG_INCR, image, MAX_SENSOR_RANGE, SENSOR_DIST_STDEV,
                 SENSOR_ANG_STDEV, LINE_THRESHOLD, CHECK_WITHIN_ANGLE, MAX_RATIO, LCL_PLN_ROT_STEP, LCL_PLN_DIST_STEP,

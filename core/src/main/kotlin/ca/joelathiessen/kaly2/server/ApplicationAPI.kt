@@ -4,6 +4,12 @@ class ApplicationAPI(private val robotSessionManager: RobotSessionManager) {
 
     // expose robot sessions directly
     fun getRobotSession(sessionID: Long): RobotSession? {
-        return robotSessionManager.getHandler(sessionID)
+        val handlerResult = robotSessionManager.getHandler(sessionID)
+        when (handlerResult) {
+            is RobotSessionManager.GetHandlerResult.RobotSessionResult -> {
+                return handlerResult.session
+            }
+        }
+        return null
     }
 }

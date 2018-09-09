@@ -20,7 +20,6 @@ import java.math.BigDecimal
 import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.PreparedStatement
-import java.util.UUID
 import java.util.Properties
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
@@ -29,7 +28,7 @@ import kotlin.coroutines.experimental.buildSequence
 
 class RobotStorage(
     val sid: Long,
-    private val serverUUID: UUID,
+    private val serverName: String,
     dbUser: String,
     dbPassword: String,
     dbUrl: String
@@ -298,7 +297,7 @@ class RobotStorage(
         doIfNotReleased {
             transaction {
                 val sessionHistory = SessionHistoryEntity.findById(sid)!!
-                if (sessionHistory.ownerServer == serverUUID) {
+                if (sessionHistory.ownerServer == serverName) {
                     sessionHistory.lastHeartbeat = System.currentTimeMillis()
                     success = true
                 }
@@ -311,7 +310,7 @@ class RobotStorage(
         doIfNotReleased {
             transaction {
                 val sessionHistory = SessionHistoryEntity.findById(sid)!!
-                if (sessionHistory.ownerServer != serverUUID) {
+                if (sessionHistory.ownerServer != serverName) {
                     throw IllegalStateException(
                         "RobotStorage can only release a sessionHistory that its server already owns"
                     )

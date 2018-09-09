@@ -22,6 +22,12 @@ import lejos.robotics.geometry.Point
 import org.joda.time.DateTime
 import java.util.Collections
 
+sealed class RobotSessionFactoryResult {
+    class LocalRobotSession(val session: RobotSession) : RobotSessionFactoryResult()
+    class RemoteRobotSessionAddress(val address: String) : RobotSessionFactoryResult()
+    class RobotSessionCreationError(val description: String? = null) : RobotSessionFactoryResult()
+}
+
 class SimRobotSessionFactory(
     private val odoAngStdDev: Float,
     private val odoDistStdDev: Float,
@@ -54,13 +60,19 @@ class SimRobotSessionFactory(
     private val ROBOT_NAME = "simRobot"
     private val MAP_NAME = "defaultMap"
 
-    override fun makeRobotSession(sid: Long?, sessionStoppedWithNoSubscribersHandler: (stopSid: Long) -> Unit): RobotSession? {
+    override fun makeRobotSession(sid: Long?, sessionStoppedWithNoSubscribersHandler: (stopSid: Long) -> Unit): RobotSessionFactoryResult {
         val currentDate = DateTime()
 
         val robotStorage = persistentStorage.getOrMakeRobotStorage(sid, ROBOT_NAME, false, MAP_NAME, currentDate)
 
-        if (robotStorage == null || (sid != null && robotStorage.sid != sid)) {
-            return null
+        if (robotStorage == null) {
+            if (sid != null) {
+                val serverAddress = persistentStorage.getServerAddress(sid)
+                if (serverAddress != null) {
+                    return RobotSessionFactoryResult.RemoteRobotSessionAddress(serverAddress)
+                }
+            }
+            return RobotSessionFactoryResult.RobotSessionCreationError()
         } else {
             val initalGoalPose = RobotPose(0L, 0f, 0f, 0f, 0f)
 
@@ -90,8 +102,9 @@ class SimRobotSessionFactory(
 
             val map = GlobalMap(obstacleSize, obstacleSize, mapRemoveInvalidObsInterval)
 
-            return RobotSession(robotStorage.sid, sessionStoppedWithNoSubscribersHandler, mapData.startPose, initalGoalPose, simPilot, simSpinner,
-                    simSensor, featureDetector, minSubcMeasTime, map, robotStorage, slam, localPlanner, globalPathPlanner)
+            return RobotSessionFactoryResult.LocalRobotSession(RobotSession(robotStorage.sid,
+                    sessionStoppedWithNoSubscribersHandler, mapData.startPose, initalGoalPose, simPilot, simSpinner,
+                    simSensor, featureDetector, minSubcMeasTime, map, robotStorage, slam, localPlanner, globalPathPlanner))
         }
     }
 

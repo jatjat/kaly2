@@ -25,9 +25,15 @@ class RobotSessionManager(
     /**
      * Gets a robot session, or creates it if it does not already exist
      */
+    sealed class GetHandlerResult {
+        class RemoteRobotSessionAddressResult(val address: String) : GetHandlerResult()
+        class RobotSessionResult(val session: RobotSession) : GetHandlerResult()
+        class RobotSessionCreationError(val description: String? = null) : GetHandlerResult()
+    }
     @Synchronized
-    fun getHandler(sid: Long?): RobotSession? {
+    fun getHandler(sid: Long?): GetHandlerResult? {
         var chosenSid = sid
+        var getHandlerResult: GetHandlerResult = GetHandlerResult.RobotSessionCreationError()
         if (chosenSid == null || robotSessions.containsKey(chosenSid) == false) {
             val factory: RobotSessionFactory
             if (chosenSid == 0L) {
@@ -39,14 +45,30 @@ class RobotSessionManager(
                     "No factory to create a session with a simulated robot was provided"
                 }
             }
-            val session = factory.makeRobotSession(sid, { stopSid: Long -> handleSessionStoppedWithNoSubscribers(stopSid) })
+            val sessionResult = factory.makeRobotSession(sid, { stopSid: Long -> handleSessionStoppedWithNoSubscribers(stopSid) })
+            when (sessionResult) {
+                is RobotSessionFactoryResult.LocalRobotSession -> {
+                    chosenSid = sessionResult.session.sid
+                    robotSessions[chosenSid] = sessionResult.session
+                    printManagingMsg()
+                    getHandlerResult = GetHandlerResult.RobotSessionResult(sessionResult.session)
+                }
+                is RobotSessionFactoryResult.RemoteRobotSessionAddress -> {
+                    printManagingMsg()
+                    getHandlerResult = GetHandlerResult.RemoteRobotSessionAddressResult(sessionResult.address)
+                }
+                is RobotSessionFactoryResult.RobotSessionCreationError -> {
+                    printManagingMsg()
+                    getHandlerResult = GetHandlerResult.RobotSessionCreationError(sessionResult.description)
+                }
+            }
+        } else {
+            val session = robotSessions[chosenSid]
             if (session != null) {
-                chosenSid = session.sid
-                robotSessions[chosenSid] = session
+                getHandlerResult = GetHandlerResult.RobotSessionResult(session)
             }
         }
-        printManagingMsg()
-        return robotSessions[chosenSid]
+        return getHandlerResult
     }
 
     @Synchronized
