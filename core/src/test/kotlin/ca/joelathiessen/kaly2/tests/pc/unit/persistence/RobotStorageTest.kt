@@ -19,7 +19,6 @@ import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.runners.MockitoJUnitRunner
-import java.util.UUID
 
 @RunWith(MockitoJUnitRunner::class)
 class RobotStorageTest {
@@ -30,7 +29,7 @@ class RobotStorageTest {
     fun testHeartbeat() {
         val timeout = 500L
 
-        val persist = PersistentStorage(UUID(10L, 10L),
+        val persist = PersistentStorage("localhost",
             dbInit = PersistentStorage.DbInitTypes.IN_MEMORY_DB, canAssumeRobotUnownedTimeout = timeout)
 
         val robot = persist.makeRobotStorage("robotname", false, "mapName",
@@ -49,7 +48,7 @@ class RobotStorageTest {
     fun testMissedHeartbeat() {
         val timeout = 1L
 
-        val persist = PersistentStorage(UUID(10L, 10L),
+        val persist = PersistentStorage("localhost",
             dbInit = PersistentStorage.DbInitTypes.IN_MEMORY_DB, canAssumeRobotUnownedTimeout = timeout)
 
         val robot = persist.makeRobotStorage("robotname", false, "mapName",
@@ -67,7 +66,7 @@ class RobotStorageTest {
 
     @Test
     fun testSaveResultsGetIterations() {
-        val persist = PersistentStorage(UUID(10L, 10L),
+        val persist = PersistentStorage("localhost",
                 dbInit = PersistentStorage.DbInitTypes.IN_MEMORY_DB)
 
         val robot = persist.makeRobotStorage("robotname", false, "mapName",

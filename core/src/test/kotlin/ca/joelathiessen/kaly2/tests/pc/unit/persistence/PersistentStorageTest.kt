@@ -5,13 +5,12 @@ import org.joda.time.DateTime
 import org.junit.Test
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
-import java.util.UUID
 
 class PersistentStorageTest {
 
     @Test
     fun testCreateRobotStorage() {
-        val persist = PersistentStorage(UUID(10L, 10L),
+        val persist = PersistentStorage("localhost",
             dbInit = PersistentStorage.DbInitTypes.IN_MEMORY_DB)
 
         val robot = persist.makeRobotStorage("robotname", false, "mapName",
@@ -22,7 +21,7 @@ class PersistentStorageTest {
 
     @Test
     fun testGetReleasedRobotStorage() {
-        val persist = PersistentStorage(UUID(10L, 10L),
+        val persist = PersistentStorage("localhost",
             dbInit = PersistentStorage.DbInitTypes.IN_MEMORY_DB)
 
         val robot = persist.makeRobotStorage("robotname", false, "mapName",

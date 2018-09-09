@@ -11,7 +11,7 @@ object SessionHistoryTable : LongIdTable("session_histories") {
 
     val startDate = date("start_date")
     val owned = bool("owned")
-    val ownerServer = uuid("owner_server")
+    val ownerServer = text("owner_server")
     val lastHeartbeat = long("last_heartbeat")
 }
 

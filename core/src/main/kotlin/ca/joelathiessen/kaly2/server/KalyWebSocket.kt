@@ -30,6 +30,7 @@ class KalyWebSocket(private val robotSessionManager: RobotSessionManager) : WebS
         builder.create()
     }()
     private var closedLock = Any()
+    private var session: RobotSession? = null
 
     override fun onOpen(connection: WebSocket.Connection) {
         this.connection = connection
@@ -45,46 +46,44 @@ class KalyWebSocket(private val robotSessionManager: RobotSessionManager) : WebS
 
         when (msgType) {
             RTRobotSessionSubscribeReqMsg.MSG_TYPE_NAME -> {
-                var subscribed = false
+                var alternateServerAddress: String? = null
                 val sessionReq = gson.fromJson<RTRobotSessionSubscribeReqMsg>(msg)
-                val robotSession = robotSessionManager.getHandler(sessionReq.sessionID)
-                if (robotSession != null) {
-                    robotSession.subscribeToRTEvents(handleRTMessageCaller)
-                    subscribed = true
+                val robotSessionResult = robotSessionManager.getHandler(sessionReq.sessionID)
+                var success = false
+                var returnSessionID: Long? = sessionReq.sessionID
+                when (robotSessionResult) {
+                    is RobotSessionManager.GetHandlerResult.RobotSessionResult -> {
+                        returnSessionID = robotSessionResult.session.sid
+                        robotSessionResult.session.subscribeToRTEvents(handleRTMessageCaller)
+                        session = robotSessionResult.session
+                        success = true
+                    }
+                    is RobotSessionManager.GetHandlerResult.RemoteRobotSessionAddressResult -> {
+                        alternateServerAddress = robotSessionResult.address
+                    }
                 }
-                val successMsg = RTRobotSessionSubscribeRespMsg(robotSession?.sid, subscribed)
-                connection.sendMessage(gson.toJson(RTMsg(successMsg)))
+                connection.sendMessage(gson.toJson(RTMsg(RTRobotSessionSubscribeRespMsg(returnSessionID, success,
+                        alternateServerAddress))))
             }
             RTRobotSessionUnsubscribeReqMsg.MSG_TYPE_NAME -> {
-                var unsubscribed = false
                 val sessionRelReq = gson.fromJson<RTRobotSessionUnsubscribeReqMsg>(msg)
-                val robotSession = robotSessionManager.getHandler(sessionRelReq.sessionID)
-                if (robotSession != null) {
-                    robotSession.unsubscribeFromRTEvents(handleRTMessageCaller)
-                    unsubscribed = true
-                }
-                val successMsg = RTRobotSessionUnsubscribeRespMsg(sessionRelReq.sessionID, unsubscribed)
+                session?.unsubscribeFromRTEvents(handleRTMessageCaller)
+                session = null
+                val successMsg = RTRobotSessionUnsubscribeRespMsg(sessionRelReq.sessionID, true)
                 connection.sendMessage(gson.toJson(RTMsg(successMsg)))
             }
             RTRobotSessionSettingsReqMsg.MSG_TYPE_NAME -> {
                 val settings = gson.fromJson<RTRobotSessionSettingsReqMsg>(msg)
-                val robotSession = robotSessionManager.getHandler(settings.sessionID)
-                if (robotSession != null) {
-                    robotSession.applyRobotSessionSettings(settings)
-                }
+                session?.applyRobotSessionSettings(settings)
             }
             RTSlamSettingsMsg.MSG_TYPE_NAME -> {
                 val settings = gson.fromJson<RTSlamSettingsMsg>(msg)
-                val robotSession = robotSessionManager.getHandler(settings.sessionID)
-                if (robotSession != null) {
-                    robotSession.applySlamSettings(settings)
-                }
+                session?.applySlamSettings(settings)
             }
             RTPastSlamInfosReqMsg.MSG_TYPE_NAME -> {
                 val pastIterationsReq = gson.fromJson<RTPastSlamInfosReqMsg>(msg)
-                val robotSession = robotSessionManager.getHandler(pastIterationsReq.sessionID)
-                if (robotSession != null) {
-                    val pastIterations = robotSession.getPastIterations(pastIterationsReq)
+                val pastIterations = session?.getPastIterations(pastIterationsReq)
+                if (pastIterations != null) {
                     connection.sendMessage(gson.toJson(RTMsg(pastIterations)))
                 }
             }
@@ -106,7 +105,9 @@ class KalyWebSocket(private val robotSessionManager: RobotSessionManager) : WebS
             connectionExecutor.execute {
                 synchronized(closedLock) {
                     if (!connectionExecutor.isShutdown()) {
-                        connection.sendMessage(gson.toJson(message))
+                        if (connection.isOpen) {
+                            connection.sendMessage(gson.toJson(message))
+                        }
                     }
                 }
             }
