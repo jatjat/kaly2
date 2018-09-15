@@ -309,4 +309,9 @@ class RobotSession(
     fun attemptHeartBeat(): Boolean {
         return robotStorage.saveHeartbeat()
     }
+
+    @Synchronized
+    fun releaseSessionHistory() {
+        robotStorage.releaseSessionHistory()
+    }
 }

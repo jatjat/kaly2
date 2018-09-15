@@ -73,7 +73,9 @@ class RobotSessionManager(
 
     @Synchronized
     fun removeSession(sid: Long) {
+        val session = robotSessions.get(sid)
         robotSessions.remove(sid)
+        session?.releaseSessionHistory()
         printManagingMsg()
     }
 
@@ -96,15 +98,6 @@ class RobotSessionManager(
                 it.value.unsubscribeFromRTEvents()
             }
         }
-    }
-
-    @Synchronized
-    fun shutDown() {
-        robotSessions.values.forEach {
-            it.unsubscribeFromRTEvents()
-            removeSession(it.sid)
-        }
-        shouldPerformHeartbeats.set(false)
     }
 
     private fun printManagingMsg() {
