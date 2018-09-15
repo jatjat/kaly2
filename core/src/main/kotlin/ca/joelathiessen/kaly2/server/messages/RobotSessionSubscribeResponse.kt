@@ -2,13 +2,15 @@ package ca.joelathiessen.kaly2.server.messages
 
 import com.google.gson.annotations.Expose
 
-class RTRobotSessionUnsubscribeReqMsg(
-    val sessionID: Long
+class RobotSessionSubscribeResponse(
+    val sessionID: Long?,
+    val success: Boolean,
+    val alternateServerAddress: String?
 ) : RTRobotMsg {
     @Expose(serialize = false, deserialize = false)
     override val MSG_TYPE = MSG_TYPE_NAME
 
     companion object {
-        val MSG_TYPE_NAME = "robotSessionUnsubscribe"
+        val MSG_TYPE_NAME = "robotSessionSubscribe"
     }
 }
