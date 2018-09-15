@@ -15,13 +15,13 @@ import ca.joelathiessen.kaly2.planner.PlannerActor
 import ca.joelathiessen.kaly2.server.messages.RTFeature
 import ca.joelathiessen.kaly2.server.messages.RTMsg
 import ca.joelathiessen.kaly2.server.messages.RTParticle
-import ca.joelathiessen.kaly2.server.messages.RTPastSlamInfosMsg
-import ca.joelathiessen.kaly2.server.messages.RTPastSlamInfosReqMsg
+import ca.joelathiessen.kaly2.server.messages.PastSlamInfosResponse
+import ca.joelathiessen.kaly2.server.messages.PastSlamInfosRequest
 import ca.joelathiessen.kaly2.server.messages.RTPose
-import ca.joelathiessen.kaly2.server.messages.RTRobotSessionSettingsReqMsg
-import ca.joelathiessen.kaly2.server.messages.RTRobotSessionSettingsRespMsg
+import ca.joelathiessen.kaly2.server.messages.RobotSessionSettingsRequest
+import ca.joelathiessen.kaly2.server.messages.RobotSessionSettingsResponse
 import ca.joelathiessen.kaly2.server.messages.RTSlamInfoMsg
-import ca.joelathiessen.kaly2.server.messages.RTSlamSettingsMsg
+import ca.joelathiessen.kaly2.server.messages.SlamSettingsResponse
 import ca.joelathiessen.kaly2.slam.FastSLAM
 import ca.joelathiessen.kaly2.subconscious.LocalPlanner
 import ca.joelathiessen.kaly2.subconscious.RobotPilot
@@ -261,12 +261,12 @@ class RobotSession(
     }
 
     @Synchronized
-    fun applySlamSettings(settingsMsg: RTSlamSettingsMsg) {
+    fun applySlamSettings(settingsMsg: SlamSettingsResponse) {
         robotCoreInput.addMsg(SlamSettings(settingsMsg.numParticles, settingsMsg.sensorAngVar, settingsMsg.sensorDistVar))
     }
 
     @Synchronized
-    fun applyRobotSessionSettings(rSettingsRobotReq: RTRobotSessionSettingsReqMsg) {
+    fun applyRobotSessionSettings(rSettingsRobotReq: RobotSessionSettingsRequest) {
         if (rSettingsRobotReq.shouldReset) {
             stopRobot()
             unpauseRobot()
@@ -281,12 +281,12 @@ class RobotSession(
             pauseRobot()
         }
         synchronized(rtEventSubscriptionLock) {
-            rtUpdateEventCont(this, RTMsg(RTRobotSessionSettingsRespMsg(sid, !shouldPause.get(), !shouldRun.get())))
+            rtUpdateEventCont(this, RTMsg(RobotSessionSettingsResponse(sid, !shouldPause.get(), !shouldRun.get())))
         }
     }
 
     @Synchronized
-    fun getPastIterations(pastItrsReq: RTPastSlamInfosReqMsg): RTPastSlamInfosMsg {
+    fun getPastIterations(pastItrsReq: PastSlamInfosRequest): PastSlamInfosResponse {
         val itrs = robotStorage.getIterations(pastItrsReq.firstItr, pastItrsReq.lastItr)
         val slamInfos = itrs.map { sInfo ->
             val particles = sInfo.particles.map { part ->
@@ -302,7 +302,7 @@ class RobotSession(
             RTSlamInfoMsg(sid, sInfo.itrNum, sInfo.timestamp, particles, features, slamPose, odoPose, realPose)
         }
 
-        return RTPastSlamInfosMsg(slamInfos)
+        return PastSlamInfosResponse(slamInfos)
     }
 
     @Synchronized

@@ -2,7 +2,7 @@ package ca.joelathiessen.kaly2.server.messages
 
 import com.google.gson.annotations.Expose
 
-class RTPastSlamInfosMsg(
+class PastSlamInfosResponse(
     val slamInfos: List<RTSlamInfoMsg>
 ) : RTRobotMsg {
     @Expose(serialize = false, deserialize = false)

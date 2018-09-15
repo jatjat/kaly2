@@ -1,14 +1,14 @@
 package ca.joelathiessen.kaly2.server
 
-import ca.joelathiessen.kaly2.server.messages.RTConnectionOpenMsg
+import ca.joelathiessen.kaly2.server.messages.ConnectionOpenRequest
 import ca.joelathiessen.kaly2.server.messages.RTMsg
-import ca.joelathiessen.kaly2.server.messages.RTPastSlamInfosReqMsg
-import ca.joelathiessen.kaly2.server.messages.RTRobotSessionSettingsReqMsg
-import ca.joelathiessen.kaly2.server.messages.RTRobotSessionSubscribeReqMsg
-import ca.joelathiessen.kaly2.server.messages.RTRobotSessionSubscribeRespMsg
-import ca.joelathiessen.kaly2.server.messages.RTRobotSessionUnsubscribeReqMsg
-import ca.joelathiessen.kaly2.server.messages.RTRobotSessionUnsubscribeRespMsg
-import ca.joelathiessen.kaly2.server.messages.RTSlamSettingsMsg
+import ca.joelathiessen.kaly2.server.messages.PastSlamInfosRequest
+import ca.joelathiessen.kaly2.server.messages.RobotSessionSettingsRequest
+import ca.joelathiessen.kaly2.server.messages.RobotSessionSubscribeRequest
+import ca.joelathiessen.kaly2.server.messages.RobotSessionSubscribeResponse
+import ca.joelathiessen.kaly2.server.messages.RobotSessionUnsubscribeRequest
+import ca.joelathiessen.kaly2.server.messages.RobotSessionUnsubscribeResponse
+import ca.joelathiessen.kaly2.server.messages.SlamSettingsResponse
 import com.github.salomonbrys.kotson.fromJson
 import com.github.salomonbrys.kotson.obj
 import com.github.salomonbrys.kotson.string
@@ -34,7 +34,7 @@ class KalyWebSocket(private val robotSessionManager: RobotSessionManager) : WebS
 
     override fun onOpen(connection: WebSocket.Connection) {
         this.connection = connection
-        connection.sendMessage(gson.toJson(RTMsg(RTConnectionOpenMsg())))
+        connection.sendMessage(gson.toJson(RTMsg(ConnectionOpenRequest())))
     }
 
     override fun onMessage(data: String) {
@@ -45,9 +45,9 @@ class KalyWebSocket(private val robotSessionManager: RobotSessionManager) : WebS
         val msg = dataJson[MSG_LABEL]
 
         when (msgType) {
-            RTRobotSessionSubscribeReqMsg.MSG_TYPE_NAME -> {
+            RobotSessionSubscribeRequest.MSG_TYPE_NAME -> {
                 var alternateServerAddress: String? = null
-                val sessionReq = gson.fromJson<RTRobotSessionSubscribeReqMsg>(msg)
+                val sessionReq = gson.fromJson<RobotSessionSubscribeRequest>(msg)
                 val robotSessionResult = robotSessionManager.getHandler(sessionReq.sessionID)
                 var success = false
                 var returnSessionID: Long? = sessionReq.sessionID
@@ -62,26 +62,26 @@ class KalyWebSocket(private val robotSessionManager: RobotSessionManager) : WebS
                         alternateServerAddress = robotSessionResult.address
                     }
                 }
-                connection.sendMessage(gson.toJson(RTMsg(RTRobotSessionSubscribeRespMsg(returnSessionID, success,
+                connection.sendMessage(gson.toJson(RTMsg(RobotSessionSubscribeResponse(returnSessionID, success,
                         alternateServerAddress))))
             }
-            RTRobotSessionUnsubscribeReqMsg.MSG_TYPE_NAME -> {
-                val sessionRelReq = gson.fromJson<RTRobotSessionUnsubscribeReqMsg>(msg)
+            RobotSessionUnsubscribeRequest.MSG_TYPE_NAME -> {
+                val sessionRelReq = gson.fromJson<RobotSessionUnsubscribeRequest>(msg)
                 session?.unsubscribeFromRTEvents(handleRTMessageCaller)
                 session = null
-                val successMsg = RTRobotSessionUnsubscribeRespMsg(sessionRelReq.sessionID, true)
+                val successMsg = RobotSessionUnsubscribeResponse(sessionRelReq.sessionID, true)
                 connection.sendMessage(gson.toJson(RTMsg(successMsg)))
             }
-            RTRobotSessionSettingsReqMsg.MSG_TYPE_NAME -> {
-                val settings = gson.fromJson<RTRobotSessionSettingsReqMsg>(msg)
+            RobotSessionSettingsRequest.MSG_TYPE_NAME -> {
+                val settings = gson.fromJson<RobotSessionSettingsRequest>(msg)
                 session?.applyRobotSessionSettings(settings)
             }
-            RTSlamSettingsMsg.MSG_TYPE_NAME -> {
-                val settings = gson.fromJson<RTSlamSettingsMsg>(msg)
+            SlamSettingsResponse.MSG_TYPE_NAME -> {
+                val settings = gson.fromJson<SlamSettingsResponse>(msg)
                 session?.applySlamSettings(settings)
             }
-            RTPastSlamInfosReqMsg.MSG_TYPE_NAME -> {
-                val pastIterationsReq = gson.fromJson<RTPastSlamInfosReqMsg>(msg)
+            PastSlamInfosRequest.MSG_TYPE_NAME -> {
+                val pastIterationsReq = gson.fromJson<PastSlamInfosRequest>(msg)
                 val pastIterations = session?.getPastIterations(pastIterationsReq)
                 if (pastIterations != null) {
                     connection.sendMessage(gson.toJson(RTMsg(pastIterations)))
