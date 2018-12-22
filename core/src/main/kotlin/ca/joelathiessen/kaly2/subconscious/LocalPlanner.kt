@@ -42,8 +42,8 @@ class LocalPlanner(
 
         // fill the search grid with obstacles:
         staticObstacles.forEach {
-            val xHalfGrid = it.x + halfGridSize
-            val yHalfGrid = it.y + halfGridSize
+            val xHalfGrid = it.x + halfGridSize - startPose.x
+            val yHalfGrid = it.y + halfGridSize - startPose.y
 
             val xStartOffset = ((xHalfGrid - checkDist) / gridStep).toInt()
             val xStart = Math.max(xStartOffset, 0)
@@ -79,7 +79,7 @@ class LocalPlanner(
 
                 val x = startPose.x + result.deltaX
                 val y = startPose.y + result.deltaY
-                collided = checkObstacles(searchGrid, x, y)
+                collided = checkObstacles(startPose, searchGrid, x, y)
                 if (!collided) {
                     val cost = getCost(x, y, heading + curRot, desiredPath)
                     if (cost < minCost) {
@@ -105,9 +105,9 @@ class LocalPlanner(
         return FloatMath.abs(two - one) < epsilon
     }
 
-    private fun checkObstacles(searchGrid: Array<Array<ArrayList<GridPoint>>>, x: Float, y: Float): Boolean {
-        val gridX = ((x + halfGridSize) / gridStep).toInt()
-        val gridY = ((y + halfGridSize) / gridStep).toInt()
+    private fun checkObstacles(startPose: RobotPose, searchGrid: Array<Array<ArrayList<GridPoint>>>, x: Float, y: Float): Boolean {
+        val gridX = ((x + halfGridSize - startPose.x) / gridStep).toInt()
+        val gridY = ((y + halfGridSize - startPose.y) / gridStep).toInt()
 
         val container = searchGrid[gridX][gridY]
         var found = false
