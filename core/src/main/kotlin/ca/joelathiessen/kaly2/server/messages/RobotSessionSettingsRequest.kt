@@ -4,8 +4,7 @@ import com.google.gson.annotations.Expose
 
 class RobotSessionSettingsRequest(
     val sessionID: Long,
-    val shouldRun: Boolean,
-    val shouldReset: Boolean
+    val shouldRun: Boolean
 ) : RTRobotMsg {
     @Expose(serialize = false, deserialize = false)
     override val MSG_TYPE = MSG_TYPE_NAME

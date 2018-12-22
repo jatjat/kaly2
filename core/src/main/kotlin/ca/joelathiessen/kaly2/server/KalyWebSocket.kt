@@ -1,9 +1,10 @@
 package ca.joelathiessen.kaly2.server
 
-import ca.joelathiessen.kaly2.server.messages.ConnectionOpenRequest
+import ca.joelathiessen.kaly2.server.messages.ConnectionOpenResponse
 import ca.joelathiessen.kaly2.server.messages.RTMsg
 import ca.joelathiessen.kaly2.server.messages.PastSlamInfosRequest
 import ca.joelathiessen.kaly2.server.messages.RobotSessionSettingsRequest
+import ca.joelathiessen.kaly2.server.messages.RobotSessionSettingsResponse
 import ca.joelathiessen.kaly2.server.messages.RobotSessionSubscribeRequest
 import ca.joelathiessen.kaly2.server.messages.RobotSessionSubscribeResponse
 import ca.joelathiessen.kaly2.server.messages.RobotSessionUnsubscribeRequest
@@ -34,7 +35,7 @@ class KalyWebSocket(private val robotSessionManager: RobotSessionManager) : WebS
 
     override fun onOpen(connection: WebSocket.Connection) {
         this.connection = connection
-        connection.sendMessage(gson.toJson(RTMsg(ConnectionOpenRequest())))
+        connection.sendMessage(gson.toJson(RTMsg(ConnectionOpenResponse())))
     }
 
     override fun onMessage(data: String) {
@@ -74,7 +75,8 @@ class KalyWebSocket(private val robotSessionManager: RobotSessionManager) : WebS
             }
             RobotSessionSettingsRequest.MSG_TYPE_NAME -> {
                 val settings = gson.fromJson<RobotSessionSettingsRequest>(msg)
-                session?.applyRobotSessionSettings(settings)
+                val running = session?.applyRobotSessionSettings(settings)
+                connection.sendMessage(gson.toJson(RTMsg(RobotSessionSettingsResponse(session?.sid, running ?: false))))
             }
             SlamSettingsResponse.MSG_TYPE_NAME -> {
                 val settings = gson.fromJson<SlamSettingsResponse>(msg)
@@ -98,8 +100,6 @@ class KalyWebSocket(private val robotSessionManager: RobotSessionManager) : WebS
         }
     }
 
-    // Unlike Jetty 9, Jetty 7 does not support asynchronous message sending
-    // See http://jetty.4.x6.nabble.com/jetty-dev-WebSocket-Async-Read-Write-td4466406.html
     fun handleRTMessage(@Suppress("UNUSED_PARAMETER") sender: Any, message: RTMsg) {
         if (message.requestingNoNetworkSend == false) {
             connectionExecutor.execute {

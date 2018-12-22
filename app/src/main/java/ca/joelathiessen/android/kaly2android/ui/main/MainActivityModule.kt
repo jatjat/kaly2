@@ -1,6 +1,6 @@
 package ca.joelathiessen.android.kaly2android.ui.main
 
-import ca.joelathiessen.android.kaly2android.repository.Repository
+import ca.joelathiessen.android.kaly2android.repository.RobotSessionRepository
 import dagger.Module
 import dagger.Provides
 
@@ -8,5 +8,5 @@ import dagger.Provides
 class MainActivityModule {
 
     @Provides
-    fun provideViewModel(repository: Repository) = MainActivityViewModel(repository)
+    fun providePresenter(repository: RobotSessionRepository) = MainActivityPresenter(repository)
 }

@@ -19,7 +19,6 @@ import ca.joelathiessen.kaly2.server.messages.PastSlamInfosResponse
 import ca.joelathiessen.kaly2.server.messages.PastSlamInfosRequest
 import ca.joelathiessen.kaly2.server.messages.RTPose
 import ca.joelathiessen.kaly2.server.messages.RobotSessionSettingsRequest
-import ca.joelathiessen.kaly2.server.messages.RobotSessionSettingsResponse
 import ca.joelathiessen.kaly2.server.messages.RTSlamInfoMsg
 import ca.joelathiessen.kaly2.server.messages.SlamSettingsResponse
 import ca.joelathiessen.kaly2.slam.FastSLAM
@@ -36,7 +35,6 @@ import ca.joelathiessen.util.itractor.ItrActorMsg
 import ca.joelathiessen.util.itractor.ItrActorThreadedHost
 import lejos.robotics.navigation.Pose
 import java.util.concurrent.Executors
-import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.collections.ArrayList
 import kotlin.concurrent.thread
@@ -70,8 +68,6 @@ class RobotSession(
 
     private val updateExecutor = Executors.newSingleThreadExecutor()!!
     private val shouldRun = AtomicBoolean()
-    private var shouldPause = AtomicBoolean(false)
-    private val pauseSemaphore = Semaphore(1)
     private val robotIsRunningLock = Any()
     private val resultsLock = Any()
     private var results: RobotCoreActedResults? = null
@@ -127,21 +123,6 @@ class RobotSession(
 
                 sendUpdateEvent(simPilotPoses.realPose, simPilotPoses.odoPose, localResults.particlePoses,
                         localResults.features, localResults.numItrs, localResults)
-
-                if (shouldPause.get() == true) {
-                    println("Robot $sid attempting to pause")
-                    subConscActorHost.stop()
-                    plannerActorHost.stop()
-                    robotCoreActorHost.stop()
-
-                    pauseSemaphore.acquire()
-                    pauseSemaphore.release()
-
-                    subConscActorHost.start()
-                    plannerActorHost.start()
-                    robotCoreActorHost.start()
-                    println("Robot $sid unpaused")
-                }
             }
             subConscActorHost.stop()
             plannerActorHost.stop()
@@ -228,22 +209,6 @@ class RobotSession(
     }
 
     @Synchronized
-    fun pauseRobot() {
-        if (shouldPause.get() == false) {
-            pauseSemaphore.acquire()
-            shouldPause.set(true)
-        }
-    }
-
-    @Synchronized
-    fun unpauseRobot() {
-        if (shouldPause.get() == true) {
-            shouldPause.set(false)
-            pauseSemaphore.release()
-        }
-    }
-
-    @Synchronized
     fun stopRobot() {
         shouldRun.set(false)
     }
@@ -266,23 +231,13 @@ class RobotSession(
     }
 
     @Synchronized
-    fun applyRobotSessionSettings(rSettingsRobotReq: RobotSessionSettingsRequest) {
-        if (rSettingsRobotReq.shouldReset) {
-            stopRobot()
-            unpauseRobot()
-        }
-
+    fun applyRobotSessionSettings(rSettingsRobotReq: RobotSessionSettingsRequest): Boolean {
         if (rSettingsRobotReq.shouldRun) {
-            if (rSettingsRobotReq.shouldReset == false) {
-                unpauseRobot()
-            }
             startRobot()
         } else {
-            pauseRobot()
+            stopRobot()
         }
-        synchronized(rtEventSubscriptionLock) {
-            rtUpdateEventCont(this, RTMsg(RobotSessionSettingsResponse(sid, !shouldPause.get(), !shouldRun.get())))
-        }
+        return shouldRun.get()
     }
 
     @Synchronized

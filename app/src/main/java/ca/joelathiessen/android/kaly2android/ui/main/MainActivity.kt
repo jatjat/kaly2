@@ -1,19 +1,20 @@
 package ca.joelathiessen.android.kaly2android.ui.main
 
-import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.support.design.widget.BottomNavigationView
 import android.support.v7.app.AppCompatActivity
 import ca.joelathiessen.android.kaly2android.R
-import ca.joelathiessen.kaly2.server.KalyServer
-import ca.joelathiessen.util.image.android.AndroidImage
+import ca.joelathiessen.kaly2.server.messages.RTSlamInfoMsg
 import dagger.android.AndroidInjection
 import kotlinx.android.synthetic.main.activity_main.*
 import javax.inject.Inject
 
-class MainActivity : AppCompatActivity() {
+interface MainActivityView {
+    fun showIterations(itrs: List<RTSlamInfoMsg>?)
+}
 
-    @Inject lateinit var mainActivityViewModel: MainActivityViewModel
+class MainActivity : AppCompatActivity(), MainActivityView {
+    @Inject lateinit var presenter: MainActivityPresenter
 
     private val mOnNavigationItemSelectedListener = BottomNavigationView.OnNavigationItemSelectedListener { item ->
         when (item.itemId) {
@@ -38,12 +39,24 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val mapImage = AndroidImage(BitmapFactory.decodeResource(
-            applicationContext.resources, R.drawable.square_filled))
-
-        val server = KalyServer(mapImage)
-        server.serve()
-
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener)
+    }
+
+    override fun onStart() {
+        super.onStart()
+        presenter.onViewAttached(this)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        presenter.onViewDetached()
+    }
+
+    override fun showIterations(itrs: List<RTSlamInfoMsg>?) {
+        // TODO: for now...
+        val pose = itrs?.lastOrNull()?.bestPose
+        if (pose != null) {
+            message.setText(resources.getString(R.string.title_real_position, pose.x, pose.y, pose.theta))
+        }
     }
 }
