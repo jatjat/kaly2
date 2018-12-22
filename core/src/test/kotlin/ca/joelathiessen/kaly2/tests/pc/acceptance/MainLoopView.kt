@@ -71,7 +71,7 @@ class MainLoopView : JPanel() {
             val server = KalyServer()
             server.serve()
 
-            val robotSession = server.inprocessAPI.getRobotSession(0)!!
+            val robotSession = server.inprocessAPI.getRobotSession()!!
             robotSession.subscribeToRTEvents(handleRTMessageCaller)
             robotSession.startRobot()
 

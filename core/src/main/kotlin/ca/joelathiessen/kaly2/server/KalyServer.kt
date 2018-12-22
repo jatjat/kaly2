@@ -114,14 +114,14 @@ class KalyServer(private val mapImage: AndroidJVMImage? = null) {
         val DB_INIT = if (isAndroid()) PersistentStorage.DbInitTypes.ANDROID_FILE_DB
         else PersistentStorage.DbInitTypes.FILE_DB
 
-        val serverDNSName = {
+        val uniqueServerName = if (isAndroid()) "Android" else ({
             val ipAddress = byteArrayOf(127, 0, 0, 1)
             val address = InetAddress.getByAddress(ipAddress)
 
             address.canonicalHostName
-        }()
+        }())
 
-        val persistentStorage = PersistentStorage(serverDNSName, dbInit = DB_INIT, dropTablesFirst = true)
+        val persistentStorage = PersistentStorage(uniqueServerName, dbInit = DB_INIT, dropTablesFirst = true)
         return SimRobotSessionFactory(ODO_ANG_STD_DEV, ODO_DIST_STD_DEV, STEP_DIST, PILOT_MAX_DIST, PILOT_MAX_ROT,
                 SENSOR_START_ANG, SENSOR_END_ANG, SENSOR_ANG_INCR, image, MAX_SENSOR_RANGE, SENSOR_DIST_STDEV,
                 SENSOR_ANG_STDEV, LINE_THRESHOLD, CHECK_WITHIN_ANGLE, MAX_RATIO, LCL_PLN_ROT_STEP, LCL_PLN_DIST_STEP,
