@@ -1,4 +1,4 @@
-group 'ca.joelathiessen.kaly2'
+group 'ca.joelathiessen.kaly2.core'
 version '0.1'
 
 buildscript {
@@ -19,7 +19,7 @@ apply plugin: 'application'
 sourceCompatibility = JavaVersion.VERSION_1_8
 targetCompatibility = JavaVersion.VERSION_1_8
 
-mainClassName = 'ca.joelathiessen.kaly2.server.KalyServer'
+mainClassName = 'ca.joelathiessen.kaly2.core.server.KalyServer'
 
 repositories {
     mavenCentral()
@@ -32,7 +32,7 @@ repositories {
 
 jar {
     manifest {
-        attributes 'Main-Class': 'ca.joelathiessen.kaly2.server.KalyServer'
+        attributes 'Main-Class': 'ca.joelathiessen.kaly2.core.server.KalyServer'
     }
 
     doFirst {
@@ -73,25 +73,25 @@ task ktlintFormat(type: JavaExec, group: "formatting") {
 task testFastSLAMView(type: JavaExec) {
     description = "Visualize FastSLAM mapping and localization algorithm"
     classpath = sourceSets.test.runtimeClasspath
-    main = 'ca.joelathiessen.kaly2.tests.pc.acceptance.FastSLAMDemo'
+    main = 'ca.joelathiessen.kaly2.core.tests.pc.acceptance.FastSLAMDemo'
 }
 
 task testFeatureDetectorView(type: JavaExec) {
     description = "Visualize split-and-merge feature detection algorithm"
     classpath = sourceSets.test.runtimeClasspath
-    main = 'ca.joelathiessen.kaly2.tests.pc.acceptance.FeatureDetectorDemo'
+    main = 'ca.joelathiessen.kaly2.core.tests.pc.acceptance.FeatureDetectorDemo'
 }
 
 task testMainLoopView(type: JavaExec) {
     description = "Visualize all algorithms working together"
     classpath = sourceSets.test.runtimeClasspath
-    main = 'ca.joelathiessen.kaly2.tests.pc.acceptance.MainLoopDemo'
+    main = 'ca.joelathiessen.kaly2.core.tests.pc.acceptance.MainLoopDemo'
 }
 
 task testRRTStarView(type: JavaExec) {
     description = "Visualize RRT* pathing algorithm"
     classpath = sourceSets.test.runtimeClasspath
-    main = 'ca.joelathiessen.kaly2.tests.pc.acceptance.RRTStarDemo'
+    main = 'ca.joelathiessen.kaly2.core.tests.pc.acceptance.RRTStarDemo'
 }
 
 

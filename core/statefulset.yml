@@ -1,22 +1,22 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: __KALY2_STATEFUL_SET_NAME__
+  name: __kaly2.core.STATEFUL_SET_NAME__
 spec:
   selector:
     matchLabels:
-      app: __KALY2_APP_LABEL__
-  serviceName: __KALY2_SERVICE_NAME__
+      app: __kaly2.core.APP_LABEL__
+  serviceName: __kaly2.core.SERVICE_NAME__
   replicas: 5
   template:
     metadata:
       labels:
-        app: __KALY2_APP_LABEL__
+        app: __kaly2.core.APP_LABEL__
     spec:
       imagePullSecrets:
         - name: gitlab-registry
       containers:
-        - name: __KALY2_CONTAINER_NAME__
-          image: __KALY2_IMAGE_NAME__
+        - name: __kaly2.core.CONTAINER_NAME__
+          image: __kaly2.core.IMAGE_NAME__
           ports:
             - containerPort: 9000
