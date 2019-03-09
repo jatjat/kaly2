@@ -51,43 +51,35 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" exported="" scope="PROVIDED" name="jama-1.0.3" level="project" />
-    <orderEntry type="library" exported="" scope="PROVIDED" name="kotson-2.3.0" level="project" />
-    <orderEntry type="library" exported="" scope="PROVIDED" name="gson-2.7" level="project" />
-    <orderEntry type="library" exported="" scope="PROVIDED" name="h2-1.4.196" level="project" />
-    <orderEntry type="library" exported="" scope="PROVIDED" name="mysql-connector-java-5.1.6" level="project" />
-    <orderEntry type="library" exported="" scope="PROVIDED" name="exposed-0.8.6" level="project" />
-    <orderEntry type="library" exported="" scope="PROVIDED" name="jetty-webapp-7.5.4.v20111024" level="project" />
-    <orderEntry type="library" exported="" scope="PROVIDED" name="jetty-servlet-7.5.4.v20111024" level="project" />
-    <orderEntry type="library" exported="" scope="PROVIDED" name="jetty-security-7.5.4.v20111024" level="project" />
-    <orderEntry type="library" exported="" scope="PROVIDED" name="jetty-server-7.5.4.v20111024" level="project" />
-    <orderEntry type="library" exported="" scope="PROVIDED" name="jetty-continuation-7.5.4.v20111024" level="project" />
-    <orderEntry type="library" exported="" scope="PROVIDED" name="jetty-websocket-7.5.4.v20111024" level="project" />
-    <orderEntry type="library" exported="" scope="PROVIDED" name="jetty-http-7.5.4.v20111024" level="project" />
-    <orderEntry type="library" exported="" scope="PROVIDED" name="jetty-io-7.5.4.v20111024" level="project" />
-    <orderEntry type="library" exported="" scope="PROVIDED" name="jetty-xml-7.5.4.v20111024" level="project" />
-    <orderEntry type="library" exported="" scope="PROVIDED" name="jetty-util-7.5.4.v20111024" level="project" />
-    <orderEntry type="library" exported="" scope="PROVIDED" name="kotlin-reflect-1.1.4-3" level="project" />
-    <orderEntry type="library" exported="" scope="PROVIDED" name="kotlin-stdlib-1.1.4-3" level="project" />
-    <orderEntry type="library" exported="" scope="PROVIDED" name="joda-time-2.9.9" level="project" />
-    <orderEntry type="library" exported="" scope="PROVIDED" name="slf4j-api-1.7.25" level="project" />
-    <orderEntry type="library" exported="" scope="PROVIDED" name="servlet-api-2.5" level="project" />
-    <orderEntry type="library" exported="" scope="PROVIDED" name="annotations-13.0" level="project" />
-    <orderEntry type="library" exported="" scope="PROVIDED" name="ev3classes" level="project" />
-    <orderEntry type="library" exported="" scope="TEST" name="junit-4.12" level="project" />
-    <orderEntry type="library" exported="" scope="TEST" name="mockito-kotlin-1.5.0" level="project" />
-    <orderEntry type="library" exported="" scope="TEST" name="mockito-core-2.8.9" level="project" />
-    <orderEntry type="library" exported="" scope="TEST" name="hamcrest-core-1.3" level="project" />
-    <orderEntry type="library" exported="" scope="TEST" name="byte-buddy-1.6.14" level="project" />
-    <orderEntry type="library" exported="" scope="TEST" name="byte-buddy-agent-1.6.14" level="project" />
-    <orderEntry type="library" exported="" scope="TEST" name="objenesis-2.5" level="project" />
-    <orderEntry type="library" exported="" name="core.core-0.1" level="project" />
-    <orderEntry type="library" exported="" name="core.core-0.1" level="project" />
-    <orderEntry type="library" exported="" name="core.core-0.1" level="project" />
-    <orderEntry type="library" exported="" name="core.core-0.1" level="project" />
-    <orderEntry type="library" exported="" name="core.core-0.1" level="project" />
-    <orderEntry type="library" exported="" name="core.core-0.1" level="project" />
-    <orderEntry type="library" exported="" name="core.core-0.1" level="project" />
-    <orderEntry type="library" exported="" name="core.core-0.1" level="project" />
+    <orderEntry type="library" exported="" scope="PROVIDED" name="Gradle: jama-1.0.3" level="project" />
+    <orderEntry type="library" exported="" scope="PROVIDED" name="Gradle: kotson-2.3.0" level="project" />
+    <orderEntry type="library" exported="" scope="PROVIDED" name="Gradle: gson-2.7" level="project" />
+    <orderEntry type="library" exported="" scope="PROVIDED" name="Gradle: h2-1.4.196" level="project" />
+    <orderEntry type="library" exported="" scope="PROVIDED" name="Gradle: mysql-connector-java-5.1.6" level="project" />
+    <orderEntry type="library" exported="" scope="PROVIDED" name="Gradle: exposed-0.8.6" level="project" />
+    <orderEntry type="library" exported="" scope="PROVIDED" name="Gradle: jetty-webapp-7.5.4.v20111024" level="project" />
+    <orderEntry type="library" exported="" scope="PROVIDED" name="Gradle: jetty-servlet-7.5.4.v20111024" level="project" />
+    <orderEntry type="library" exported="" scope="PROVIDED" name="Gradle: jetty-security-7.5.4.v20111024" level="project" />
+    <orderEntry type="library" exported="" scope="PROVIDED" name="Gradle: jetty-server-7.5.4.v20111024" level="project" />
+    <orderEntry type="library" exported="" scope="PROVIDED" name="Gradle: jetty-continuation-7.5.4.v20111024" level="project" />
+    <orderEntry type="library" exported="" scope="PROVIDED" name="Gradle: jetty-websocket-7.5.4.v20111024" level="project" />
+    <orderEntry type="library" exported="" scope="PROVIDED" name="Gradle: jetty-http-7.5.4.v20111024" level="project" />
+    <orderEntry type="library" exported="" scope="PROVIDED" name="Gradle: jetty-io-7.5.4.v20111024" level="project" />
+    <orderEntry type="library" exported="" scope="PROVIDED" name="Gradle: jetty-xml-7.5.4.v20111024" level="project" />
+    <orderEntry type="library" exported="" scope="PROVIDED" name="Gradle: jetty-util-7.5.4.v20111024" level="project" />
+    <orderEntry type="library" exported="" scope="PROVIDED" name="Gradle: kotlin-reflect-1.1.4-3" level="project" />
+    <orderEntry type="library" exported="" scope="PROVIDED" name="Gradle: kotlin-stdlib-1.1.4-3" level="project" />
+    <orderEntry type="library" exported="" scope="PROVIDED" name="Gradle: joda-time-2.9.9" level="project" />
+    <orderEntry type="library" exported="" scope="PROVIDED" name="Gradle: slf4j-api-1.7.25" level="project" />
+    <orderEntry type="library" exported="" scope="PROVIDED" name="Gradle: servlet-api-2.5" level="project" />
+    <orderEntry type="library" exported="" scope="PROVIDED" name="Gradle: annotations-13.0" level="project" />
+    <orderEntry type="library" exported="" scope="PROVIDED" name="Gradle: ev3classes" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: junit-4.12" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: mockito-kotlin-1.5.0" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: mockito-core-2.8.9" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: hamcrest-core-1.3" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: byte-buddy-1.6.14" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: byte-buddy-agent-1.6.14" level="project" />
+    <orderEntry type="library" exported="" scope="TEST" name="Gradle: objenesis-2.5" level="project" />
   </component>
 </module>
