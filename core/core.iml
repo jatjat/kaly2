@@ -81,5 +81,13 @@
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: byte-buddy-1.6.14" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: byte-buddy-agent-1.6.14" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="Gradle: objenesis-2.5" level="project" />
+    <orderEntry type="library" exported="" name="Gradle: core.core-0.1" level="project" />
+    <orderEntry type="library" exported="" name="Gradle: core.core-0.1" level="project" />
+    <orderEntry type="library" exported="" name="Gradle: core.core-0.1" level="project" />
+    <orderEntry type="library" exported="" name="Gradle: core.core-0.1" level="project" />
+    <orderEntry type="library" exported="" name="Gradle: core.core-0.1" level="project" />
+    <orderEntry type="library" exported="" name="Gradle: core.core-0.1" level="project" />
+    <orderEntry type="library" exported="" name="Gradle: core.core-0.1" level="project" />
+    <orderEntry type="library" exported="" name="Gradle: core.core-0.1" level="project" />
   </component>
 </module>
