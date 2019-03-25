@@ -2,7 +2,6 @@ package ca.joelathiessen.kaly2.android
 
 import android.app.Activity
 import android.app.Application
-import ca.joelathiessen.kaly2.android.di.DaggerAppComponent
 import dagger.android.AndroidInjector
 import dagger.android.DispatchingAndroidInjector
 import dagger.android.HasActivityInjector

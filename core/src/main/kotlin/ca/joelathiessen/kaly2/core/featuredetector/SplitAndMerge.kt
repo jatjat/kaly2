@@ -86,7 +86,7 @@ class SplitAndMerge(val threshold: Float, val checkWithinAngle: Float, val maxRa
             results.ensureCapacity(subLength + list2.size)
             results.addAll(list1.subList(0, subLength))
             results.addAll(list2)
-        } else {
+        } else if (inputPoints.isNotEmpty()) {
             // discard all the points between the start and end points
             if (inputPoints.size > 1) {
                 inputPoints[0].incrDiscardedPointsCount(inputPoints.size - 2)

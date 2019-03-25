@@ -14,37 +14,38 @@ class FastSLAM(
     val startPose: RobotPose,
     private val carMotionModel: CarModel,
     private val dataAssoc: DataAssociator,
-    private val partResamp: ParticleResampler
+    private val partResamp: ParticleResampler,
+    val defaultNumParticles: Int,
+    val defaultDistVariance: Float,
+    val defaultAngVariance: Float,
+    val identityVariance: Float
+
 ) : Slam {
     private val ADD_REMOVE_SEED = 1L
-    val DEFAULT_NUM_PARTICLES = 20
-    val DEFAULT_DIST_VARIANCE = 1.0f
-    val DEFAULT_ANG_VARIANCE = 0.01f
-    val IDENTITY_VARIANCE = 0.2f
 
-    var numParticles = DEFAULT_NUM_PARTICLES
+    var numParticles = defaultNumParticles
         get() = particles.size
         private set
 
-    var distVariance = DEFAULT_DIST_VARIANCE
+    var distVariance = defaultDistVariance
         private set
 
-    var angleVariance = DEFAULT_ANG_VARIANCE
+    var angleVariance = defaultAngVariance
         private set
 
-    private var R = createR(distVariance, angleVariance, IDENTITY_VARIANCE)
+    private var R = createR(distVariance, angleVariance, identityVariance)
 
     private var lastKnownPose = startPose
 
-    private var particles = ArrayList<Particle>(DEFAULT_NUM_PARTICLES)
+    private var particles = ArrayList<Particle>(defaultNumParticles)
 
     init {
-        for (i in 1..DEFAULT_NUM_PARTICLES) {
-            particles.add(Particle(startPose, 1.0f / DEFAULT_NUM_PARTICLES))
+        for (i in 1..defaultNumParticles) {
+            particles.add(Particle(startPose, 1.0f / defaultNumParticles))
         }
     }
 
-    fun changeNumParticles(number: Int = DEFAULT_NUM_PARTICLES) {
+    fun changeNumParticles(number: Int = defaultNumParticles) {
         var remCnt = 0
         for (i in number..particles.size - 1) {
             particles.removeAt(Random(ADD_REMOVE_SEED).nextInt(particles.size))
@@ -62,14 +63,14 @@ class FastSLAM(
         println("Removed: $remCnt, added: $addCnt, total num particles: $numParticles")
     }
 
-    fun changeDistanceVariance(variance: Float = DEFAULT_DIST_VARIANCE) {
+    fun changeDistanceVariance(variance: Float = defaultDistVariance) {
         distVariance = variance
-        R = createR(distVariance, angleVariance, IDENTITY_VARIANCE)
+        R = createR(distVariance, angleVariance, identityVariance)
     }
 
-    fun changeAngleVariance(variance: Float = DEFAULT_ANG_VARIANCE) {
+    fun changeAngleVariance(variance: Float = defaultAngVariance) {
         angleVariance = variance
-        R = createR(distVariance, angleVariance, IDENTITY_VARIANCE)
+        R = createR(distVariance, angleVariance, identityVariance)
     }
 
     private fun createR(distVar: Float, angVar: Float, identVar: Float): Matrix {

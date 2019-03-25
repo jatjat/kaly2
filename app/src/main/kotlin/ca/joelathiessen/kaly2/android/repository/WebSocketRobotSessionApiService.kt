@@ -4,7 +4,7 @@ import ca.joelathiessen.kaly2.core.server.messages.PastSlamInfosResponse
 import ca.joelathiessen.kaly2.core.server.messages.RTRobotMsg
 
 class WebSocketRobotSessionApiService: RobotSessionApiService {
-    override fun subscribeToRobotSession(sessionID: Long?, subscriber: (RTRobotMsg) -> Unit,
+    override fun subscribeToRobotSession(sessionID: Long?, isReal: Boolean, subscriber: (RTRobotMsg) -> Unit,
                                          onResponse: (sessionID: Long) -> Unit,
                                          onFailure: (error: ApiServiceFailure) -> Unit) {
         TODO("not implemented")

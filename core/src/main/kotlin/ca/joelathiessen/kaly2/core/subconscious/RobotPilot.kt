@@ -2,8 +2,8 @@ package ca.joelathiessen.kaly2.core.subconscious
 
 interface RobotPilot {
     val poses: PilotPoses
-    val maxDist: Float
-    val maxRot: Float
+    val maxDesiredPlanDist: Float
+    val maxDesiredPlanRot: Float
 
     fun execLocalPlan(plan: LocalPlan)
 }

@@ -22,21 +22,19 @@ import lejos.robotics.geometry.Point
 import org.joda.time.DateTime
 import java.util.Collections
 
-sealed class RobotSessionFactoryResult {
-    class LocalRobotSession(val session: RobotSession) : RobotSessionFactoryResult()
-    class RemoteRobotSessionAddress(val address: String) : RobotSessionFactoryResult()
-    class RobotSessionCreationError(val description: String? = null) : RobotSessionFactoryResult()
-}
-
 class SimRobotSessionFactory(
     private val odoAngStdDev: Float,
     private val odoDistStdDev: Float,
     private val stepDist: Float,
-    private val maxPilotDist: Float,
-    private val maxPilotRot: Float,
+    private val maxRot: Float,
+    private val maxSpeed: Float,
     private val sensorStartAng: Float,
     private val sensorEndAng: Float,
     private val sensorAngIncr: Float,
+    private val defaultNumParticles: Int,
+    private val defaultDistVariance: Float,
+    private val defaultAngVariance: Float,
+    private val defaultIdentiryVariance: Float,
     private val mapImage: AndroidJVMImage,
     private val maxSensorRange: Float,
     private val sensorDistStdDev: Float,
@@ -81,7 +79,7 @@ class SimRobotSessionFactory(
             val obstacles = MapTree()
             mapData.obstaclePoints.forEach { obstacles.add(it) }
 
-            val simPilot = SimulatedPilot(odoAngStdDev, odoDistStdDev, stepDist, mapData.startPose, maxPilotRot, maxPilotDist)
+            val simPilot = SimulatedPilot(odoAngStdDev, odoDistStdDev, stepDist, mapData.startPose, maxRot, maxSpeed)
             val simSpinner = SimSpinner(sensorStartAng, sensorEndAng, sensorAngIncr)
             val simSensor = SimSensor(mapData.obstacleGrid, mapImage.width, mapImage.height,
                     maxSensorRange, sensorDistStdDev, sensorAngStdDev, simSpinner, simPilot)
@@ -91,7 +89,9 @@ class SimRobotSessionFactory(
             val motionModel = CarModel()
             val dataAssoc = NNDataAssociator(nnAsocThreshold)
             val partResamp = FastUnbiasedResampler()
-            val slam = FastSLAM(mapData.startPose, motionModel, dataAssoc, partResamp)
+
+            val slam = FastSLAM(mapData.startPose, motionModel, dataAssoc, partResamp, defaultNumParticles,
+                    defaultDistVariance, defaultAngVariance, defaultIdentiryVariance)
 
             val localPlanner = LocalPlanner(0f, localPlannerRotStep, localPlannerDistStep, localPlannerGridStep,
                     localPlannerGridSize, obstacleSize)
