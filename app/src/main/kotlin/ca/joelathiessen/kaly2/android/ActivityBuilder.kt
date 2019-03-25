@@ -1,4 +1,4 @@
-package ca.joelathiessen.kaly2.android.di
+package ca.joelathiessen.kaly2.android
 
 import ca.joelathiessen.kaly2.android.ui.main.MainActivity
 import ca.joelathiessen.kaly2.android.ui.main.MainActivityModule

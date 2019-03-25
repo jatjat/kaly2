@@ -119,9 +119,10 @@ class RobotSession(
                     results = localResults
                 }
 
-                val simPilotPoses = localResults.subconcResults.pilotPoses as SimPilotPoses
+                val pilotPoses = localResults.subconcResults.pilotPoses
+                val simPilotPoses = localResults.subconcResults.pilotPoses as? SimPilotPoses
 
-                sendUpdateEvent(simPilotPoses.realPose, simPilotPoses.odoPose, localResults.particlePoses,
+                sendUpdateEvent(simPilotPoses?.realPose, pilotPoses.odoPose, localResults.particlePoses,
                         localResults.features, localResults.numItrs, localResults)
             }
             subConscActorHost.stop()
@@ -132,7 +133,7 @@ class RobotSession(
     }
 
     private fun sendUpdateEvent(
-        truePos: Pose,
+        truePos: Pose?,
         odoPos: Pose,
         particlePoses: List<Pose>,
         featuresForRT: List<Feature>,
@@ -147,7 +148,9 @@ class RobotSession(
             }
             val rtFeatures = featuresForRT.map { RTFeature(it.distance, it.angle, it.stdDev) }
             val rtOdoPos = RTPose(odoPos.x, odoPos.y, odoPos.heading)
-            val rtTruePos = RTPose(truePos.x, truePos.y, truePos.heading)
+            val rtTruePos: RTPose? = if (truePos != null) {
+                RTPose(truePos.x, truePos.y, truePos.heading)
+            } else { null }
 
             var sumX = 0.0f
             var sumY = 0.0f

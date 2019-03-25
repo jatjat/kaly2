@@ -13,14 +13,14 @@ class RobotSessionRepository @Inject constructor(private val apiService: RobotSe
     private val iterationsCache = HashMap<Long, ArrayList<RTSlamInfoMsg>>()
     private var unsubscribing = false
 
-    fun subscribeToRobotSession(sessionID: Long?, subscriber: (RTRobotMsg) -> Unit,
+    fun subscribeToRobotSession(sessionID: Long?, isReal: Boolean, subscriber: (RTRobotMsg) -> Unit,
                                 onResponse: (sessionID: Long?) -> Unit, onFailure: (failure: RepositoryFailure) -> Unit) {
         if (unsubscribing == true) {
             onFailure(RepositoryIsUnsubscribingFailure())
         } else if (currentSessionID != null) {
             onFailure(RepositoryAlreadySubscribedFailure())
         } else {
-            apiService.subscribeToRobotSession(sessionID, { rtRobotMsg: RTRobotMsg ->
+            apiService.subscribeToRobotSession(sessionID, isReal, { rtRobotMsg: RTRobotMsg ->
                 updateCaches(rtRobotMsg)
                 subscriber(rtRobotMsg)
             }, { apiSessionID: Long? ->

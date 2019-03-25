@@ -41,7 +41,7 @@ class SubconsciousActed(
                 System.currentTimeMillis()))
         }
 
-        val plan = localPlanner.makePlan(measurements, mesPose, robotPilot.maxRot, robotPilot.maxDist,
+        val plan = localPlanner.makePlan(measurements, mesPose, robotPilot.maxDesiredPlanRot, robotPilot.maxDesiredPlanDist,
             globalManeuvers)
 
         robotPilot.execLocalPlan(plan)

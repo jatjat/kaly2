@@ -10,7 +10,7 @@ class MainActivityPresenter(private val repository: RobotSessionRepository) {
     private var iterations: MutableList<RTSlamInfoMsg> = ArrayList()
 
     init {
-        repository.subscribeToRobotSession(null, { message ->
+        repository.subscribeToRobotSession(null, true, { message ->
             onMessage(message)
         }, {
             repository.setRobotSessionSettings(true, {}, { failure ->

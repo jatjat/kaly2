@@ -9,8 +9,8 @@ class SimulatedPilot(
     private val odoDistStdDev: Float,
     private val stepDist: Float,
     startPose: RobotPose,
-    override val maxRot: Float,
-    override val maxDist: Float
+    override val maxDesiredPlanRot: Float,
+    override val maxDesiredPlanDist: Float
 ) : RobotPilot {
 
     private val random = FloatRandom(1)

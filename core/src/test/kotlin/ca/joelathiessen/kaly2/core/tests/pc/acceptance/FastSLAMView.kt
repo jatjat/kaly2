@@ -5,11 +5,9 @@ import ca.joelathiessen.kaly2.core.odometry.RobotPose
 import ca.joelathiessen.kaly2.core.slam.FastSLAM
 import ca.joelathiessen.kaly2.core.slam.FastUnbiasedResampler
 import ca.joelathiessen.kaly2.core.slam.NNDataAssociator
-import ca.joelathiessen.kaly2.core.subconscious.sensor.SensorInfo
 import ca.joelathiessen.util.FloatMath
 import ca.joelathiessen.util.FloatRandom
 import ca.joelathiessen.util.getFeatureForPosition
-import org.mockito.Mockito
 import java.awt.Color
 import java.awt.Graphics
 import java.util.ArrayList
@@ -36,6 +34,10 @@ class FastSLAMView : JPanel() {
     val STEP_ROT_STD_DEV = 0.01f
     val STEP_DIST_STD_DEV = 0.5f
     val MIN_WIDTH = 400.0f
+    val DEFAULT_NUM_PARTICLES = 20
+    val DEFAULT_DIST_VARIANCE = 1.0f
+    val DEFAULT_ANG_VARIANCE = 0.01f
+    val IDENTITY_VARIANCE = 0.2f
 
     val SENSOR_STD_DEV = 0.1f
 
@@ -43,7 +45,6 @@ class FastSLAMView : JPanel() {
     val motionModel = CarModel()
     val dataAssoc = NNDataAssociator()
     val partResamp = FastUnbiasedResampler()
-    val sensorInfo = Mockito.mock(SensorInfo::class.java)
     var realPos: RobotPose = startPos
     val random = FloatRandom(1)
 
@@ -54,7 +55,8 @@ class FastSLAMView : JPanel() {
     val realObjectLocs = ArrayList<xyPnt>()
     val odoLocs = ArrayList<RobotPose>()
 
-    var slam = FastSLAM(startPos, motionModel, dataAssoc, partResamp)
+    var slam = FastSLAM(startPos, motionModel, dataAssoc, partResamp, DEFAULT_NUM_PARTICLES, DEFAULT_DIST_VARIANCE,
+            DEFAULT_ANG_VARIANCE, IDENTITY_VARIANCE)
 
     var x = MIN_WIDTH / 2
     var y = MIN_WIDTH / 2

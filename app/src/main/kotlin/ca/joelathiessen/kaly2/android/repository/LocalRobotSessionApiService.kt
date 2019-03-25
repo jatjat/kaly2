@@ -24,11 +24,11 @@ class LocalRobotSessionApiService @Inject constructor(private val server: KalySe
         server.serve()
     }
 
-    override fun subscribeToRobotSession(sessionID: Long?, subscriber: (RTRobotMsg) -> Unit,
+    override fun subscribeToRobotSession(sessionID: Long?, isReal: Boolean,  subscriber: (RTRobotMsg) -> Unit,
                                          onResponse: (sessionID: Long) -> Unit, onFailure: (failure: ApiServiceFailure) -> Unit) {
         val isNotSubscribedToAnotherSession = session == null || (sessionID != session?.sid && sessionID != null)
         if (isNotSubscribedToAnotherSession) {
-            session = server.inprocessAPI.getRobotSession(sessionID)
+            session = server.inprocessAPI.getRobotSession(sessionID, isReal)
 
             val ses = session
             if (ses != null) {

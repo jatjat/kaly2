@@ -6,8 +6,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.thread
 
 class RobotSessionManager(
-    private val realRobotSessionFactory: RobotSessionFactory?,
-    private val simRobotSessionFactory: RobotSessionFactory?
+    private val realRobotSessionFactory: RealRobotSessionFactory?,
+    private val simRobotSessionFactory: SimRobotSessionFactory?
 ) {
     private val HEARTBEAT_TIME = 250L
     private val robotSessions = HashMap<Long, RobotSession>()
@@ -31,12 +31,12 @@ class RobotSessionManager(
         class RobotSessionCreationError(val description: String? = null) : GetHandlerResult()
     }
     @Synchronized
-    fun getHandler(sid: Long?): GetHandlerResult? {
+    fun getHandler(sid: Long?, isReal: Boolean? = false): GetHandlerResult? {
         var chosenSid = sid
         var getHandlerResult: GetHandlerResult = GetHandlerResult.RobotSessionCreationError()
         if (chosenSid == null || robotSessions.containsKey(chosenSid) == false) {
             val factory: RobotSessionFactory
-            if (chosenSid == 0L) {
+            if (isReal == true) {
                 factory = checkNotNull(realRobotSessionFactory) {
                     "No factory to create a session with a real robot was provided"
                 }

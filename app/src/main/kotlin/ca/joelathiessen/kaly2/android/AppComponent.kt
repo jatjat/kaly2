@@ -1,7 +1,6 @@
-package ca.joelathiessen.kaly2.android.di
+package ca.joelathiessen.kaly2.android
 
 import android.app.Application
-import ca.joelathiessen.kaly2.android.AndroidApp
 import dagger.BindsInstance
 import dagger.Component
 import dagger.android.AndroidInjectionModule

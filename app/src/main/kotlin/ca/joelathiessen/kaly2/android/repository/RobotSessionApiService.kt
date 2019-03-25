@@ -5,7 +5,7 @@ import ca.joelathiessen.kaly2.core.server.messages.RTRobotMsg
 
 interface RobotSessionApiService {
 
-    fun subscribeToRobotSession(sessionID: Long?, subscriber: (RTRobotMsg) -> Unit,
+    fun subscribeToRobotSession(sessionID: Long?, isReal: Boolean, subscriber: (RTRobotMsg) -> Unit,
                                 onResponse: (sessionID: Long) -> Unit,
                                 onFailure: (error: ApiServiceFailure) -> Unit)
 
