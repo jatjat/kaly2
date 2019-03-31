@@ -28,23 +28,25 @@ class AppModule {
 
     @Provides
     @Singleton
-    fun provideSerialConnectionCreator(): SerialConnectionCreator {
-
+    fun provideBluetoothSerialConnectionCreator(): BluetoothSerialConnectionCreator {
         return BluetoothSerialConnectionCreator()
     }
 
     @Provides
     @Singleton
     fun provideRobotSessionApiService(application: Application, mapImage: AndroidJVMImage,
-                                      robotSerialConnectionCreator: SerialConnectionCreator,
-                                      sensorSerialConnectionCreator: SerialConnectionCreator): RobotSessionApiService {
-        val subscriberThreadExecutor = object : Executor {
+                                      robotSerialConnectionCreator: BluetoothSerialConnectionCreator,
+                                      sensorSerialConnectionCreator: BluetoothSerialConnectionCreator): RobotSessionApiService {
+        robotSerialConnectionCreator.connectionName = application.getString(R.string.bluetooth_robot_name)
+        sensorSerialConnectionCreator.connectionName = application.getString(R.string.bluetooth_sensor_name)
+
+        val subscriberThreadExecutor: Executor = object : Executor {
             override fun execute(runnable: Runnable?) {
                 Handler(application.mainLooper).post(runnable)
             }
         }
+
         return LocalRobotSessionApiService(KalyServer(mapImage, robotSerialConnectionCreator,
                 sensorSerialConnectionCreator), subscriberThreadExecutor)
     }
 }
-
