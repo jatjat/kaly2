@@ -22,9 +22,9 @@ class TextMessenger(private val connectionCreator: SerialConnectionCreator) {
                 if (conn == null) {
                     Thread.sleep(CONN_FAILED_WAIT_MS)
                 } else {
-                    val reader = conn.getInputReader()
+                    val reader = conn.inputReader
                     synchronized(writerLock) {
-                        writer = conn.getOutputWriter()
+                        writer = conn.outputWriter
                     }
                     var couldRead = true
                     try {

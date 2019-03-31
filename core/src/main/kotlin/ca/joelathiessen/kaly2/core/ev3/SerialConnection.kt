@@ -4,7 +4,7 @@ import java.io.BufferedReader
 import java.io.BufferedWriter
 
 interface SerialConnection {
-    fun getOutputWriter(): BufferedWriter
-    fun getInputReader(): BufferedReader
+    val outputWriter: BufferedWriter
+    val inputReader: BufferedReader
     fun close()
 }
