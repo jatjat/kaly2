@@ -9,3 +9,5 @@
 .externalNativeBuild
 /core/build
 /core/out
+/ev3/build
+/ev3/out

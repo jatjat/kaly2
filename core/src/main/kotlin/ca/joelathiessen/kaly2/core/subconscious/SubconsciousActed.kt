@@ -32,13 +32,21 @@ class SubconsciousActed(
         val pilotPoses = robotPilot.poses
 
         val measurements = ArrayList<Measurement>()
-        val mesPose = accurateOdo.getOutputPose()
+
         spinner.spin()
+        while (spinner.spinning == false) {
+            // temporary sleep:
+            Thread.sleep(10)
+        }
+
+        val mesPose = accurateOdo.getOutputPose()
         while (spinner.spinning) {
             val sample = FloatArray(2)
             sensor.fetchSample(sample, 0)
             measurements.add(Measurement(sample[0], sample[1], mesPose, robotPilot.poses.odoPose,
                 System.currentTimeMillis()))
+            // temporary sleep:
+            Thread.sleep(10)
         }
 
         val plan = localPlanner.makePlan(measurements, mesPose, robotPilot.maxDesiredPlanRot, robotPilot.maxDesiredPlanDist,

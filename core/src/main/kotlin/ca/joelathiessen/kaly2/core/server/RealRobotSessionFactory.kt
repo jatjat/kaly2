@@ -24,7 +24,6 @@ import ca.joelathiessen.kaly2.core.subconscious.RobotPilot
 import ca.joelathiessen.kaly2.core.subconscious.sensor.Kaly2Sensor
 import ca.joelathiessen.kaly2.core.subconscious.sensor.Spinnable
 import org.joda.time.DateTime
-import java.io.IOException
 import java.util.concurrent.atomic.AtomicBoolean
 
 class RealRobotSessionFactory(
@@ -165,12 +164,7 @@ class RealSpinner(private val robotCommsManager: RobotComm) : Spinnable {
     }
 
     override fun spin() {
-        try {
-            robotCommsManager.spinSensor()
-            isTurningClockwise.set(!isTurningClockwise.get())
-        } catch (except: IOException) {
-            except.printStackTrace()
-        }
+        robotCommsManager.spinSensor()
     }
 }
 

@@ -2,10 +2,10 @@ package ca.joelathiessen.util.itractor
 
 import kotlin.concurrent.thread
 
-class ItrActorThreadedHost(private val itrActor: ItrActor) {
+class ItrActorThreadedHost(private val itrActor: ItrActor, private val name: String = "ItrActor") {
     private var eventRunnerThread = makeEventHostThread()
 
-    private fun makeEventHostThread() = thread(start = false) {
+    private fun makeEventHostThread() = thread(start = false, name = name) {
         itrActor.act()
     }
 

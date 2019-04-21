@@ -13,7 +13,7 @@ class TextMessenger(private val connectionCreator: SerialConnectionCreator) {
     private var writer: BufferedWriter? = null
 
     init {
-        thread {
+        thread(name = "TextMessengerReader") {
             while (cont.get() == true) {
                 synchronized(writerLock) {
                     writer = null
@@ -54,10 +54,19 @@ class TextMessenger(private val connectionCreator: SerialConnectionCreator) {
         subscriber = null
     }
 
-    fun sendText(text: String) {
+    fun sendText(text: String): Boolean {
+        var success = false
         synchronized(writerLock) {
-            writer?.write(text)
+            try {
+                writer?.write(text + "\n")
+                writer?.flush()
+                success = true
+            } catch (except: Exception) {
+                except.printStackTrace()
+                writer?.close()
+            }
         }
+        return success
     }
 
     fun stopCommunication() {

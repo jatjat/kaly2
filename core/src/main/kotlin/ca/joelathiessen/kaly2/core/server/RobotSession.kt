@@ -96,14 +96,14 @@ class RobotSession(
         val plannerActor = PlannerActor(globalPathPlanner, globalPathPlannerInput, robotCoreInput)
         val robotCoreActor = RobotCoreActor(robotCore, robotCoreInput, robotCoreOutput, globalPathPlannerInput, subconscInput)
 
-        subConscActorHost = ItrActorThreadedHost(subConscActor)
-        plannerActorHost = ItrActorThreadedHost(plannerActor)
-        robotCoreActorHost = ItrActorThreadedHost(robotCoreActor)
+        subConscActorHost = ItrActorThreadedHost(subConscActor, "Subconscious")
+        plannerActorHost = ItrActorThreadedHost(plannerActor, "Planner")
+        robotCoreActorHost = ItrActorThreadedHost(robotCoreActor, "RobotCore")
     }
 
     private lateinit var simThread: Thread
 
-    fun makeSimThread(): Thread = thread(start = false) {
+    fun makeSimThread(): Thread = thread(start = false, name = "Sim") {
 
         synchronized(robotIsRunningLock) {
             subConscActorHost.start()

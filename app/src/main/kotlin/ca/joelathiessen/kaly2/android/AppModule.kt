@@ -5,7 +5,6 @@ import android.graphics.BitmapFactory
 import android.os.Handler
 import ca.joelathiessen.kaly2.android.repository.LocalRobotSessionApiService
 import ca.joelathiessen.kaly2.android.repository.RobotSessionApiService
-import ca.joelathiessen.kaly2.core.ev3.SerialConnectionCreator
 import ca.joelathiessen.kaly2.core.server.KalyServer
 import ca.joelathiessen.util.image.AndroidJVMImage
 import ca.joelathiessen.util.image.android.AndroidImage
@@ -19,6 +18,12 @@ class AppModule {
 
     @Provides
     @Singleton
+    fun provideAppConfig(application: Application): AppConfig {
+        return AppConfig(application)
+    }
+
+    @Provides
+    @Singleton
     fun provideMapImage(application: Application): AndroidJVMImage {
         val options = BitmapFactory.Options()
         options.inScaled = false
@@ -27,7 +32,6 @@ class AppModule {
     }
 
     @Provides
-    @Singleton
     fun provideBluetoothSerialConnectionCreator(): BluetoothSerialConnectionCreator {
         return BluetoothSerialConnectionCreator()
     }
