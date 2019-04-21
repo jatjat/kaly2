@@ -14,7 +14,7 @@ class RobotSessionManager(
     private val shouldPerformHeartbeats = AtomicBoolean()
 
     init {
-        thread {
+        thread(name = "Heartbeat") {
             while (shouldPerformHeartbeats.get()) {
                 attemptHeartbeats()
                 Thread.sleep(HEARTBEAT_TIME)

@@ -1,10 +1,11 @@
 package ca.joelathiessen.kaly2.android.ui.main
 
+import ca.joelathiessen.kaly2.android.AppConfig
 import ca.joelathiessen.kaly2.android.repository.RobotSessionRepository
 import ca.joelathiessen.kaly2.core.server.messages.RTRobotMsg
 import ca.joelathiessen.kaly2.core.server.messages.RTSlamInfoMsg
 
-class MainActivityPresenter(private val repository: RobotSessionRepository) {
+class MainActivityPresenter(private val repository: RobotSessionRepository, private val config: AppConfig) {
 
     private var view: MainActivityView? = null
     private var iterations: MutableList<RTSlamInfoMsg> = ArrayList()
@@ -30,6 +31,12 @@ class MainActivityPresenter(private val repository: RobotSessionRepository) {
         }
     }
 
+    fun onBluetoothDeviceFound(address: String, name: String) {
+        when(name) {
+            config.bluetoothRobotName -> view?.createBTBond(address, config.bluetoothRobotPin)
+            config.bluetoothSensorName -> view?.createBTBond(address, config.bluetoothSensorPin)
+        }
+    }
 
     fun onViewAttached(view: MainActivityView) {
         this.view = view

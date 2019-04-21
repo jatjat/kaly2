@@ -21,11 +21,12 @@ class BluetoothSerialConnectionCreator: SerialConnectionCreator {
                 try {
                     sock.connect()
                     conn = BluetoothSerialConnection(sock)
+                    println("Connected to $connectionName")
                 } catch (except: Exception) {
-                    except.printStackTrace()
+                    println("Failed to connect to $connectionName")
                     sock.close()
                 }
-            }
+                }
         }
         return conn
     }

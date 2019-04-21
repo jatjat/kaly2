@@ -80,7 +80,7 @@ class RRTStarView : JPanel() {
         val planner = GlobalPathPlanner(segmentFactory, obstacles, OBS_SIZE, SEARCH_DIST, STEP_DIST,
             RobotPose(0, 0f, xStart, yStart, 0f), RobotPose(0, 0f, xEnd, yEnd, 0f))
 
-        thread {
+        thread(name = "DrawPathsManeuvers") {
             while (true) {
                 planner.iterate(ITERATIONS)
                 synchronized(drawLock) {

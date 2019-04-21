@@ -48,7 +48,7 @@ class KalyServer(
     }
 
     fun serve() {
-        thread {
+        thread (name = "KalyServerWrapper") {
             val logger = StdErrLog()
             logger.level = StdErrLog.LEVEL_DEBUG
             Log.setLog(logger)
