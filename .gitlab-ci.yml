@@ -50,13 +50,14 @@ release-master:
       helm upgrade helm-chart/kaly2
       --install
       --force
+      --wait
       --set nameOverride=${NAME}
       --set repository $CI_REGISTRY_IMAGE:stable
       --namespace=${NAMESPACE}
 
 deploy-staging:
   stage: staging
-  image: alpine/helm:stable
+  image: alpine/helm:2.13.1
   variables:
     NAMESPACE: staging
   <<: *common-deploy-script
@@ -68,7 +69,7 @@ deploy-staging:
 
 deploy-production:
   stage: production
-  image: alpine/helm:stable
+  image: alpine/helm:2.13.1
   variables:
     NAMESPACE: prod
   <<: *common-deploy-script
