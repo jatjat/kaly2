@@ -45,29 +45,20 @@ release-master:
 
 .common-deploy-script: &common-deploy-script
   script:
-    - sed -i "s|__KALY2_IMAGE_NAME__|$CI_REGISTRY_IMAGE:$CI_BUILD_REF|" core/statefulset.yml
-    - sed -i "s|__KALY2_STATEFUL_SET_NAME__|$KALY2_STATEFUL_SET_NAME|" core/statefulset.yml
-    - sed -i "s|__KALY2_CONTAINER_NAME__|$KALY2_CONTAINER_NAME|" core/statefulset.yml
-    - sed -i "s|__KALY2_APP_LABEL__|$KALY2_APP_LABEL|" core/statefulset.yml core/service.yml
-    - sed -i "s|__KALY2_SERVICE_NAME__|$KALY2_SERVICE_NAME|" core/statefulset.yml core/service.yml
-    - kubectl apply -f core/service.yml
-    - kubectl apply -f core/statefulset.yml
     - |
-      if kubectl apply -f core/statefulset.yml | grep -q unchanged; then
-        echo "Forcing image update by patching statefulset"
-        kubectl patch -f core/statefulset.yml -p "{\"spec\":{\"template\":{\"metadata\":{\"annotations\":{\"ci-last-updated\":\"$(date +'%s')\"}}}}}"
-      else
-        echo "Applying statefulset caused succesful image update"
-      fi
+      helm init
+      helm upgrade helm-chart/kaly2
+      --install
+      --force
+      --set nameOverride=${NAME}
+      --set repository $CI_REGISTRY_IMAGE:stable
+      --namespace=${NAMESPACE}
 
 deploy-staging:
   stage: staging
-  image: registry.joelathiessen.ca/kaly2/joelathiessen.ca/jbuild
+  image: alpine/helm:stable
   variables:
-    KALY2_SERVICE_NAME: "kaly2-staging"
-    KALY2_STATEFUL_SET_NAME: "kaly2-stateful-set-staging"
-    KALY2_CONTAINER_NAME: "kaly2-container-staging"
-    KALY2_APP_LABEL: "kaly2-backend-staging"
+    NAMESPACE: staging
   <<: *common-deploy-script
   environment:
     name: staging
@@ -77,12 +68,9 @@ deploy-staging:
 
 deploy-production:
   stage: production
-  image: registry.joelathiessen.ca/kaly2/joelathiessen.ca/jbuild
+  image: alpine/helm:stable
   variables:
-    KALY2_SERVICE_NAME: "kaly2-prod"
-    KALY2_STATEFUL_SET_NAME: "kaly2-stateful-set-prod"
-    KALY2_CONTAINER_NAME: "kaly2-container-prod"
-    KALY2_APP_LABEL: "kaly2-backend-prod"
+    NAMESPACE: prod
   <<: *common-deploy-script
   environment:
     name: production
