@@ -10,6 +10,7 @@ stages:
 variables:
   DOCKER_DRIVER: overlay2
   DOCKER_HOST: "tcp://localhost:2375"
+  KUBECONFIG: /etc/deploy/config
 
 before_script:
   - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
@@ -46,7 +47,8 @@ release-master:
 .common-deploy-script: &common-deploy-script
   script:
     - mkdir -p /etc/deploy/
-    - echo ${KUBE_CONFIG} | base64 -d > /etc/deploy/config
+    - echo ${KUBE_CONFIG_CONTENTS} | base64 -d > /etc/deploy/config
+    - kubectl config use-context deploy
     - helm init --client-only
     - |
       helm upgrade helm-chart/kaly2
