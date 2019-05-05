@@ -57,7 +57,7 @@ release-master:
 
 deploy-staging:
   stage: staging
-  image: registry.joelathiessen.ca/kaly2/kaly2/jbuild
+  image: registry.joelathiessen.ca/kaly2/kaly2/jbuild:stable
   variables:
     NAMESPACE: staging
   <<: *common-deploy-script
@@ -69,7 +69,7 @@ deploy-staging:
 
 deploy-production:
   stage: production
-  image: registry.joelathiessen.ca/kaly2/kaly2/jbuild
+  image: registry.joelathiessen.ca/kaly2/kaly2/jbuild:stable
   variables:
     NAMESPACE: prod
   <<: *common-deploy-script
