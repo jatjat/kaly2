@@ -10,7 +10,6 @@ stages:
 variables:
   DOCKER_DRIVER: overlay2
   DOCKER_HOST: "tcp://localhost:2375"
-  KUBECONFIG: /etc/deploy/config
 
 before_script:
   - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
@@ -63,6 +62,7 @@ deploy-staging:
   stage: staging
   image: registry.joelathiessen.ca/kaly2/kaly2/jbuild:stable
   variables:
+    KUBECONFIG: /etc/deploy/config
     NAMESPACE: staging
   <<: *common-deploy-script
   environment:
@@ -75,6 +75,7 @@ deploy-production:
   stage: production
   image: registry.joelathiessen.ca/kaly2/kaly2/jbuild:stable
   variables:
+    KUBECONFIG: /etc/deploy/config
     NAMESPACE: prod
   <<: *common-deploy-script
   environment:
