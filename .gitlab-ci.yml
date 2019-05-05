@@ -49,7 +49,7 @@ release-master:
     - echo ${KUBE_CONFIG_CONTENTS} | base64 -d > /etc/deploy/config
     - kubectl config use-context deploy
     - helm init --client-only
-    - |
+    - >
       helm upgrade kaly2 helm-chart/kaly2
       --install
       --force
