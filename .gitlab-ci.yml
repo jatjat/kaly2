@@ -45,8 +45,11 @@ release-master:
 
 .common-deploy-script: &common-deploy-script
   script:
+    - mkdir -p /etc/deploy/
+    - echo ${KUBE_CONFIG} | base64 -d > /etc/deploy/config
+    - kubectl config use-context standard
+    - helm init --client-only
     - |
-      helm init
       helm upgrade helm-chart/kaly2
       --install
       --force
