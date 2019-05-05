@@ -47,7 +47,6 @@ release-master:
   script:
     - mkdir -p /etc/deploy/
     - echo ${KUBE_CONFIG} | base64 -d > /etc/deploy/config
-    - kubectl config use-context standard
     - helm init --client-only
     - |
       helm upgrade helm-chart/kaly2
@@ -55,7 +54,7 @@ release-master:
       --force
       --wait
       --set nameOverride=${NAME}
-      --set repository $CI_REGISTRY_IMAGE:stable
+      --set repository $CI_REGISTRY_IMAGE:$CI_BUILD_REF
       --namespace=${NAMESPACE}
 
 deploy-staging:
