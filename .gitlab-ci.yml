@@ -11,11 +11,13 @@ variables:
   DOCKER_DRIVER: overlay2
   DOCKER_HOST: "tcp://localhost:2375"
 
+before_script:
+  - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
+
 build:
   stage: build
   image: docker:stable
   script:
-    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
     - docker build --pull -t $CI_REGISTRY_IMAGE:$CI_BUILD_REF core --cache-from $CI_REGISTRY_IMAGE:latest
     - docker push $CI_REGISTRY_IMAGE:$CI_BUILD_REF
   except:
@@ -25,7 +27,6 @@ release-name:
   stage: release
   image: docker:stable
   script:
-    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
     - docker pull $CI_REGISTRY_IMAGE:$CI_BUILD_REF
     - docker tag $CI_REGISTRY_IMAGE:$CI_BUILD_REF $CI_REGISTRY_IMAGE:$CI_BUILD_REF_NAME
     - docker push $CI_REGISTRY_IMAGE:$CI_BUILD_REF_NAME
@@ -36,7 +37,6 @@ release-master:
   stage: release
   image: docker:stable
   script:
-    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
     - docker pull $CI_REGISTRY_IMAGE:$CI_BUILD_REF
     - docker tag $CI_REGISTRY_IMAGE:$CI_BUILD_REF $CI_REGISTRY_IMAGE:stable
     - docker push $CI_REGISTRY_IMAGE:stable
@@ -57,7 +57,7 @@ release-master:
 
 deploy-staging:
   stage: staging
-  image: alpine/helm:2.13.1
+  image: registry.joelathiessen.ca/kaly2/kaly2/jbuild
   variables:
     NAMESPACE: staging
   <<: *common-deploy-script
@@ -69,7 +69,7 @@ deploy-staging:
 
 deploy-production:
   stage: production
-  image: alpine/helm:2.13.1
+  image: registry.joelathiessen.ca/kaly2/kaly2/jbuild
   variables:
     NAMESPACE: prod
   <<: *common-deploy-script
