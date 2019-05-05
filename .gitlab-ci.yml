@@ -50,12 +50,12 @@ release-master:
     - kubectl config use-context deploy
     - helm init --client-only
     - >
-      helm upgrade kaly2 helm-chart/kaly2
+      helm upgrade kaly2 ./helm-chart/kaly2
       --install
       --force
       --wait
       --set nameOverride=${NAME}
-      --set repository $CI_REGISTRY_IMAGE:$CI_BUILD_REF
+      --set repository=$CI_REGISTRY_IMAGE:$CI_BUILD_REF
       --namespace=${NAMESPACE}
 
 deploy-staging:
