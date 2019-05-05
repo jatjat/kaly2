@@ -18,8 +18,8 @@ build:
   stage: build
   image: docker:stable
   script:
-    - docker build --pull -t $CI_REGISTRY_IMAGE:$CI_BUILD_REF core --cache-from $CI_REGISTRY_IMAGE:latest
-    - docker push $CI_REGISTRY_IMAGE:$CI_BUILD_REF
+    - docker build --pull -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA core --cache-from $CI_REGISTRY_IMAGE:latest
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
   except:
     - tags
 
@@ -27,8 +27,8 @@ release-name:
   stage: release
   image: docker:stable
   script:
-    - docker pull $CI_REGISTRY_IMAGE:$CI_BUILD_REF
-    - docker tag $CI_REGISTRY_IMAGE:$CI_BUILD_REF $CI_REGISTRY_IMAGE:$CI_BUILD_REF_NAME
+    - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+    - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE:$CI_BUILD_REF_NAME
     - docker push $CI_REGISTRY_IMAGE:$CI_BUILD_REF_NAME
   except:
     - master
@@ -37,8 +37,8 @@ release-master:
   stage: release
   image: docker:stable
   script:
-    - docker pull $CI_REGISTRY_IMAGE:$CI_BUILD_REF
-    - docker tag $CI_REGISTRY_IMAGE:$CI_BUILD_REF $CI_REGISTRY_IMAGE:stable
+    - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+    - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE:stable
     - docker push $CI_REGISTRY_IMAGE:stable
   only:
     - master
@@ -55,7 +55,7 @@ release-master:
       --force
       --wait
       --set nameOverride=${NAME}
-      --set repository=$CI_REGISTRY_IMAGE:$CI_BUILD_REF
+      --set repository=$CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
       --namespace=${NAMESPACE}
 
 deploy-staging:
