@@ -37,6 +37,8 @@ jobs:
           chmod +x "$RUNNER_TEMP/kind" && echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
           setsid nohup bash -c "'$RUNNER_TEMP/kind' create cluster --name ci --wait 180s; echo \$? > '$RUNNER_TEMP/kind.exit'" \
             > "$RUNNER_TEMP/kind.log" 2>&1 < /dev/null &
+          # The end-to-end test runs in this image
+          setsid nohup docker pull -q node:22.20.0-alpine > /dev/null 2>&1 < /dev/null &
 
       - name: Pick versions to test together
         id: refs
@@ -89,6 +91,10 @@ jobs:
           if docker pull -q "us-central1-docker.pkg.dev/$PROJECT/site/$OTHER:$OTHER_TAG"; then
             docker tag "us-central1-docker.pkg.dev/$PROJECT/site/$OTHER:$OTHER_TAG" "$OTHER:local"
             echo "build_other=false" >> "$GITHUB_OUTPUT"
+            # Load it into the cluster as soon as the cluster is up, while this repo's image builds
+            setsid nohup bash -c "until [ -f '$RUNNER_TEMP/kind.exit' ]; do sleep 1; done; \
+              '$RUNNER_TEMP/kind' load docker-image '$OTHER:local' --name ci; echo \$? > '$RUNNER_TEMP/other.loaded'" \
+              > "$RUNNER_TEMP/other-load.log" 2>&1 < /dev/null &
           else
             echo "No $OTHER:$OTHER_TAG in the registry yet, so it gets built from source"
             echo "build_other=true" >> "$GITHUB_OUTPUT"
@@ -114,6 +120,9 @@ jobs:
           fi
 
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+        with:
+          # The runner is thrown away anyway; skips ~15 s of teardown
+          cleanup: false
 
       # Layers are cached in GitHub's cache, so packages only reinstall when lockfiles change
       - name: Build this repo's image
@@ -143,8 +152,18 @@ jobs:
           [ "$(cat "$RUNNER_TEMP/kind.exit" 2>/dev/null)" = 0 ]
 
       - name: Run both on Kubernetes
+        env:
+          THIS: ${{ steps.refs.outputs.this }}
+          OTHER: ${{ steps.refs.outputs.other }}
+          BUILT_OTHER: ${{ steps.reuse.outputs.build_other }}
         run: |
-          kind load docker-image website:local kaly2:local --name ci
+          if [ "$BUILT_OTHER" = true ]; then
+            kind load docker-image "$THIS:local" "$OTHER:local" --name ci
+          else
+            kind load docker-image "$THIS:local" --name ci
+            until [ -f "$RUNNER_TEMP/other.loaded" ]; do sleep 1; done
+            cat "$RUNNER_TEMP/other-load.log"; [ "$(cat "$RUNNER_TEMP/other.loaded")" = 0 ]
+          fi
           kubectl apply -f kaly2/k8s/kaly2.yaml -f website/k8s/website.yaml
           kubectl rollout status deploy/kaly2 --timeout=180s
           kubectl rollout status deploy/website --timeout=180s
@@ -178,78 +197,21 @@ jobs:
             docker push -q "$reg/$IMG:$t"
           done
 
-  deploy:
-    name: Deploy to Cloud Run
-    needs: test-together
-    if: github.ref == 'refs/heads/master' && github.event_name != 'delete'
-    runs-on: ubuntu-24.04
-    concurrency:
-      group: deploy-${{ github.repository }}
-      cancel-in-progress: false
-    env:
-      SITE_URL: https://website-${{ secrets.GCP_PROJECT_NUMBER }}.us-central1.run.app
-    steps:
-      # For the end-to-end test script
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          repository: jatjat/joelathiessen.ca
-          ref: master
-          path: website
-          persist-credentials: false
-
-      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
-        with:
-          workload_identity_provider: projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/github/providers/github
-          service_account: ci-deploy-prod@${{ secrets.GCP_PROJECT }}.iam.gserviceaccount.com
+      # Branch pushes get a preview, in this same job (same account) to skip a second job's startup
+      - name: Check for a preinstalled gcloud
+        id: gcloud
+        if: github.ref != 'refs/heads/master' && github.event_name == 'push'
+        run: echo "installed=$(command -v gcloud > /dev/null && echo true || echo false)" >> "$GITHUB_OUTPUT"
 
       - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
-
-      - name: Deploy, test the live site, roll back if the test fails
-        run: |
-          svc=$([ "$GITHUB_REPOSITORY" = jatjat/kaly2 ] && echo kaly2 || echo website)
-          cr() { gcloud run "$@" --project "$PROJECT" --region us-central1 --quiet; }
-          key=$(gcloud secrets versions access latest --secret site-key --project "$PROJECT")
-          echo "::add-mask::$key"
-          before=$(cr services describe "$svc" --format='value(status.traffic[0].revisionName)')
-          cr deploy "$svc" --image "us-central1-docker.pkg.dev/$PROJECT/site/$svc:$GITHUB_SHA"
-          cr services update-traffic "$svc" --to-latest
-          if curl -fsS -o /dev/null -H "x-site-key: $key" "$SITE_URL/" && \
-             SITE_KEY="$key" docker run --rm -e SITE_KEY -v "$PWD/website/ci:/ci:ro" node:22.20.0-alpine \
-               node /ci/robot-demo-test.mjs "${SITE_URL/https/wss}"; then
-            echo "The live site works with the new $svc"
-          else
-            echo "The live site test failed, so $svc goes back to $before"
-            cr services update-traffic "$svc" --to-revisions "$before=100"
-            exit 1
-          fi
-
-  preview:
-    name: Deploy a preview
-    needs: test-together
-    if: github.ref != 'refs/heads/master' && github.event_name == 'push'
-    runs-on: ubuntu-24.04
-    concurrency:
-      group: preview-${{ github.repository }}-${{ github.ref }}
-      cancel-in-progress: true
-    steps:
-      # The website version tested above, for the end-to-end test script
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: github.ref != 'refs/heads/master' && github.event_name == 'push'
         with:
-          repository: jatjat/joelathiessen.ca
-          ref: ${{ needs.test-together.outputs.website }}
-          path: website
-          persist-credentials: false
+          skip_install: ${{ steps.gcloud.outputs.installed == 'true' }}
 
-      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
-        with:
-          workload_identity_provider: projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/github/providers/github
-          service_account: ci-build@${{ secrets.GCP_PROJECT }}.iam.gserviceaccount.com
-
-      - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
-
-      - name: Deploy the preview and test it
+      - name: Deploy a preview and test it
+        if: github.ref != 'refs/heads/master' && github.event_name == 'push'
         env:
-          SLUG: ${{ needs.test-together.outputs.slug }}
+          SLUG: ${{ steps.refs.outputs.slug }}
         run: |
           cr() { gcloud run "$@" --project "$PROJECT" --region us-central1 --quiet; }
           reg="us-central1-docker.pkg.dev/$PROJECT/site"
@@ -275,6 +237,57 @@ jobs:
           SITE_KEY="$key" docker run --rm -e SITE_KEY -v "$PWD/website/ci:/ci:ro" node:22.20.0-alpine \
             node /ci/robot-demo-test.mjs "${url/https/wss}"
           echo "Preview: https://joelathiessen.ca/share/$kind/$SLUG/" | tee -a "$GITHUB_STEP_SUMMARY"
+
+  deploy:
+    name: Deploy to Cloud Run
+    needs: test-together
+    if: github.ref == 'refs/heads/master' && github.event_name != 'delete'
+    runs-on: ubuntu-24.04
+    concurrency:
+      group: deploy-${{ github.repository }}
+      cancel-in-progress: false
+    env:
+      SITE_URL: https://website-${{ secrets.GCP_PROJECT_NUMBER }}.us-central1.run.app
+    steps:
+      # For the end-to-end test script
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: jatjat/joelathiessen.ca
+          ref: master
+          path: website
+          persist-credentials: false
+
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        with:
+          workload_identity_provider: projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/github/providers/github
+          service_account: ci-deploy-prod@${{ secrets.GCP_PROJECT }}.iam.gserviceaccount.com
+
+      - name: Check for a preinstalled gcloud
+        id: gcloud
+        run: echo "installed=$(command -v gcloud > /dev/null && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+      - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
+        with:
+          skip_install: ${{ steps.gcloud.outputs.installed == 'true' }}
+
+      - name: Deploy, test the live site, roll back if the test fails
+        run: |
+          svc=$([ "$GITHUB_REPOSITORY" = jatjat/kaly2 ] && echo kaly2 || echo website)
+          cr() { gcloud run "$@" --project "$PROJECT" --region us-central1 --quiet; }
+          key=$(gcloud secrets versions access latest --secret site-key --project "$PROJECT")
+          echo "::add-mask::$key"
+          before=$(cr services describe "$svc" --format='value(status.traffic[0].revisionName)')
+          cr deploy "$svc" --image "us-central1-docker.pkg.dev/$PROJECT/site/$svc:$GITHUB_SHA"
+          cr services update-traffic "$svc" --to-latest
+          if curl -fsS -o /dev/null -H "x-site-key: $key" "$SITE_URL/" && \
+             SITE_KEY="$key" docker run --rm -e SITE_KEY -v "$PWD/website/ci:/ci:ro" node:22.20.0-alpine \
+               node /ci/robot-demo-test.mjs "${SITE_URL/https/wss}"; then
+            echo "The live site works with the new $svc"
+          else
+            echo "The live site test failed, so $svc goes back to $before"
+            cr services update-traffic "$svc" --to-revisions "$before=100"
+            exit 1
+          fi
 
   remove-preview:
     name: Remove the preview
