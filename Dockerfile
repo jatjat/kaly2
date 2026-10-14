@@ -9,7 +9,8 @@ COPY src ./src
 # Maven repo that still has it: docker build --build-context legacy-maven=<dir>
 COPY --from=legacy-maven . /legacy-maven
 ENV LEGACY_MAVEN_URL=file:///legacy-maven
-RUN gradle --no-daemon build -x test
+# Compile inside Gradle: Kotlin 1.1's compile daemon sometimes fails to start
+RUN gradle --no-daemon -Dkotlin.compiler.execution.strategy=in-process -Pkotlin.incremental=false build -x test
 
 FROM eclipse-temurin:8-jre-alpine
 WORKDIR /app
