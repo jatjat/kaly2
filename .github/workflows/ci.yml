@@ -1,5 +1,6 @@
-# Same file in jatjat/joelathiessen.ca and jatjat/kaly2. On every push: build both
-# apps, run them together on a throwaway Kubernetes cluster and test the robot demo.
+# Same file in jatjat/joelathiessen.ca and jatjat/kaly2. On every push: build this
+# repo's app (the other repo's comes from the registry when it's already been built),
+# run both together on a throwaway Kubernetes cluster and test the robot demo.
 # Then branches get a preview, and master deploys. Deleting a branch removes its preview.
 name: CI
 
@@ -28,6 +29,15 @@ jobs:
       website: ${{ steps.refs.outputs.website }}
       slug: ${{ steps.refs.outputs.slug }}
     steps:
+      # Creating the cluster takes ~40 s, so it boots while the image builds
+      - name: Start a throwaway Kubernetes cluster in the background
+        run: |
+          curl -fsSLo "$RUNNER_TEMP/kind" https://github.com/kubernetes-sigs/kind/releases/download/v0.33.0/kind-linux-amd64
+          echo "aee6151561422756b764a4ae28e7f44cda5af5a9eead3cc9985112b1de8d8e0d  $RUNNER_TEMP/kind" | sha256sum -c -
+          chmod +x "$RUNNER_TEMP/kind" && echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
+          setsid nohup bash -c "'$RUNNER_TEMP/kind' create cluster --name ci --wait 180s; echo \$? > '$RUNNER_TEMP/kind.exit'" \
+            > "$RUNNER_TEMP/kind.log" 2>&1 < /dev/null &
+
       - name: Pick versions to test together
         id: refs
         # This commit, plus the other repo's branch of the same name if it has
@@ -38,10 +48,14 @@ jobs:
             elif git ls-remote --exit-code --heads "https://github.com/jatjat/$1" "$GITHUB_REF_NAME" >/dev/null; then echo "$GITHUB_REF_NAME"
             else echo master; fi
           }
-          echo "website=$(pick joelathiessen.ca)" >> "$GITHUB_OUTPUT"
-          echo "kaly2=$(pick kaly2)" >> "$GITHUB_OUTPUT"
+          website=$(pick joelathiessen.ca); kaly2=$(pick kaly2)
           # Branch name as used in preview links; keep in sync with scripts/git-hooks/pre-push
-          echo "slug=$(printf %s "$GITHUB_REF_NAME" | tr A-Z a-z | tr -c a-z0-9 - | cut -c1-28 | sed 's/-*$//')" >> "$GITHUB_OUTPUT"
+          slug=$(printf %s "$GITHUB_REF_NAME" | tr A-Z a-z | tr -c a-z0-9 - | cut -c1-28 | sed 's/-*$//')
+          if [ "$GITHUB_REPOSITORY" = jatjat/kaly2 ]; then this=kaly2; other=website; other_ref=$website
+          else this=website; other=kaly2; other_ref=$kaly2; fi
+          # The other repo's image as its own CI last built it for that branch
+          other_tag=$([ "$other_ref" = master ] && echo master || echo "branch-$slug")
+          printf '%s\n' "website=$website" "kaly2=$kaly2" "slug=$slug" "this=$this" "other=$other" "other_tag=$other_tag" >> "$GITHUB_OUTPUT"
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -64,27 +78,69 @@ jobs:
           service_account: ci-build@${{ secrets.GCP_PROJECT }}.iam.gserviceaccount.com
           token_format: access_token
 
+      - name: Use the other repo's image if its CI already built it
+        id: reuse
+        env:
+          TOKEN: ${{ steps.auth.outputs.access_token }}
+          OTHER: ${{ steps.refs.outputs.other }}
+          OTHER_TAG: ${{ steps.refs.outputs.other_tag }}
+        run: |
+          echo "$TOKEN" | docker login -u oauth2accesstoken --password-stdin https://us-central1-docker.pkg.dev
+          if docker pull -q "us-central1-docker.pkg.dev/$PROJECT/site/$OTHER:$OTHER_TAG"; then
+            docker tag "us-central1-docker.pkg.dev/$PROJECT/site/$OTHER:$OTHER_TAG" "$OTHER:local"
+            echo "build_other=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "No $OTHER:$OTHER_TAG in the registry yet, so it gets built from source"
+            echo "build_other=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Fetch files kept out of git
         env:
           TOKEN: ${{ steps.auth.outputs.access_token }}
+          BUILD_WEBSITE: ${{ steps.refs.outputs.this == 'website' || steps.reuse.outputs.build_other == 'true' }}
+          BUILD_KALY2: ${{ steps.refs.outputs.this == 'kaly2' || steps.reuse.outputs.build_other == 'true' }}
         run: |
-          curl -fsS -H "Authorization: Bearer $TOKEN" -o website/public/res.pdf \
-            "https://storage.googleapis.com/storage/v1/b/$BUCKET/o/public%2Fres.pdf?alt=media"
+          if [ "$BUILD_WEBSITE" = true ]; then
+            curl -fsS -H "Authorization: Bearer $TOKEN" -o website/public/res.pdf \
+              "https://storage.googleapis.com/storage/v1/b/$BUCKET/o/public%2Fres.pdf?alt=media"
+          fi
           m=org/jetbrains/exposed/exposed/0.8.6
           mkdir -p "legacy-maven/$m"
-          for f in exposed-0.8.6.pom exposed-0.8.6.jar; do
-            curl -fsS -H "Authorization: Bearer $TOKEN" -o "legacy-maven/$m/$f" \
-              "https://us-central1-maven.pkg.dev/$PROJECT/legacy-maven/$m/$f"
-          done
+          if [ "$BUILD_KALY2" = true ]; then
+            for f in exposed-0.8.6.pom exposed-0.8.6.jar; do
+              curl -fsS -H "Authorization: Bearer $TOKEN" -o "legacy-maven/$m/$f" \
+                "https://us-central1-maven.pkg.dev/$PROJECT/legacy-maven/$m/$f"
+            done
+          fi
 
-      - name: Build images
-        run: |
-          docker build -t website:local website
-          docker build --build-context legacy-maven=legacy-maven -t kaly2:local kaly2
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
-      - uses: helm/kind-action@06c1ae10762d3b9c1644e7fe69596ae519e015a2 # v1.15.0
+      # Layers are cached in GitHub's cache, so packages only reinstall when lockfiles change
+      - name: Build this repo's image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
-          cluster_name: ci
+          context: ${{ steps.refs.outputs.this }}
+          build-contexts: legacy-maven=legacy-maven
+          tags: ${{ steps.refs.outputs.this }}:local
+          load: true
+          cache-from: type=gha,scope=${{ steps.refs.outputs.this }}
+          cache-to: type=gha,mode=max,scope=${{ steps.refs.outputs.this }}
+
+      - name: Build the other repo's image
+        if: steps.reuse.outputs.build_other == 'true'
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ${{ steps.refs.outputs.other }}
+          build-contexts: legacy-maven=legacy-maven
+          tags: ${{ steps.refs.outputs.other }}:local
+          load: true
+          cache-from: type=gha,scope=${{ steps.refs.outputs.other }}
+
+      - name: Wait for the cluster
+        run: |
+          for i in $(seq 1 240); do [ -f "$RUNNER_TEMP/kind.exit" ] && break; sleep 1; done
+          cat "$RUNNER_TEMP/kind.log"
+          [ "$(cat "$RUNNER_TEMP/kind.exit" 2>/dev/null)" = 0 ]
 
       - name: Run both on Kubernetes
         run: |
@@ -107,20 +163,20 @@ jobs:
         run: |
           kubectl logs deploy/kaly2 --tail=50 || true
           kubectl logs deploy/website --tail=50 || true
+          tail -20 "$RUNNER_TEMP/kind.log" || true
 
       - name: Push this repo's image
         env:
-          TOKEN: ${{ steps.auth.outputs.access_token }}
+          IMG: ${{ steps.refs.outputs.this }}
+          SLUG: ${{ steps.refs.outputs.slug }}
         run: |
-          img=$([ "$GITHUB_REPOSITORY" = jatjat/kaly2 ] && echo kaly2 || echo website)
           reg="us-central1-docker.pkg.dev/$PROJECT/site"
-          echo "$TOKEN" | docker login -u oauth2accesstoken --password-stdin https://us-central1-docker.pkg.dev
-          docker tag "$img:local" "$reg/$img:$GITHUB_SHA"
-          docker push "$reg/$img:$GITHUB_SHA"
-          if [ "$GITHUB_REF" = refs/heads/master ]; then
-            docker tag "$img:local" "$reg/$img:master"
-            docker push "$reg/$img:master"
-          fi
+          # The branch tag lets the other repo's CI reuse this image for a same-named branch
+          tag=$([ "$GITHUB_REF" = refs/heads/master ] && echo master || echo "branch-$SLUG")
+          for t in "$GITHUB_SHA" "$tag"; do
+            docker tag "$IMG:local" "$reg/$IMG:$t"
+            docker push -q "$reg/$IMG:$t"
+          done
 
   deploy:
     name: Deploy to Cloud Run
