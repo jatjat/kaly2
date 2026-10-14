@@ -20,8 +20,11 @@ mainClassName = 'ca.joelathiessen.kaly2.server.KalyServer'
 repositories {
     mavenCentral()
     jcenter()
-    maven {
-        url  "https://dl.bintray.com/kotlin/exposed"
+    // Exposed 0.8.6 was only on Bintray, which shut down in 2021
+    if (System.getenv("LEGACY_MAVEN_URL")) {
+        maven {
+            url System.getenv("LEGACY_MAVEN_URL")
+        }
     }
 }
 

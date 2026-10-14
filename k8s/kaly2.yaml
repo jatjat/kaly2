@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kaly2
+spec:
+  # Robot sessions live in memory, so run a single copy
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kaly2
+  template:
+    metadata:
+      labels:
+        app: kaly2
+    spec:
+      containers:
+        - name: kaly2
+          image: kaly2:local
+          ports:
+            - containerPort: 9000
+          readinessProbe:
+            tcpSocket:
+              port: 9000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kaly2
+spec:
+  selector:
+    app: kaly2
+  ports:
+    - port: 9000
