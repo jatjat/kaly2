@@ -1,0 +1,112 @@
+# Same file in jatjat/joelathiessen.ca and jatjat/kaly2: build both apps,
+# run them together on a throwaway Kubernetes cluster and test the robot demo.
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  test-together:
+    name: Build and test website with kaly2
+    runs-on: ubuntu-24.04
+    env:
+      # Repository secrets so GitHub hides them in the public logs
+      PROJECT: ${{ secrets.GCP_PROJECT }}
+      BUCKET: ${{ secrets.GCP_PRIVATE_BUCKET }}
+    steps:
+      - name: Pick versions to test together
+        id: refs
+        # This commit, plus the other repo's branch of the same name if it has
+        # one (for changes that span both repos), otherwise its master
+        run: |
+          pick() {
+            if [ "$GITHUB_REPOSITORY" = "jatjat/$1" ]; then echo "$GITHUB_SHA"
+            elif git ls-remote --exit-code --heads "https://github.com/jatjat/$1" "$GITHUB_REF_NAME" >/dev/null; then echo "$GITHUB_REF_NAME"
+            else echo master; fi
+          }
+          echo "website=$(pick joelathiessen.ca)" >> "$GITHUB_OUTPUT"
+          echo "kaly2=$(pick kaly2)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: jatjat/joelathiessen.ca
+          ref: ${{ steps.refs.outputs.website }}
+          path: website
+          persist-credentials: false
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: jatjat/kaly2
+          ref: ${{ steps.refs.outputs.kaly2 }}
+          path: kaly2
+          persist-credentials: false
+
+      - id: auth
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        with:
+          workload_identity_provider: projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/github/providers/github
+          service_account: ci-build@${{ secrets.GCP_PROJECT }}.iam.gserviceaccount.com
+          token_format: access_token
+
+      - name: Fetch files kept out of git
+        env:
+          TOKEN: ${{ steps.auth.outputs.access_token }}
+        run: |
+          curl -fsS -H "Authorization: Bearer $TOKEN" -o website/public/res.pdf \
+            "https://storage.googleapis.com/storage/v1/b/$BUCKET/o/public%2Fres.pdf?alt=media"
+          m=org/jetbrains/exposed/exposed/0.8.6
+          mkdir -p "legacy-maven/$m"
+          for f in exposed-0.8.6.pom exposed-0.8.6.jar; do
+            curl -fsS -H "Authorization: Bearer $TOKEN" -o "legacy-maven/$m/$f" \
+              "https://us-central1-maven.pkg.dev/$PROJECT/legacy-maven/$m/$f"
+          done
+
+      - name: Build images
+        run: |
+          docker build -t website:local website
+          docker build --build-context legacy-maven=legacy-maven -t kaly2:local kaly2
+
+      - uses: helm/kind-action@06c1ae10762d3b9c1644e7fe69596ae519e015a2 # v1.15.0
+        with:
+          cluster_name: ci
+
+      - name: Run both on Kubernetes
+        run: |
+          kind load docker-image website:local kaly2:local --name ci
+          kubectl apply -f kaly2/k8s/kaly2.yaml -f website/k8s/website.yaml
+          kubectl rollout status deploy/kaly2 --timeout=180s
+          kubectl rollout status deploy/website --timeout=180s
+
+      - name: Test the robot demo end to end
+        run: |
+          kubectl port-forward svc/website 3000:3000 &
+          sleep 3
+          curl -fsS -o /dev/null http://localhost:3000/
+          curl -fsS -o /dev/null http://localhost:3000/public/res.pdf
+          docker run --rm --network host -v "$PWD/website/ci:/ci:ro" node:22.20.0-alpine \
+            node /ci/robot-demo-test.mjs ws://localhost:3000
+
+      - name: Show app logs
+        if: failure()
+        run: |
+          kubectl logs deploy/kaly2 --tail=50 || true
+          kubectl logs deploy/website --tail=50 || true
+
+      - name: Push this repo's image (master only)
+        if: github.ref == 'refs/heads/master'
+        env:
+          TOKEN: ${{ steps.auth.outputs.access_token }}
+        run: |
+          img=$([ "$GITHUB_REPOSITORY" = jatjat/kaly2 ] && echo kaly2 || echo website)
+          reg="us-central1-docker.pkg.dev/$PROJECT/site"
+          echo "$TOKEN" | docker login -u oauth2accesstoken --password-stdin https://us-central1-docker.pkg.dev
+          docker tag "$img:local" "$reg/$img:$GITHUB_SHA"
+          docker tag "$img:local" "$reg/$img:master"
+          docker push "$reg/$img:$GITHUB_SHA"
+          docker push "$reg/$img:master"
