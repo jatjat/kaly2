@@ -1,0 +1,20 @@
+#!/bin/sh
+# Prints the preview link for each branch you push. Same file in both repos.
+# Turn it on once per clone with: git config core.hooksPath scripts/git-hooks
+case $(git remote get-url origin 2>/dev/null) in
+  *kaly2*) kind=kaly2 ;;
+  *) kind=website ;;
+esac
+while read -r local_ref _ remote_ref _; do
+  case $remote_ref in refs/heads/*) ;; *) continue ;; esac
+  [ "$local_ref" = "(delete)" ] && continue
+  branch=${remote_ref#refs/heads/}
+  if [ "$branch" = master ]; then
+    echo "master: CI tests it, then deploys it to production"
+    continue
+  fi
+  # Keep in sync with the slug in .github/workflows/ci.yml
+  slug=$(printf %s "$branch" | tr A-Z a-z | tr -c a-z0-9 - | cut -c1-28 | sed 's/-*$//')
+  echo "Preview (ready when CI finishes): https://joelathiessen.ca/share/$kind/$slug/"
+done
+exit 0

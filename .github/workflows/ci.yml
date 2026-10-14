@@ -1,24 +1,32 @@
-# Same file in jatjat/joelathiessen.ca and jatjat/kaly2: build both apps,
-# run them together on a throwaway Kubernetes cluster and test the robot demo.
+# Same file in jatjat/joelathiessen.ca and jatjat/kaly2. On every push: build both
+# apps, run them together on a throwaway Kubernetes cluster and test the robot demo.
+# Then branches get a preview, and master deploys. Deleting a branch removes its preview.
 name: CI
 
 on:
   push:
     branches: ["**"]
+  delete:
   workflow_dispatch:
 
 permissions:
   contents: read
   id-token: write
 
+env:
+  # Repository secrets so GitHub hides them in the public logs
+  PROJECT: ${{ secrets.GCP_PROJECT }}
+  PROJECT_NUMBER: ${{ secrets.GCP_PROJECT_NUMBER }}
+  BUCKET: ${{ secrets.GCP_PRIVATE_BUCKET }}
+
 jobs:
   test-together:
     name: Build and test website with kaly2
+    if: github.event_name != 'delete'
     runs-on: ubuntu-24.04
-    env:
-      # Repository secrets so GitHub hides them in the public logs
-      PROJECT: ${{ secrets.GCP_PROJECT }}
-      BUCKET: ${{ secrets.GCP_PRIVATE_BUCKET }}
+    outputs:
+      website: ${{ steps.refs.outputs.website }}
+      slug: ${{ steps.refs.outputs.slug }}
     steps:
       - name: Pick versions to test together
         id: refs
@@ -32,6 +40,8 @@ jobs:
           }
           echo "website=$(pick joelathiessen.ca)" >> "$GITHUB_OUTPUT"
           echo "kaly2=$(pick kaly2)" >> "$GITHUB_OUTPUT"
+          # Branch name as used in preview links; keep in sync with scripts/git-hooks/pre-push
+          echo "slug=$(printf %s "$GITHUB_REF_NAME" | tr A-Z a-z | tr -c a-z0-9 - | cut -c1-28 | sed 's/-*$//')" >> "$GITHUB_OUTPUT"
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -98,8 +108,7 @@ jobs:
           kubectl logs deploy/kaly2 --tail=50 || true
           kubectl logs deploy/website --tail=50 || true
 
-      - name: Push this repo's image (master only)
-        if: github.ref == 'refs/heads/master'
+      - name: Push this repo's image
         env:
           TOKEN: ${{ steps.auth.outputs.access_token }}
         run: |
@@ -107,20 +116,21 @@ jobs:
           reg="us-central1-docker.pkg.dev/$PROJECT/site"
           echo "$TOKEN" | docker login -u oauth2accesstoken --password-stdin https://us-central1-docker.pkg.dev
           docker tag "$img:local" "$reg/$img:$GITHUB_SHA"
-          docker tag "$img:local" "$reg/$img:master"
           docker push "$reg/$img:$GITHUB_SHA"
-          docker push "$reg/$img:master"
+          if [ "$GITHUB_REF" = refs/heads/master ]; then
+            docker tag "$img:local" "$reg/$img:master"
+            docker push "$reg/$img:master"
+          fi
 
   deploy:
     name: Deploy to Cloud Run
     needs: test-together
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/master' && github.event_name != 'delete'
     runs-on: ubuntu-24.04
     concurrency:
       group: deploy-${{ github.repository }}
       cancel-in-progress: false
     env:
-      PROJECT: ${{ secrets.GCP_PROJECT }}
       SITE_URL: https://website-${{ secrets.GCP_PROJECT_NUMBER }}.us-central1.run.app
     steps:
       # For the end-to-end test script
@@ -142,15 +152,95 @@ jobs:
         run: |
           svc=$([ "$GITHUB_REPOSITORY" = jatjat/kaly2 ] && echo kaly2 || echo website)
           cr() { gcloud run "$@" --project "$PROJECT" --region us-central1 --quiet; }
+          key=$(gcloud secrets versions access latest --secret site-key --project "$PROJECT")
+          echo "::add-mask::$key"
           before=$(cr services describe "$svc" --format='value(status.traffic[0].revisionName)')
           cr deploy "$svc" --image "us-central1-docker.pkg.dev/$PROJECT/site/$svc:$GITHUB_SHA"
           cr services update-traffic "$svc" --to-latest
-          if curl -fsS -o /dev/null "$SITE_URL/" && \
-             docker run --rm -v "$PWD/website/ci:/ci:ro" node:22.20.0-alpine \
+          if curl -fsS -o /dev/null -H "x-site-key: $key" "$SITE_URL/" && \
+             SITE_KEY="$key" docker run --rm -e SITE_KEY -v "$PWD/website/ci:/ci:ro" node:22.20.0-alpine \
                node /ci/robot-demo-test.mjs "${SITE_URL/https/wss}"; then
             echo "The live site works with the new $svc"
           else
             echo "The live site test failed, so $svc goes back to $before"
             cr services update-traffic "$svc" --to-revisions "$before=100"
             exit 1
+          fi
+
+  preview:
+    name: Deploy a preview
+    needs: test-together
+    if: github.ref != 'refs/heads/master' && github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    concurrency:
+      group: preview-${{ github.repository }}-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      # The website version tested above, for the end-to-end test script
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: jatjat/joelathiessen.ca
+          ref: ${{ needs.test-together.outputs.website }}
+          path: website
+          persist-credentials: false
+
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        with:
+          workload_identity_provider: projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/github/providers/github
+          service_account: ci-build@${{ secrets.GCP_PROJECT }}.iam.gserviceaccount.com
+
+      - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
+
+      - name: Deploy the preview and test it
+        env:
+          SLUG: ${{ needs.test-together.outputs.slug }}
+        run: |
+          cr() { gcloud run "$@" --project "$PROJECT" --region us-central1 --quiet; }
+          reg="us-central1-docker.pkg.dev/$PROJECT/site"
+          host() { echo "https://$1---$2-$PROJECT_NUMBER.us-central1.run.app"; }
+          key=$(gcloud secrets versions access latest --secret site-key --project "$PROJECT")
+          echo "::add-mask::$key"
+          if [ "$GITHUB_REPOSITORY" = jatjat/kaly2 ]; then
+            # This kaly2 branch, with a copy of the live website wired to it
+            tag="k-$SLUG"; kind=kaly2
+            cr deploy kaly2-preview --image "$reg/kaly2:$GITHUB_SHA" --tag "$tag" --no-traffic
+            kaly2_url=$(host "$tag" kaly2-preview)
+            website_image="$reg/website:master"
+          else
+            # This website branch, talking to the live kaly2
+            tag="w-$SLUG"; kind=website
+            kaly2_url="https://kaly2-$PROJECT_NUMBER.us-central1.run.app"
+            website_image="$reg/website:$GITHUB_SHA"
+          fi
+          cr deploy website-preview --image "$website_image" --tag "$tag" --no-traffic \
+            --update-env-vars "WS_ADDR=${kaly2_url/https/wss}/api/ws/robot"
+          url=$(host "$tag" website-preview)
+          curl -fsS -o /dev/null -H "x-site-key: $key" "$url/"
+          SITE_KEY="$key" docker run --rm -e SITE_KEY -v "$PWD/website/ci:/ci:ro" node:22.20.0-alpine \
+            node /ci/robot-demo-test.mjs "${url/https/wss}"
+          echo "Preview: https://joelathiessen.ca/share/$kind/$SLUG/" | tee -a "$GITHUB_STEP_SUMMARY"
+
+  remove-preview:
+    name: Remove the preview
+    if: github.event_name == 'delete' && github.event.ref_type == 'branch'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        with:
+          workload_identity_provider: projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/github/providers/github
+          service_account: ci-build@${{ secrets.GCP_PROJECT }}.iam.gserviceaccount.com
+
+      - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
+
+      - name: Remove the deleted branch's preview
+        env:
+          BRANCH: ${{ github.event.ref }}
+        run: |
+          cr() { gcloud run "$@" --project "$PROJECT" --region us-central1 --quiet; }
+          slug=$(printf %s "$BRANCH" | tr A-Z a-z | tr -c a-z0-9 - | cut -c1-28 | sed 's/-*$//')
+          if [ "$GITHUB_REPOSITORY" = jatjat/kaly2 ]; then
+            cr services update-traffic kaly2-preview --remove-tags "k-$slug" || true
+            cr services update-traffic website-preview --remove-tags "k-$slug" || true
+          else
+            cr services update-traffic website-preview --remove-tags "w-$slug" || true
           fi
