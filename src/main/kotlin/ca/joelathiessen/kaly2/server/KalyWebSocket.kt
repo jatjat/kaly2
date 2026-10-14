@@ -1,5 +1,6 @@
 package ca.joelathiessen.kaly2.server
 
+import ca.joelathiessen.kaly2.server.messages.ConnectionOpenRespMsg
 import ca.joelathiessen.kaly2.server.messages.RTMsg
 import ca.joelathiessen.kaly2.server.messages.RobotSessionSettingsMsgDeserializer
 import ca.joelathiessen.kaly2.server.messages.RobotSessionSettingsReqMsg
@@ -31,6 +32,8 @@ class KalyWebSocket(private val robotSessionManager: RobotSessionManager) : WebS
     override fun onOpen(connection: WebSocket.Connection) {
         this.connection = connection
         robotSession?.subscribeToRTEvents(handleRTMessageCaller)
+        // Lets the client know the connection to kaly2 is fully open before it sends anything
+        connection.sendMessage(gson.toJson(RTMsg(ConnectionOpenRespMsg())))
     }
 
     override fun onMessage(data: String) {
