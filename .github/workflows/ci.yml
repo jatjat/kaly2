@@ -1,6 +1,7 @@
 # Same file in jatjat/joelathiessen.ca and jatjat/kaly2. On every push: build this
 # repo's app (the other repo's comes from the registry when it's already been built),
 # run both together on a throwaway Kubernetes cluster and test the robot demo.
+# kaly2 builds with Bazel, which also runs its unit tests.
 # Then branches get a preview, and master deploys. Deleting a branch removes its preview.
 name: CI
 
@@ -84,66 +85,84 @@ jobs:
         id: reuse
         env:
           TOKEN: ${{ steps.auth.outputs.access_token }}
+          THIS: ${{ steps.refs.outputs.this }}
           OTHER: ${{ steps.refs.outputs.other }}
           OTHER_TAG: ${{ steps.refs.outputs.other_tag }}
         run: |
           echo "$TOKEN" | docker login -u oauth2accesstoken --password-stdin https://us-central1-docker.pkg.dev
           if docker pull -q "us-central1-docker.pkg.dev/$PROJECT/site/$OTHER:$OTHER_TAG"; then
             docker tag "us-central1-docker.pkg.dev/$PROJECT/site/$OTHER:$OTHER_TAG" "$OTHER:local"
-            echo "build_other=false" >> "$GITHUB_OUTPUT"
+            build_other=false
             # Load it into the cluster as soon as the cluster is up, while this repo's image builds
             setsid nohup bash -c "until [ -f '$RUNNER_TEMP/kind.exit' ]; do sleep 1; done; \
               '$RUNNER_TEMP/kind' load docker-image '$OTHER:local' --name ci; echo \$? > '$RUNNER_TEMP/other.loaded'" \
               > "$RUNNER_TEMP/other-load.log" 2>&1 < /dev/null &
           else
             echo "No $OTHER:$OTHER_TAG in the registry yet, so it gets built from source"
-            echo "build_other=true" >> "$GITHUB_OUTPUT"
+            build_other=true
           fi
+          echo "build_other=$build_other" >> "$GITHUB_OUTPUT"
+          # The images this run builds: this repo's, plus the other one if it can't be reused
+          for app in website kaly2; do
+            echo "build_$app=$([ "$app" = "$THIS" ] || [ "$build_other" = true ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          done
 
       - name: Fetch files kept out of git
         env:
           TOKEN: ${{ steps.auth.outputs.access_token }}
-          BUILD_WEBSITE: ${{ steps.refs.outputs.this == 'website' || steps.reuse.outputs.build_other == 'true' }}
-          BUILD_KALY2: ${{ steps.refs.outputs.this == 'kaly2' || steps.reuse.outputs.build_other == 'true' }}
+          BUILD_WEBSITE: ${{ steps.reuse.outputs.build_website }}
+          BUILD_KALY2: ${{ steps.reuse.outputs.build_kaly2 }}
         run: |
           if [ "$BUILD_WEBSITE" = true ]; then
             curl -fsS -H "Authorization: Bearer $TOKEN" -o website/public/res.pdf \
               "https://storage.googleapis.com/storage/v1/b/$BUCKET/o/public%2Fres.pdf?alt=media"
           fi
-          m=org/jetbrains/exposed/exposed/0.8.6
-          mkdir -p "legacy-maven/$m"
           if [ "$BUILD_KALY2" = true ]; then
-            for f in exposed-0.8.6.pom exposed-0.8.6.jar; do
-              curl -fsS -H "Authorization: Bearer $TOKEN" -o "legacy-maven/$m/$f" \
-                "https://us-central1-maven.pkg.dev/$PROJECT/legacy-maven/$m/$f"
-            done
+            curl -fsS -H "Authorization: Bearer $TOKEN" -o kaly2/lib/exposed-0.8.6.jar \
+              "https://us-central1-maven.pkg.dev/$PROJECT/legacy-maven/org/jetbrains/exposed/exposed/0.8.6/exposed-0.8.6.jar"
+            echo "d1b7af584e7a526be2a50353d3a88ad1e6a858913745f2fc1d1aa450b09003dd  kaly2/lib/exposed-0.8.6.jar" | sha256sum -c -
           fi
 
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+        if: steps.reuse.outputs.build_website == 'true'
         with:
           # The runner is thrown away anyway; skips ~15 s of teardown
           cleanup: false
 
       # Layers are cached in GitHub's cache, so packages only reinstall when lockfiles change
-      - name: Build this repo's image
+      - name: Build the website image
+        if: steps.reuse.outputs.build_website == 'true'
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
-          context: ${{ steps.refs.outputs.this }}
-          build-contexts: legacy-maven=legacy-maven
-          tags: ${{ steps.refs.outputs.this }}:local
+          context: website
+          tags: website:local
           load: true
-          cache-from: type=gha,scope=${{ steps.refs.outputs.this }}
-          cache-to: type=gha,mode=max,scope=${{ steps.refs.outputs.this }}
+          cache-from: type=gha,scope=website
+          cache-to: ${{ steps.refs.outputs.this == 'website' && 'type=gha,mode=max,scope=website' || '' }}
 
-      - name: Build the other repo's image
-        if: steps.reuse.outputs.build_other == 'true'
-        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+      # Bazel keeps everything it downloads and builds here, so only changed code rebuilds
+      - name: Restore Bazel's caches
+        if: steps.reuse.outputs.build_kaly2 == 'true'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          context: ${{ steps.refs.outputs.other }}
-          build-contexts: legacy-maven=legacy-maven
-          tags: ${{ steps.refs.outputs.other }}:local
-          load: true
-          cache-from: type=gha,scope=${{ steps.refs.outputs.other }}
+          path: |
+            ~/.cache/bazelisk
+            ~/.cache/bazel-disk
+            ~/.cache/bazel-repo
+          key: bazel-${{ hashFiles('kaly2/.bazelversion', 'kaly2/MODULE.bazel.lock', 'kaly2/maven_install.json') }}-${{ github.sha }}
+          restore-keys: |
+            bazel-${{ hashFiles('kaly2/.bazelversion', 'kaly2/MODULE.bazel.lock', 'kaly2/maven_install.json') }}-
+            bazel-
+
+      - name: Build kaly2's image
+        if: steps.reuse.outputs.build_kaly2 == 'true'
+        working-directory: kaly2
+        env:
+          THIS: ${{ steps.refs.outputs.this }}
+        run: |
+          # Its unit tests run in its own CI
+          if [ "$THIS" = kaly2 ]; then bazel test --config=ci //...; fi
+          bazel run --config=ci //:image_load
 
       - name: Wait for the cluster
         run: |
