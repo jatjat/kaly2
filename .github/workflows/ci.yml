@@ -25,6 +25,11 @@ jobs:
     name: Build and test website with kaly2
     if: github.event_name != 'delete'
     runs-on: ubuntu-24.04
+    # A newer push to a branch replaces its older run, which could otherwise finish last and
+    # overwrite the preview and branch image with older code. Master runs all finish.
+    concurrency:
+      group: test-${{ github.repository }}-${{ github.ref }}
+      cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
     outputs:
       website: ${{ steps.refs.outputs.website }}
       slug: ${{ steps.refs.outputs.slug }}
