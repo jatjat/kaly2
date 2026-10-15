@@ -3,3 +3,6 @@ out/
 .gradle
 .idea
 out/
+/bazel-*
+# Fetched from the private Maven repo, see BUILD.bazel
+/lib/exposed-0.8.6.jar

@@ -1,0 +1,14 @@
+# Compile with a downloaded JDK 21, but for Java 8, which the server and tests run on
+common --java_language_version=8
+common --java_runtime_version=remotejdk_8
+common --tool_java_language_version=21
+common --tool_java_runtime_version=remotejdk_21
+
+test --test_output=errors
+
+# CI keeps these in GitHub's cache between runs
+common:ci --disk_cache=~/.cache/bazel-disk
+common:ci --repository_cache=~/.cache/bazel-repo
+
+# javac 21 warns that Java 8 is obsolete on every compile
+common --javacopt=-Xlint:-options
