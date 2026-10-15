@@ -1,8 +1,11 @@
-# Compile with a downloaded JDK 21, but for Java 8, which the server and tests run on
+# Compile with the JDK 25 that Bazel's own Java tools need, but for Java 8, which the
+# server and tests run on. Both JDKs are downloaded, so the machine's JDK doesn't matter.
 common --java_language_version=8
 common --java_runtime_version=remotejdk_8
-common --tool_java_language_version=21
-common --tool_java_runtime_version=remotejdk_21
+common --tool_java_language_version=25
+common --tool_java_runtime_version=remotejdk_25
+# javac warns that Java 8 is obsolete on every compile
+common --javacopt=-Xlint:-options
 
 test --test_output=errors
 
@@ -10,9 +13,7 @@ test --test_output=errors
 # in GitHub's cache between runs
 common:ci --repo_contents_cache=~/.cache/bazel-tools
 common:ci --disk_cache=~/.cache/bazel-outputs
-# GitHub's machines come with a large Android SDK. kaly2 has no Android code, so keep the
-# Android rules (which the Kotlin rules depend on) from scanning it on every run.
-common:ci --repo_env=ANDROID_HOME=
-
-# javac 21 warns that Java 8 is obsolete on every compile
-common --javacopt=-Xlint:-options
+# GitHub's machines come with Swift in /usr/local/bin, and Apple's Swift rules (which the
+# Java rules depend on) spend 30-50 s testing it on every run. kaly2 has no Swift code, so
+# set up tools with a PATH that doesn't have it.
+common:ci --repo_env=PATH=/usr/bin:/bin
