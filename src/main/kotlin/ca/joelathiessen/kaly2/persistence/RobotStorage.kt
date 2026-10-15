@@ -18,7 +18,6 @@ import java.util.Properties
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
-import kotlin.coroutines.experimental.buildSequence
 
 class RobotStorage(private val histid: Long, private val serverUUID: UUID,
                    dbUser: String, dbPassword: String, dbUrl: String) {
@@ -28,7 +27,7 @@ class RobotStorage(private val histid: Long, private val serverUUID: UUID,
     var released = false
         private set
 
-    private val mesInsertSeq = buildSequence {
+    private val mesInsertSeq = sequence {
         val insertStr = "insert into measurements(iteration, mes_num, mes_time, distance, angle," +
                 "guessed_pose_x, guessed_pose_y, guessed_pose_heading, odo_pose_x, odo_pose_y, odo_pose_heading)" +
                 "values"

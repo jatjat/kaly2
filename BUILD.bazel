@@ -1,0 +1,202 @@
+load("@rules_java//java:java_binary.bzl", "java_binary")
+load("@rules_java//java:java_import.bzl", "java_import")
+load("@rules_java//java:java_library.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library", "kt_jvm_test")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load")
+load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
+
+MAIN = "src/main/kotlin/ca/joelathiessen/"
+
+TESTS = "src/test/kotlin/ca/joelathiessen/kaly2/tests/pc/"
+
+java_import(
+    name = "ev3classes",
+    jars = ["lib/leJOS_EV3_0.9.1-beta/lib/ev3/ev3classes.jar"],
+)
+
+# Exposed 0.8.6 was only published on Bintray, which shut down in 2021. Fetch it
+# from the project's private Maven repo into lib/ (kept out of git) before building.
+java_import(
+    name = "exposed",
+    jars = ["lib/exposed-0.8.6.jar"],
+    deps = [
+        "@maven//:joda_time_joda_time",
+        "@maven//:org_slf4j_slf4j_api",
+        "@rules_kotlin//kotlin/compiler:kotlin-reflect",
+    ],
+)
+
+java_library(
+    name = "kdtree",
+    srcs = glob(["src/main/java/ags/**/*.java"]),
+)
+
+kt_jvm_library(
+    name = "itractor",
+    srcs = glob([MAIN + "util/itractor/*.kt"]),
+)
+
+# These packages all use each other, so they compile as one library
+kt_jvm_library(
+    name = "core",
+    srcs = glob(
+        [MAIN + "**/*.kt"],
+        exclude = [
+            MAIN + "kaly2/planner/linear/**",
+            MAIN + "kaly2/server/**",
+            MAIN + "util/itractor/**",
+        ],
+    ),
+    runtime_deps = [
+        "@maven//:com_h2database_h2",
+        "@maven//:mysql_mysql_connector_java",
+    ],
+    deps = [
+        ":ev3classes",
+        ":exposed",
+        ":itractor",
+        ":kdtree",
+        "@maven//:gov_nist_math_jama",
+        "@maven//:joda_time_joda_time",
+    ],
+)
+
+kt_jvm_library(
+    name = "planner_linear",
+    srcs = glob([MAIN + "kaly2/planner/linear/*.kt"]),
+    deps = [
+        ":core",
+        ":ev3classes",
+    ],
+)
+
+kt_jvm_library(
+    name = "server_lib",
+    srcs = glob([MAIN + "kaly2/server/**/*.kt"]),
+    deps = [
+        ":core",
+        ":ev3classes",
+        ":itractor",
+        "@maven//:com_github_salomonbrys_kotson_kotson",
+        "@maven//:com_google_code_gson_gson",
+        "@maven//:org_eclipse_jetty_jetty_http",
+        "@maven//:org_eclipse_jetty_jetty_server",
+        "@maven//:org_eclipse_jetty_jetty_servlet",
+        "@maven//:org_eclipse_jetty_jetty_websocket",
+    ],
+)
+
+# bazel run //:server, or build //:server_deploy.jar for a single runnable jar
+java_binary(
+    name = "server",
+    main_class = "ca.joelathiessen.kaly2.server.KalyServer",
+    runtime_deps = [":server_lib"],
+)
+
+pkg_tar(
+    name = "server_layer",
+    files = {":server_deploy.jar": "app/kaly2.jar"},
+)
+
+oci_image(
+    name = "image",
+    base = "@eclipse_temurin_8_jre_linux_amd64",
+    cmd = [
+        "java",
+        "-XX:+UseConcMarkSweepGC",
+        "-XX:CMSIncrementalSafetyFactor=50",
+        "-XX:+UseParNewGC",
+        "-XX:+CMSConcurrentMTEnabled",
+        "-XX:ConcGCThreads=2",
+        "-XX:ParallelGCThreads=2",
+        "-XX:GCTimeRatio=90",
+        "-XX:MaxGCPauseMillis=1",
+        "-XX:GCPauseIntervalMillis=1000",
+        "-jar",
+        "kaly2.jar",
+    ],
+    exposed_ports = ["9000/tcp"],
+    tars = [":server_layer"],
+    workdir = "/app",
+)
+
+# bazel run //:image_load puts the image into Docker as kaly2:local
+oci_load(
+    name = "image_load",
+    image = ":image",
+    repo_tags = ["kaly2:local"],
+)
+
+# Tests
+
+kt_jvm_library(
+    name = "test_util",
+    testonly = True,
+    srcs = [
+        TESTS + "unit/util/TestUtil.kt",
+        TESTS + "unit/util/itractor/ItrActorSampleImpl.kt",
+    ],
+    deps = [
+        ":core",
+        ":itractor",
+    ],
+)
+
+TEST_DEPS = [
+    ":core",
+    ":ev3classes",
+    ":exposed",
+    ":itractor",
+    ":kdtree",
+    ":planner_linear",
+    ":server_lib",
+    ":test_util",
+    "@maven//:com_nhaarman_mockito_kotlin",
+    "@maven//:gov_nist_math_jama",
+    "@maven//:junit_junit",
+    "@maven//:org_mockito_mockito_core",
+]
+
+# These declare the subconscious test package although they sit in other folders
+WRONG_PACKAGE = {
+    "GlobalMapTest": "ca.joelathiessen.kaly2.tests.pc.unit.subconscious",
+    "GlobalPathPlannerTest": "ca.joelathiessen.kaly2.tests.pc.unit.subconscious",
+    "LinearPathSegmentTest": "ca.joelathiessen.kaly2.tests.pc.unit.subconscious",
+}
+
+# One target per test class, e.g. bazel test //:RobotTest
+[kt_jvm_test(
+    name = name,
+    srcs = [src],
+    resource_strip_prefix = "src/test/resources",
+    # Mocks final Kotlin classes
+    resources = ["src/test/resources/mockito-extensions/org.mockito.plugins.MockMaker"],
+    test_class = WRONG_PACKAGE.get(name, folder.replace("/", ".")) + "." + name,
+    deps = TEST_DEPS,
+) for src in glob([TESTS + "**/*Test.kt"]) for folder, name in [(
+    src[len("src/test/kotlin/"):].rpartition("/")[0],
+    src.split("/")[-1][:-len(".kt")],
+)]]
+
+# The Swing demos, e.g. bazel run //:MainLoopDemo
+kt_jvm_library(
+    name = "demos",
+    testonly = True,
+    srcs = glob([TESTS + "acceptance/*.kt"]),
+    resource_strip_prefix = "src/test/resources",
+    resources = glob(["src/test/resources/images/*"]),
+    deps = TEST_DEPS,
+)
+
+[java_binary(
+    name = demo,
+    testonly = True,
+    main_class = "ca.joelathiessen.kaly2.tests.pc.acceptance." + demo,
+    runtime_deps = [":demos"],
+) for demo in [
+    "Demo",
+    "FastSLAMDemo",
+    "FeatureDetectorDemo",
+    "MainLoopDemo",
+    "RRTStarDemo",
+]]
