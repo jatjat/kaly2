@@ -6,9 +6,13 @@ common --tool_java_runtime_version=remotejdk_21
 
 test --test_output=errors
 
-# CI keeps these in GitHub's cache between runs
-common:ci --disk_cache=~/.cache/bazel-disk
-common:ci --repository_cache=~/.cache/bazel-repo
+# CI keeps the unpacked tools (JDKs, Kotlin compiler, libraries) and the build outputs
+# in GitHub's cache between runs
+common:ci --repo_contents_cache=~/.cache/bazel-tools
+common:ci --disk_cache=~/.cache/bazel-outputs
+# GitHub's machines come with a large Android SDK. kaly2 has no Android code, so keep the
+# Android rules (which the Kotlin rules depend on) from scanning it on every run.
+common:ci --repo_env=ANDROID_HOME=
 
 # javac 21 warns that Java 8 is obsolete on every compile
 common --javacopt=-Xlint:-options
