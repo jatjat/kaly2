@@ -34,6 +34,8 @@ maven.install(
         "org.jetbrains.kotlin:kotlin-runtime",
         "org.jetbrains.kotlin:kotlin-stdlib",
     ],
+    # protobuf (used by the Kotlin rules) adds its own libraries to this list
+    known_contributing_modules = ["protobuf"],
     repositories = ["https://repo1.maven.org/maven2"],
 )
 
