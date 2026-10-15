@@ -145,7 +145,7 @@ jobs:
           cache-from: type=gha,scope=website
           cache-to: ${{ steps.refs.outputs.this == 'website' && 'type=gha,mode=max,scope=website' || '' }}
 
-      # Saved again only when kaly2's dependencies change
+      # Saved again only when kaly2's dependencies or Bazel settings change
       - name: Restore Bazel's tools
         if: steps.reuse.outputs.build_kaly2 == 'true'
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -153,7 +153,7 @@ jobs:
           path: |
             ~/.cache/bazelisk
             ~/.cache/bazel-tools
-          key: bazel-tools-${{ hashFiles('kaly2/.bazelversion', 'kaly2/MODULE.bazel', 'kaly2/MODULE.bazel.lock', 'kaly2/maven_install.json') }}
+          key: bazel-tools-${{ hashFiles('kaly2/.bazelrc', 'kaly2/.bazelversion', 'kaly2/MODULE.bazel', 'kaly2/MODULE.bazel.lock', 'kaly2/maven_install.json') }}
 
       # The last run's outputs, so only changed code recompiles
       - name: Restore Bazel's build outputs
