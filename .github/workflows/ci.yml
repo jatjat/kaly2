@@ -265,11 +265,12 @@ jobs:
           cr() { gcloud run "$@" --project "$PROJECT" --region us-central1 --quiet; }
           reg="us-central1-docker.pkg.dev/$PROJECT/site"
           host() { echo "https://$1---$2-$PROJECT_NUMBER.us-central1.run.app"; }
+          # kaly2's simulation needs 2 CPUs to take about 25 steps a second
           # Like the test above, a same-named branch of the other repo is paired with this one
           if [ "$GITHUB_REPOSITORY" = jatjat/kaly2 ]; then
             # This kaly2 branch, with a copy of the live website (or its same-named branch)
             tag="k-$SLUG"; kind=kaly2
-            cr deploy kaly2-preview --image "$reg/kaly2:$GITHUB_SHA" --tag "$tag" --no-traffic
+            cr deploy kaly2-preview --image "$reg/kaly2:$GITHUB_SHA" --tag "$tag" --no-traffic --cpu 2
             kaly2_url=$(host "$tag" kaly2-preview)
             website_image="$reg/website:$OTHER_TAG"
           else
@@ -278,7 +279,7 @@ jobs:
             if [ "$OTHER_TAG" = master ]; then
               kaly2_url="https://kaly2-$PROJECT_NUMBER.us-central1.run.app"
             else
-              cr deploy kaly2-preview --image "$reg/kaly2:$OTHER_TAG" --tag "$tag" --no-traffic
+              cr deploy kaly2-preview --image "$reg/kaly2:$OTHER_TAG" --tag "$tag" --no-traffic --cpu 2
               kaly2_url=$(host "$tag" kaly2-preview)
             fi
             website_image="$reg/website:$GITHUB_SHA"
@@ -326,9 +327,11 @@ jobs:
           SITE_KEY: ${{ steps.secrets.outputs.site_key }}
         run: |
           svc=$([ "$GITHUB_REPOSITORY" = jatjat/kaly2 ] && echo kaly2 || echo website)
+          # kaly2's simulation needs 2 CPUs to take about 25 steps a second
+          cpu=$([ "$svc" = kaly2 ] && echo 2 || echo 1)
           cr() { gcloud run "$@" --project "$PROJECT" --region us-central1 --quiet; }
           before=$(cr services describe "$svc" --format='value(status.traffic[0].revisionName)')
-          cr deploy "$svc" --image "us-central1-docker.pkg.dev/$PROJECT/site/$svc:$GITHUB_SHA"
+          cr deploy "$svc" --image "us-central1-docker.pkg.dev/$PROJECT/site/$svc:$GITHUB_SHA" --cpu "$cpu"
           cr services update-traffic "$svc" --to-latest
           if curl -fsS -o /dev/null -H "x-site-key: $SITE_KEY" "$SITE_URL/" && \
              docker run --rm -e SITE_KEY -v "$PWD/website/ci:/ci:ro" node:22.20.0-alpine \
