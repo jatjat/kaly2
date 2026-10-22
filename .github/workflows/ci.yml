@@ -84,15 +84,19 @@ jobs:
           service_account: ci-build@${{ secrets.GCP_PROJECT }}.iam.gserviceaccount.com
           token_format: access_token
 
+      - uses: docker/login-action@v4
+        with:
+          registry: us-central1-docker.pkg.dev
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+
       - name: Use the other repo's image if its CI already built it
         id: reuse
         env:
-          TOKEN: ${{ steps.auth.outputs.access_token }}
           THIS: ${{ steps.refs.outputs.this }}
           OTHER: ${{ steps.refs.outputs.other }}
           OTHER_TAG: ${{ steps.refs.outputs.other_tag }}
         run: |
-          echo "$TOKEN" | docker login -u oauth2accesstoken --password-stdin https://us-central1-docker.pkg.dev
           if docker pull -q "us-central1-docker.pkg.dev/$PROJECT/site/$OTHER:$OTHER_TAG"; then
             docker tag "us-central1-docker.pkg.dev/$PROJECT/site/$OTHER:$OTHER_TAG" "$OTHER:local"
             build_other=false
@@ -227,26 +231,21 @@ jobs:
           done
 
       # Branch pushes get a preview, in this same job (same account) to skip a second job's startup
-      - name: Check for a preinstalled gcloud
-        id: gcloud
+      - id: secrets
         if: github.ref != 'refs/heads/master' && github.event_name == 'push'
-        run: echo "installed=$(command -v gcloud > /dev/null && echo true || echo false)" >> "$GITHUB_OUTPUT"
-
-      - uses: google-github-actions/setup-gcloud@v3
-        if: github.ref != 'refs/heads/master' && github.event_name == 'push'
+        uses: google-github-actions/get-secretmanager-secrets@v3
         with:
-          skip_install: ${{ steps.gcloud.outputs.installed == 'true' }}
+          secrets: site_key:${{ secrets.GCP_PROJECT }}/site-key
 
       - name: Deploy a preview and test it
         if: github.ref != 'refs/heads/master' && github.event_name == 'push'
         env:
           SLUG: ${{ steps.refs.outputs.slug }}
+          SITE_KEY: ${{ steps.secrets.outputs.site_key }}
         run: |
           cr() { gcloud run "$@" --project "$PROJECT" --region us-central1 --quiet; }
           reg="us-central1-docker.pkg.dev/$PROJECT/site"
           host() { echo "https://$1---$2-$PROJECT_NUMBER.us-central1.run.app"; }
-          key=$(gcloud secrets versions access latest --secret site-key --project "$PROJECT")
-          echo "::add-mask::$key"
           if [ "$GITHUB_REPOSITORY" = jatjat/kaly2 ]; then
             # This kaly2 branch, with a copy of the live website wired to it
             tag="k-$SLUG"; kind=kaly2
@@ -262,8 +261,8 @@ jobs:
           cr deploy website-preview --image "$website_image" --tag "$tag" --no-traffic \
             --update-env-vars "WS_ADDR=${kaly2_url/https/wss}/api/ws/robot"
           url=$(host "$tag" website-preview)
-          curl -fsS -o /dev/null -H "x-site-key: $key" "$url/"
-          SITE_KEY="$key" docker run --rm -e SITE_KEY -v "$PWD/website/ci:/ci:ro" node:22.20.0-alpine \
+          curl -fsS -o /dev/null -H "x-site-key: $SITE_KEY" "$url/"
+          docker run --rm -e SITE_KEY -v "$PWD/website/ci:/ci:ro" node:22.20.0-alpine \
             node /ci/robot-demo-test.mjs "${url/https/wss}"
           echo "Preview: https://joelathiessen.ca/share/$kind/$SLUG/" | tee -a "$GITHUB_STEP_SUMMARY"
 
@@ -291,25 +290,23 @@ jobs:
           workload_identity_provider: projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/github/providers/github
           service_account: ci-deploy-prod@${{ secrets.GCP_PROJECT }}.iam.gserviceaccount.com
 
-      - name: Check for a preinstalled gcloud
-        id: gcloud
-        run: echo "installed=$(command -v gcloud > /dev/null && echo true || echo false)" >> "$GITHUB_OUTPUT"
-
-      - uses: google-github-actions/setup-gcloud@v3
+      - id: secrets
+        uses: google-github-actions/get-secretmanager-secrets@v3
         with:
-          skip_install: ${{ steps.gcloud.outputs.installed == 'true' }}
+          secrets: site_key:${{ secrets.GCP_PROJECT }}/site-key
 
+      # GitHub's machines come with gcloud, which uses the sign-in above
       - name: Deploy, test the live site, roll back if the test fails
+        env:
+          SITE_KEY: ${{ steps.secrets.outputs.site_key }}
         run: |
           svc=$([ "$GITHUB_REPOSITORY" = jatjat/kaly2 ] && echo kaly2 || echo website)
           cr() { gcloud run "$@" --project "$PROJECT" --region us-central1 --quiet; }
-          key=$(gcloud secrets versions access latest --secret site-key --project "$PROJECT")
-          echo "::add-mask::$key"
           before=$(cr services describe "$svc" --format='value(status.traffic[0].revisionName)')
           cr deploy "$svc" --image "us-central1-docker.pkg.dev/$PROJECT/site/$svc:$GITHUB_SHA"
           cr services update-traffic "$svc" --to-latest
-          if curl -fsS -o /dev/null -H "x-site-key: $key" "$SITE_URL/" && \
-             SITE_KEY="$key" docker run --rm -e SITE_KEY -v "$PWD/website/ci:/ci:ro" node:22.20.0-alpine \
+          if curl -fsS -o /dev/null -H "x-site-key: $SITE_KEY" "$SITE_URL/" && \
+             docker run --rm -e SITE_KEY -v "$PWD/website/ci:/ci:ro" node:22.20.0-alpine \
                node /ci/robot-demo-test.mjs "${SITE_URL/https/wss}"; then
             echo "The live site works with the new $svc"
           else
@@ -328,8 +325,7 @@ jobs:
           workload_identity_provider: projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/github/providers/github
           service_account: ci-build@${{ secrets.GCP_PROJECT }}.iam.gserviceaccount.com
 
-      - uses: google-github-actions/setup-gcloud@v3
-
+      # GitHub's machines come with gcloud, which uses the sign-in above
       - name: Remove the deleted branch's preview
         env:
           BRANCH: ${{ github.event.ref }}
