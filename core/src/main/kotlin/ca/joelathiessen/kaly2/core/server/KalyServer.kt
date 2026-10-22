@@ -102,7 +102,10 @@ class KalyServer(
         val STEP_DIST = 2f
 
         val MAX_ROT = 1.0f
-        val MAX_SPEED = 1.0f
+        // Up to March 2019 (as PILOT_MAX_DIST) the simulation could plan moves of up to 20 units.
+        // At 1 the local planner only tries standing still, so the simulated robot never drives.
+        // val MAX_SPEED = 1.0f
+        val MAX_SPEED = 20f
 
         val MIN_WIDTH = 400.0f
 
