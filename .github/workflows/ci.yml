@@ -146,6 +146,15 @@ jobs:
           cache-from: type=gha,scope=website
           cache-to: ${{ steps.refs.outputs.this == 'website' && 'type=gha,mode=max,scope=website' || '' }}
 
+      # The website's own CI also checks it keeps running when kaly2 can't be reached
+      - name: Test the website with kaly2 unreachable
+        if: steps.refs.outputs.this == 'website'
+        run: |
+          docker run -d --name website-no-kaly2 --network host -e PORT=3102 \
+            -e WS_ADDR=ws://127.0.0.1:9/api/ws/robot website:local
+          docker run --rm --network host -v "$PWD/website/ci:/ci:ro" node:22.20.0-alpine \
+            node /ci/website-server-test.mjs
+
       # Saved again only when kaly2's dependencies or Bazel settings change
       - name: Restore Bazel's tools
         if: steps.reuse.outputs.build_kaly2 == 'true'
@@ -215,6 +224,7 @@ jobs:
         run: |
           kubectl logs deploy/kaly2 --tail=50 || true
           kubectl logs deploy/website --tail=50 || true
+          docker logs website-no-kaly2 --tail=30 || true
           tail -20 "$RUNNER_TEMP/kind.log" || true
 
       - name: Push this repo's image
