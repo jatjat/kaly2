@@ -15,7 +15,8 @@ class SubconsciousActed(
     private val sensor: Kaly2Sensor,
     private val spinner: Spinnable,
     private var globalManeuvers: List<RobotPose>,
-    private val minMeasTime: Long
+    private val minMeasTime: Long,
+    private val sampleWaitTime: Long
 ) {
 
     fun iterate(newGlobalManeuvers: List<RobotPose> = globalManeuvers): SubconsciousActedResults {
@@ -46,7 +47,8 @@ class SubconsciousActed(
             measurements.add(Measurement(sample[0], sample[1], mesPose, robotPilot.poses.odoPose,
                 System.currentTimeMillis()))
             // temporary sleep:
-            Thread.sleep(10)
+            // Thread.sleep(10)
+            Thread.sleep(sampleWaitTime)
         }
 
         val plan = localPlanner.makePlan(measurements, mesPose, robotPilot.maxDesiredPlanRot, robotPilot.maxDesiredPlanDist,

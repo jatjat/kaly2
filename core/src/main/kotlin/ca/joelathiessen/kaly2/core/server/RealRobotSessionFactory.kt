@@ -50,6 +50,7 @@ class RealRobotSessionFactory(
     private val globalPlannerItrs: Int,
     private val mapRemoveInvalidObsInterval: Int,
     private val minSubcMeasTime: Long,
+    private val sampleWaitTime: Long,
     private val nnAsocThreshold: Float,
     private val persistentStorage: PersistentStorage,
     private val robotSerialCreator: SerialConnectionCreator,
@@ -106,7 +107,7 @@ class RealRobotSessionFactory(
 
             return RobotSessionFactoryResult.LocalRobotSession(RobotSession(robotStorage.sid,
                     sessionStoppedWithNoSubscribersHandler, startPose, initalGoalPose, realPilot, realSpinner,
-                    realSensor, featureDetector, minSubcMeasTime, map, robotStorage, slam, localPlanner, globalPathPlanner))
+                    realSensor, featureDetector, minSubcMeasTime, sampleWaitTime, map, robotStorage, slam, localPlanner, globalPathPlanner))
         }
     }
 }

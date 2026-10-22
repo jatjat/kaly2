@@ -52,6 +52,7 @@ class SimRobotSessionFactory(
     private val globalPlannerItrs: Int,
     private val mapRemoveInvalidObsInterval: Int,
     private val minSubcMeasTime: Long,
+    private val sampleWaitTime: Long,
     private val nnAsocThreshold: Float,
     private val persistentStorage: PersistentStorage
 ) : RobotSessionFactory {
@@ -104,7 +105,7 @@ class SimRobotSessionFactory(
 
             return RobotSessionFactoryResult.LocalRobotSession(RobotSession(robotStorage.sid,
                     sessionStoppedWithNoSubscribersHandler, mapData.startPose, initalGoalPose, simPilot, simSpinner,
-                    simSensor, featureDetector, minSubcMeasTime, map, robotStorage, slam, localPlanner, globalPathPlanner))
+                    simSensor, featureDetector, minSubcMeasTime, sampleWaitTime, map, robotStorage, slam, localPlanner, globalPathPlanner))
         }
     }
 

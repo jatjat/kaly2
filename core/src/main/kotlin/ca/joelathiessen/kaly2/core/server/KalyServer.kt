@@ -121,6 +121,10 @@ class KalyServer(
         val MAP_REMOVE_INVALID_OBS_INTERVAL = 10
 
         val MIN_MES_TIME = 160L
+        // The simulated sensor needn't wait between readings like the EV3's, so a step takes
+        // about MIN_MES_TIME instead of 4 s
+        // val SAMPLE_WAIT_TIME = 10L
+        val SAMPLE_WAIT_TIME = 0L
 
         val DB_INIT = if (isAndroid()) PersistentStorage.DbInitTypes.ANDROID_FILE_DB
         else PersistentStorage.DbInitTypes.FILE_DB
@@ -138,7 +142,7 @@ class KalyServer(
                 DEFAULT_ANG_VARIANCE, IDENTITY_VARIANCE, image, MAX_SENSOR_RANGE, SENSOR_DIST_STDEV,
                 SENSOR_ANG_STDEV, LINE_THRESHOLD, CHECK_WITHIN_ANGLE, MAX_RATIO, LCL_PLN_ROT_STEP, LCL_PLN_DIST_STEP,
                 LCL_PLN_GRID_STEP, LCL_PLN_GRID_SIZE, OBS_SIZE, SEARCH_DIST, GBL_PTH_PLN_STEP_DIST, GBL_PTH_PLN_ITRS,
-                MAP_REMOVE_INVALID_OBS_INTERVAL, MIN_MES_TIME, NN_ASSOC_THRESHOLD, persistentStorage)
+                MAP_REMOVE_INVALID_OBS_INTERVAL, MIN_MES_TIME, SAMPLE_WAIT_TIME, NN_ASSOC_THRESHOLD, persistentStorage)
     }
 
     fun configureRealFactory(robotConnectionCreator: SerialConnectionCreator, sensorConnectionCreator: SerialConnectionCreator): RealRobotSessionFactory {
@@ -177,6 +181,8 @@ class KalyServer(
         val MAP_REMOVE_INVALID_OBS_INTERVAL = 10
 
         val MIN_MES_TIME = 160L
+        // The EV3's wait between sensor readings
+        val SAMPLE_WAIT_TIME = 10L
 
         val DB_INIT = if (isAndroid()) PersistentStorage.DbInitTypes.ANDROID_FILE_DB
         else PersistentStorage.DbInitTypes.FILE_DB
@@ -193,7 +199,7 @@ class KalyServer(
                 MAX_ROT, DIST_TO_SPEED_CONV, DEFAULT_NUM_PARTICLES, DEFAULT_DIST_VARIANCE, DEFAULT_ANG_VARIANCE,
                 IDENTITY_VARIANCE, LINE_THRESHOLD, CHECK_WITHIN_ANGLE, MAX_RATIO, LCL_PLN_ROT_STEP, LCL_PLN_DIST_STEP,
                 LCL_PLN_GRID_STEP, LCL_PLN_GRID_SIZE, OBS_SIZE, SEARCH_DIST, GBL_PTH_PLN_STEP_DIST, GBL_PTH_PLN_ITRS,
-                MAP_REMOVE_INVALID_OBS_INTERVAL, MIN_MES_TIME, NN_ASSOC_THRESHOLD, persistentStorage,
+                MAP_REMOVE_INVALID_OBS_INTERVAL, MIN_MES_TIME, SAMPLE_WAIT_TIME, NN_ASSOC_THRESHOLD, persistentStorage,
                 robotConnectionCreator, sensorConnectionCreator)
     }
 }

@@ -51,6 +51,7 @@ class RobotSession(
     sensor: Kaly2Sensor,
     featureDetector: FeatureDetector,
     minSubcMeasTime: Long,
+    sampleWaitTime: Long,
     map: GlobalMap,
     private val robotStorage: RobotStorage,
     slam: FastSLAM,
@@ -88,7 +89,7 @@ class RobotSession(
         val accurateOdo = AccurateSlamOdometry(robotPilot.poses.odoPose, { robotPilot.poses.odoPose })
 
         val subConsc = SubconsciousActed(robotPilot, accurateOdo, localPlanner,
-                sensor, spinner, gblManeuvers, minSubcMeasTime)
+                sensor, spinner, gblManeuvers, minSubcMeasTime, sampleWaitTime)
 
         val robotCore = RobotCoreActed(initialGoal, accurateOdo, slam, featureDetector, map, robotStorage)
 
