@@ -62,6 +62,7 @@ class KalyWebSocket(private val robotSessionManager: RobotSessionManager) : WebS
                     is RobotSessionManager.GetHandlerResult.RemoteRobotSessionAddressResult -> {
                         alternateServerAddress = robotSessionResult.address
                     }
+                    else -> {}
                 }
                 connection.sendMessage(gson.toJson(RTMsg(RobotSessionSubscribeResponse(returnSessionID, success,
                         alternateServerAddress))))

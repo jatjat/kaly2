@@ -9,6 +9,7 @@ class ApplicationAPI(private val robotSessionManager: RobotSessionManager) {
             is RobotSessionManager.GetHandlerResult.RobotSessionResult -> {
                 return handlerResult.session
             }
+            else -> {}
         }
         return null
     }

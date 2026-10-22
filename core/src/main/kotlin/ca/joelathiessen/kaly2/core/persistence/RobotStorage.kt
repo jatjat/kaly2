@@ -40,7 +40,7 @@ class RobotStorage(
         private set
 
     fun makeInsertSeq(tableName: String, columnNames: List<String>): Sequence<String> {
-        val seq = buildSequence {
+        val seq = sequence {
             val insertStr = "insert into $tableName(${columnNames.joinToString()}) values"
             val questionMarks = (0 until columnNames.size).map { "?" }
             val valStr = "(${questionMarks.joinToString()})"
