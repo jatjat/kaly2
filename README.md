@@ -27,12 +27,13 @@ Builds use [Bazel](https://bazel.build) through [Bazelisk](https://github.com/ba
 
 Exposed 0.8.6 was only published on Bintray, which shut down in 2021, so first fetch it from the private Maven repo:
 ```
-./gradlew core:run
+gcloud artifacts files download org/jetbrains/exposed/exposed/0.8.6/exposed-0.8.6.jar --repository legacy-maven \
+  --location us-central1 --project <project> --destination core/lib --local-filename exposed-0.8.6.jar
 ```
 
 To run as a webserver:
 ```
-./gradlew core:installDist && ./core/build/install/bin/core
+bazel run //core:server
 ```
 
 To run the JUnit tests:
@@ -42,7 +43,7 @@ bazel test //...
 
 To build the Docker image and load it into Docker as `kaly2:local`:
 ```
-bazel run //:image_load
+bazel run //core:image_load
 ```
 
-To preview functionality not yet available on the website, you can run an acceptance test such as `MainLoopDemo` in `MainLoopView.kt` from an IDE or by writing a custom Gradle configuration.
+To preview functionality not yet available on the website, you can run an acceptance test such as `MainLoopDemo` in `MainLoopView.kt` with `bazel run //core:MainLoopDemo`.

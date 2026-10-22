@@ -13,10 +13,16 @@
     "joda-time:joda-time": -187295576,
     "junit:junit": 1849086067,
     "mysql:mysql-connector-java": 1297911093,
-    "org.eclipse.jetty:jetty-http": -799284441,
-    "org.eclipse.jetty:jetty-server": 1815562060,
-    "org.eclipse.jetty:jetty-servlet": 983147710,
-    "org.eclipse.jetty:jetty-websocket": -622542084,
+    "org.eclipse.jetty:jetty-continuation": 860264100,
+    "org.eclipse.jetty:jetty-http": 994253813,
+    "org.eclipse.jetty:jetty-io": -455867117,
+    "org.eclipse.jetty:jetty-security": -466405971,
+    "org.eclipse.jetty:jetty-server": 940056368,
+    "org.eclipse.jetty:jetty-servlet": -1442100354,
+    "org.eclipse.jetty:jetty-util": -453751441,
+    "org.eclipse.jetty:jetty-webapp": -1931261894,
+    "org.eclipse.jetty:jetty-websocket": 1692691840,
+    "org.eclipse.jetty:jetty-xml": -33931696,
     "org.jetbrains.kotlin:kotlin-reflect": -1806966424,
     "org.jetbrains.kotlin:kotlin-runtime": 2125520387,
     "org.jetbrains.kotlin:kotlin-stdlib": -84985713,
@@ -36,21 +42,23 @@
     "com.h2database:h2": -1239839677,
     "com.nhaarman:mockito-kotlin": 2102632902,
     "gov.nist.math:jama": 1887634524,
+    "javax.servlet:servlet-api": 1949759031,
     "joda-time:joda-time": 1444653929,
     "junit:junit": -643342642,
     "mysql:mysql-connector-java": 394274383,
     "net.bytebuddy:byte-buddy": -91871923,
     "net.bytebuddy:byte-buddy-agent": -1200741159,
     "org.checkerframework:checker-qual": -1533199059,
-    "org.eclipse.jetty.orbit:javax.servlet": 801286045,
-    "org.eclipse.jetty:jetty-continuation": 1854041969,
-    "org.eclipse.jetty:jetty-http": 1620239250,
-    "org.eclipse.jetty:jetty-io": 797506219,
-    "org.eclipse.jetty:jetty-security": 1928424130,
-    "org.eclipse.jetty:jetty-server": 1186940475,
-    "org.eclipse.jetty:jetty-servlet": -1145452132,
-    "org.eclipse.jetty:jetty-util": -1593807159,
-    "org.eclipse.jetty:jetty-websocket": -2071404439,
+    "org.eclipse.jetty:jetty-continuation": -1389029505,
+    "org.eclipse.jetty:jetty-http": -1275456541,
+    "org.eclipse.jetty:jetty-io": -1576487153,
+    "org.eclipse.jetty:jetty-security": 482279896,
+    "org.eclipse.jetty:jetty-server": 1769525355,
+    "org.eclipse.jetty:jetty-servlet": -359910179,
+    "org.eclipse.jetty:jetty-util": 1344317147,
+    "org.eclipse.jetty:jetty-webapp": -84468789,
+    "org.eclipse.jetty:jetty-websocket": -1243321092,
+    "org.eclipse.jetty:jetty-xml": -1196609220,
     "org.hamcrest:hamcrest-core": 649657847,
     "org.mockito:mockito-core": 1602741172,
     "org.objenesis:objenesis": -1789524489,
@@ -126,6 +134,12 @@
       },
       "version": "1.0.3"
     },
+    "javax.servlet:servlet-api": {
+      "shasums": {
+        "jar": "c658ea360a70faeeadb66fb3c90a702e4142a0ab7768f9ae9828678e0d9ad4dc"
+      },
+      "version": "2.5"
+    },
     "joda-time:joda-time": {
       "shasums": {
         "jar": "b049a43c1057942e6acfbece008e4949b2e35d1658d0c8e06f4485397e2fa4e7"
@@ -162,59 +176,65 @@
       },
       "version": "3.33.0"
     },
-    "org.eclipse.jetty.orbit:javax.servlet": {
-      "shasums": {
-        "jar": "fbeb9035112292148b211226409ea25d8acc5b6ba2f7afe806516d79e50e10fc"
-      },
-      "version": "2.5.0.v201103041518"
-    },
     "org.eclipse.jetty:jetty-continuation": {
       "shasums": {
-        "jar": "83593a531ac7bd817b20dc8e04430033e857e9cc6f33f575cd7f10cdcaf28511"
+        "jar": "db9e12f16955db814ea0c0f37353af64158d833a4ee3ba1acef5a203bc5807fe"
       },
-      "version": "7.6.19.v20160209"
+      "version": "7.5.4.v20111024"
     },
     "org.eclipse.jetty:jetty-http": {
       "shasums": {
-        "jar": "d7f251a3c42f42dd0ca7669171c83fd565b1bdaa6a4d4ab18c33e121df2092eb"
+        "jar": "f98dd1a8c04362d896090991b6e8919a095e629cedf3ef1546aceae8fc7c7293"
       },
-      "version": "7.6.19.v20160209"
+      "version": "7.5.4.v20111024"
     },
     "org.eclipse.jetty:jetty-io": {
       "shasums": {
-        "jar": "0609aa1829d1e8bf7618bc88105147b84ab1fcebb48f0159364d64cf0bd3b1c3"
+        "jar": "6c7602e275cfa0e6c83eb7536a67c90e67e24cf0a7c335dfa5c43a807093d36b"
       },
-      "version": "7.6.19.v20160209"
+      "version": "7.5.4.v20111024"
     },
     "org.eclipse.jetty:jetty-security": {
       "shasums": {
-        "jar": "b763c47e507f300473e1a44a7edf3176e8a75370f04d7d621879eca27820d3df"
+        "jar": "72700bc25c038f22b66b223fa6cdf5f34d6771492440a8293ab431f6e369295c"
       },
-      "version": "7.6.19.v20160209"
+      "version": "7.5.4.v20111024"
     },
     "org.eclipse.jetty:jetty-server": {
       "shasums": {
-        "jar": "3e4be367d6b4ee38515f1ef2750ed40c9d8092cd268942091735db89262c5633"
+        "jar": "658b45d4ff98668f9e6ac41fb5fb17a5b48a179fbc31988ab47f690cf9b08804"
       },
-      "version": "7.6.19.v20160209"
+      "version": "7.5.4.v20111024"
     },
     "org.eclipse.jetty:jetty-servlet": {
       "shasums": {
-        "jar": "8b04cdf22d4fe091e2e947178969a89334fc452644ee6860084e8c419f2b4b10"
+        "jar": "0622018259dc7da361fdfa670629ac0e90a1ff8073c3f977d0e873b69cea3737"
       },
-      "version": "7.6.19.v20160209"
+      "version": "7.5.4.v20111024"
     },
     "org.eclipse.jetty:jetty-util": {
       "shasums": {
-        "jar": "b17e324f3384f26b8eb6dc5b5259f242478e6162aa45148fd313d2bf2aceabc2"
+        "jar": "c3df13a0dd65d9d686d0bb5b8d99a7d932d15758cb6f0312e57c0e918cb5a646"
       },
-      "version": "7.6.19.v20160209"
+      "version": "7.5.4.v20111024"
+    },
+    "org.eclipse.jetty:jetty-webapp": {
+      "shasums": {
+        "jar": "589a2dfc491b4f337cbb6764fbc114ae7d369e59fc03dd8b7e229825c6073e40"
+      },
+      "version": "7.5.4.v20111024"
     },
     "org.eclipse.jetty:jetty-websocket": {
       "shasums": {
-        "jar": "c5fdaa912ced654664bd189e36d69c2c86e8a6f60e38211013c27b8ebdc87024"
+        "jar": "00d967300c68bcceda77c78db092324f541e49ef767801d6e777e4cd1739e3eb"
       },
-      "version": "7.6.19.v20160209"
+      "version": "7.5.4.v20111024"
+    },
+    "org.eclipse.jetty:jetty-xml": {
+      "shasums": {
+        "jar": "b13bee63299b1ce381f794b9834d86cfd40acee7ff66ad5d71b9b340249c8921"
+      },
+      "version": "7.5.4.v20111024"
     },
     "org.hamcrest:hamcrest-core": {
       "shasums": {
@@ -269,16 +289,23 @@
       "org.eclipse.jetty:jetty-server"
     ],
     "org.eclipse.jetty:jetty-server": [
-      "org.eclipse.jetty.orbit:javax.servlet",
+      "javax.servlet:servlet-api",
       "org.eclipse.jetty:jetty-continuation",
       "org.eclipse.jetty:jetty-http"
     ],
     "org.eclipse.jetty:jetty-servlet": [
       "org.eclipse.jetty:jetty-security"
     ],
+    "org.eclipse.jetty:jetty-webapp": [
+      "org.eclipse.jetty:jetty-servlet",
+      "org.eclipse.jetty:jetty-xml"
+    ],
     "org.eclipse.jetty:jetty-websocket": [
       "org.eclipse.jetty:jetty-http",
       "org.eclipse.jetty:jetty-io",
+      "org.eclipse.jetty:jetty-util"
+    ],
+    "org.eclipse.jetty:jetty-xml": [
       "org.eclipse.jetty:jetty-util"
     ],
     "org.mockito:mockito-core": [
@@ -381,6 +408,10 @@
       "Jama.examples",
       "Jama.test",
       "Jama.util"
+    ],
+    "javax.servlet:servlet-api": [
+      "javax.servlet",
+      "javax.servlet.http"
     ],
     "joda-time:joda-time": [
       "org.joda.time",
@@ -509,16 +540,13 @@
       "org.checkerframework.dataflow.qual",
       "org.checkerframework.framework.qual"
     ],
-    "org.eclipse.jetty.orbit:javax.servlet": [
-      "javax.servlet",
-      "javax.servlet.http"
-    ],
     "org.eclipse.jetty:jetty-continuation": [
       "org.eclipse.jetty.continuation"
     ],
     "org.eclipse.jetty:jetty-http": [
       "org.eclipse.jetty.http",
       "org.eclipse.jetty.http.gzip",
+      "org.eclipse.jetty.http.security",
       "org.eclipse.jetty.http.ssl"
     ],
     "org.eclipse.jetty:jetty-io": [
@@ -552,15 +580,19 @@
       "org.eclipse.jetty.util.ajax",
       "org.eclipse.jetty.util.component",
       "org.eclipse.jetty.util.log",
-      "org.eclipse.jetty.util.preventers",
       "org.eclipse.jetty.util.resource",
       "org.eclipse.jetty.util.security",
-      "org.eclipse.jetty.util.ssl",
       "org.eclipse.jetty.util.statistic",
       "org.eclipse.jetty.util.thread"
     ],
+    "org.eclipse.jetty:jetty-webapp": [
+      "org.eclipse.jetty.webapp"
+    ],
     "org.eclipse.jetty:jetty-websocket": [
       "org.eclipse.jetty.websocket"
+    ],
+    "org.eclipse.jetty:jetty-xml": [
+      "org.eclipse.jetty.xml"
     ],
     "org.hamcrest:hamcrest-core": [
       "org.hamcrest",
@@ -662,13 +694,13 @@
       "com.h2database:h2",
       "com.nhaarman:mockito-kotlin",
       "gov.nist.math:jama",
+      "javax.servlet:servlet-api",
       "joda-time:joda-time",
       "junit:junit",
       "mysql:mysql-connector-java",
       "net.bytebuddy:byte-buddy",
       "net.bytebuddy:byte-buddy-agent",
       "org.checkerframework:checker-qual",
-      "org.eclipse.jetty.orbit:javax.servlet",
       "org.eclipse.jetty:jetty-continuation",
       "org.eclipse.jetty:jetty-http",
       "org.eclipse.jetty:jetty-io",
@@ -676,7 +708,9 @@
       "org.eclipse.jetty:jetty-server",
       "org.eclipse.jetty:jetty-servlet",
       "org.eclipse.jetty:jetty-util",
+      "org.eclipse.jetty:jetty-webapp",
       "org.eclipse.jetty:jetty-websocket",
+      "org.eclipse.jetty:jetty-xml",
       "org.hamcrest:hamcrest-core",
       "org.mockito:mockito-core",
       "org.objenesis:objenesis",
