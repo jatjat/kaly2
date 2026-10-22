@@ -65,14 +65,14 @@ jobs:
           other_tag=$([ "$other_ref" = master ] && echo master || echo "branch-$slug")
           printf '%s\n' "website=$website" "kaly2=$kaly2" "slug=$slug" "this=$this" "other=$other" "other_tag=$other_tag" >> "$GITHUB_OUTPUT"
 
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@v7
         with:
           repository: jatjat/joelathiessen.ca
           ref: ${{ steps.refs.outputs.website }}
           path: website
           persist-credentials: false
 
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@v7
         with:
           repository: jatjat/kaly2
           ref: ${{ steps.refs.outputs.kaly2 }}
@@ -80,7 +80,7 @@ jobs:
           persist-credentials: false
 
       - id: auth
-        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        uses: google-github-actions/auth@v3
         with:
           workload_identity_provider: projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/github/providers/github
           service_account: ci-build@${{ secrets.GCP_PROJECT }}.iam.gserviceaccount.com
@@ -128,7 +128,7 @@ jobs:
             echo "d1b7af584e7a526be2a50353d3a88ad1e6a858913745f2fc1d1aa450b09003dd  kaly2/lib/exposed-0.8.6.jar" | sha256sum -c -
           fi
 
-      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - uses: docker/setup-buildx-action@v4
         if: steps.reuse.outputs.build_website == 'true'
         with:
           # The runner is thrown away anyway; skips ~15 s of teardown
@@ -137,7 +137,7 @@ jobs:
       # Layers are cached in GitHub's cache, so packages only reinstall when lockfiles change
       - name: Build the website image
         if: steps.reuse.outputs.build_website == 'true'
-        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        uses: docker/build-push-action@v7
         with:
           context: website
           tags: website:local
@@ -148,7 +148,7 @@ jobs:
       # Saved again only when kaly2's dependencies or Bazel settings change
       - name: Restore Bazel's tools
         if: steps.reuse.outputs.build_kaly2 == 'true'
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cache/bazelisk
@@ -158,7 +158,7 @@ jobs:
       # The last run's outputs, so only changed code recompiles
       - name: Restore Bazel's build outputs
         if: steps.reuse.outputs.build_kaly2 == 'true'
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        uses: actions/cache@v6
         with:
           path: ~/.cache/bazel-outputs
           key: bazel-outputs-${{ github.sha }}
@@ -235,7 +235,7 @@ jobs:
         if: github.ref != 'refs/heads/master' && github.event_name == 'push'
         run: echo "installed=$(command -v gcloud > /dev/null && echo true || echo false)" >> "$GITHUB_OUTPUT"
 
-      - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
+      - uses: google-github-actions/setup-gcloud@v3
         if: github.ref != 'refs/heads/master' && github.event_name == 'push'
         with:
           skip_install: ${{ steps.gcloud.outputs.installed == 'true' }}
@@ -282,14 +282,14 @@ jobs:
       SITE_URL: https://website-${{ secrets.GCP_PROJECT_NUMBER }}.us-central1.run.app
     steps:
       # For the end-to-end test script
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@v7
         with:
           repository: jatjat/joelathiessen.ca
           ref: master
           path: website
           persist-credentials: false
 
-      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+      - uses: google-github-actions/auth@v3
         with:
           workload_identity_provider: projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/github/providers/github
           service_account: ci-deploy-prod@${{ secrets.GCP_PROJECT }}.iam.gserviceaccount.com
@@ -298,7 +298,7 @@ jobs:
         id: gcloud
         run: echo "installed=$(command -v gcloud > /dev/null && echo true || echo false)" >> "$GITHUB_OUTPUT"
 
-      - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
+      - uses: google-github-actions/setup-gcloud@v3
         with:
           skip_install: ${{ steps.gcloud.outputs.installed == 'true' }}
 
@@ -326,12 +326,12 @@ jobs:
     if: github.event_name == 'delete' && github.event.ref_type == 'branch'
     runs-on: ubuntu-24.04
     steps:
-      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+      - uses: google-github-actions/auth@v3
         with:
           workload_identity_provider: projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/github/providers/github
           service_account: ci-build@${{ secrets.GCP_PROJECT }}.iam.gserviceaccount.com
 
-      - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
+      - uses: google-github-actions/setup-gcloud@v3
 
       - name: Remove the deleted branch's preview
         env:
