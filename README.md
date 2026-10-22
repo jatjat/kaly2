@@ -27,8 +27,8 @@ Builds use [Bazel](https://bazel.build) through [Bazelisk](https://github.com/ba
 
 Exposed 0.8.6 was only published on Bintray, which shut down in 2021, so first fetch it from the private Maven repo:
 ```
-curl -fsS -H "Authorization: Bearer $(gcloud auth print-access-token)" -o lib/exposed-0.8.6.jar \
-  https://us-central1-maven.pkg.dev/<project>/legacy-maven/org/jetbrains/exposed/exposed/0.8.6/exposed-0.8.6.jar
+gcloud artifacts files download org/jetbrains/exposed/exposed/0.8.6/exposed-0.8.6.jar --repository legacy-maven \
+  --location us-central1 --project <project> --destination lib --local-filename exposed-0.8.6.jar
 ```
 
 To run as a webserver:

@@ -35,13 +35,11 @@ jobs:
       website: ${{ steps.refs.outputs.website }}
       slug: ${{ steps.refs.outputs.slug }}
     steps:
-      # Creating the cluster takes ~40 s, so it boots while the image builds
+      # Creating the cluster takes ~40 s, so it boots while the image builds. GitHub's
+      # machines come with kind.
       - name: Start a throwaway Kubernetes cluster in the background
         run: |
-          curl -fsSLo "$RUNNER_TEMP/kind" https://github.com/kubernetes-sigs/kind/releases/download/v0.33.0/kind-linux-amd64
-          echo "aee6151561422756b764a4ae28e7f44cda5af5a9eead3cc9985112b1de8d8e0d  $RUNNER_TEMP/kind" | sha256sum -c -
-          chmod +x "$RUNNER_TEMP/kind" && echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
-          setsid nohup bash -c "'$RUNNER_TEMP/kind' create cluster --name ci --wait 180s; echo \$? > '$RUNNER_TEMP/kind.exit'" \
+          setsid nohup bash -c "kind create cluster --name ci --wait 180s; echo \$? > '$RUNNER_TEMP/kind.exit'" \
             > "$RUNNER_TEMP/kind.log" 2>&1 < /dev/null &
           # The end-to-end test runs in this image
           setsid nohup docker pull -q node:22.20.0-alpine > /dev/null 2>&1 < /dev/null &
@@ -100,7 +98,7 @@ jobs:
             build_other=false
             # Load it into the cluster as soon as the cluster is up, while this repo's image builds
             setsid nohup bash -c "until [ -f '$RUNNER_TEMP/kind.exit' ]; do sleep 1; done; \
-              '$RUNNER_TEMP/kind' load docker-image '$OTHER:local' --name ci; echo \$? > '$RUNNER_TEMP/other.loaded'" \
+              kind load docker-image '$OTHER:local' --name ci; echo \$? > '$RUNNER_TEMP/other.loaded'" \
               > "$RUNNER_TEMP/other-load.log" 2>&1 < /dev/null &
           else
             echo "No $OTHER:$OTHER_TAG in the registry yet, so it gets built from source"
@@ -112,19 +110,18 @@ jobs:
             echo "build_$app=$([ "$app" = "$THIS" ] || [ "$build_other" = true ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
           done
 
+      # gcloud comes with GitHub's machines and uses the sign-in above
       - name: Fetch files kept out of git
         env:
-          TOKEN: ${{ steps.auth.outputs.access_token }}
           BUILD_WEBSITE: ${{ steps.reuse.outputs.build_website }}
           BUILD_KALY2: ${{ steps.reuse.outputs.build_kaly2 }}
         run: |
           if [ "$BUILD_WEBSITE" = true ]; then
-            curl -fsS -H "Authorization: Bearer $TOKEN" -o website/public/res.pdf \
-              "https://storage.googleapis.com/storage/v1/b/$BUCKET/o/public%2Fres.pdf?alt=media"
+            gcloud storage cp "gs://$BUCKET/public/res.pdf" website/public/
           fi
           if [ "$BUILD_KALY2" = true ]; then
-            curl -fsS -H "Authorization: Bearer $TOKEN" -o kaly2/lib/exposed-0.8.6.jar \
-              "https://us-central1-maven.pkg.dev/$PROJECT/legacy-maven/org/jetbrains/exposed/exposed/0.8.6/exposed-0.8.6.jar"
+            gcloud artifacts files download org/jetbrains/exposed/exposed/0.8.6/exposed-0.8.6.jar --repository legacy-maven \
+              --location us-central1 --project "$PROJECT" --destination kaly2/lib --local-filename exposed-0.8.6.jar
             echo "d1b7af584e7a526be2a50353d3a88ad1e6a858913745f2fc1d1aa450b09003dd  kaly2/lib/exposed-0.8.6.jar" | sha256sum -c -
           fi
 
