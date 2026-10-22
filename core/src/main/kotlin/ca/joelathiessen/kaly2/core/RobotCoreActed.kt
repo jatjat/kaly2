@@ -17,6 +17,7 @@ import lejos.robotics.geometry.Point
 import lejos.robotics.navigation.Pose
 import java.util.ArrayList
 import java.util.Random
+import ca.joelathiessen.kaly2.core.planner.LapGoals
 
 data class RobotCoreActedResults(
     val timestamp: Long,
@@ -38,7 +39,8 @@ class RobotCoreActed(
     private val slam: Slam,
     private val featureDetector: FeatureDetector,
     private val map: GlobalMap,
-    private val robotStorage: RobotStorage
+    private val robotStorage: RobotStorage,
+    private val lapGoals: LapGoals? = null
 ) {
 
     private val REQ_MAN_INTERVAL = 5
@@ -48,6 +50,7 @@ class RobotCoreActed(
     private val random = Random(0)
     private var numItrs = 0L
     private var currentPlanItrs = 0
+    private var lapsStarted = false
 
     var features: List<Feature> = ArrayList()
         private set
@@ -119,7 +122,13 @@ class RobotCoreActed(
             currentPlanItrs = 0
         }
 
-        if ((numItrs % UPDATE_PLAN_END_POSE_INTERVAL) == 0L) {
+        if (lapGoals != null) {
+            // Drive laps: plan to the next point once the current one is reached
+            if (lapGoals.next(avgPoseAfter) != null || !lapsStarted) {
+                lapsStarted = true
+                planTo(lapGoals.goal)
+            }
+        } else if ((numItrs % UPDATE_PLAN_END_POSE_INTERVAL) == 0L) {
             val randomEnd = RobotPose(0, 0f, (random.nextFloat() - 0.5f) * MAX_PLAN_DIST,
                 (random.nextFloat() - 0.5f) * MAX_PLAN_DIST, 0f)
             planTo(randomEnd)

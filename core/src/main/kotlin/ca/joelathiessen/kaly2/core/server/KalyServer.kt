@@ -14,6 +14,7 @@ import org.eclipse.jetty.util.log.Log
 import org.eclipse.jetty.util.log.StdErrLog
 import java.net.InetAddress
 import kotlin.concurrent.thread
+import ca.joelathiessen.kaly2.core.odometry.RobotPose
 
 class KalyServer(
     mapImage: AndroidJVMImage? = null,
@@ -121,6 +122,24 @@ class KalyServer(
         val LCL_PLN_GRID_STEP = 5f
         val LCL_PLN_GRID_SIZE = 2 * MAX_SENSOR_RANGE
 
+        // The simulated robot drives laps of a circle filling the middle of its room, clear of the walls
+        // and boxes, so its odometry drifts off in spirals while its SLAM path stays on the circle. It
+        // starts on the circle facing along it, not at the map image's red start point, so it doesn't
+        // first drive out to the circle. The EV3 explores with random goals.
+        val LAP_CENTER_X = 178f
+        val LAP_CENTER_Y = 188f
+        val LAP_RADIUS = 95f
+        val LAP_START_ANGLE = Math.PI
+        val LAP_POINTS = (1..16).map {
+            val angle = LAP_START_ANGLE + 2 * Math.PI * it / 16
+            RobotPose(0, 0f, LAP_CENTER_X + LAP_RADIUS * Math.cos(angle).toFloat(),
+                    LAP_CENTER_Y + LAP_RADIUS * Math.sin(angle).toFloat(), 0f)
+        }
+        val LAP_REACHED_DIST = 15f
+        // val START_POSE: RobotPose? = null
+        val START_POSE = RobotPose(0, 0f, LAP_CENTER_X + LAP_RADIUS * Math.cos(LAP_START_ANGLE).toFloat(),
+                LAP_CENTER_Y + LAP_RADIUS * Math.sin(LAP_START_ANGLE).toFloat(), (LAP_START_ANGLE + Math.PI / 2).toFloat())
+
         val MAP_REMOVE_INVALID_OBS_INTERVAL = 10
 
         // One simulated step per 40 ms (about 25 a second, like the old demo's 27) instead of one
@@ -148,7 +167,8 @@ class KalyServer(
                 DEFAULT_ANG_VARIANCE, IDENTITY_VARIANCE, image, MAX_SENSOR_RANGE, SENSOR_DIST_STDEV,
                 SENSOR_ANG_STDEV, LINE_THRESHOLD, CHECK_WITHIN_ANGLE, MAX_RATIO, LCL_PLN_ROT_STEP, LCL_PLN_DIST_STEP,
                 LCL_PLN_GRID_STEP, LCL_PLN_GRID_SIZE, OBS_SIZE, SEARCH_DIST, GBL_PTH_PLN_STEP_DIST, GBL_PTH_PLN_ITRS,
-                MAP_REMOVE_INVALID_OBS_INTERVAL, MIN_MES_TIME, SAMPLE_WAIT_TIME, NN_ASSOC_THRESHOLD, persistentStorage)
+                MAP_REMOVE_INVALID_OBS_INTERVAL, MIN_MES_TIME, SAMPLE_WAIT_TIME, NN_ASSOC_THRESHOLD, persistentStorage,
+                LAP_POINTS, LAP_REACHED_DIST, START_POSE)
     }
 
     fun configureRealFactory(robotConnectionCreator: SerialConnectionCreator, sensorConnectionCreator: SerialConnectionCreator): RealRobotSessionFactory {

@@ -38,6 +38,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.collections.ArrayList
 import kotlin.concurrent.thread
+import ca.joelathiessen.kaly2.core.planner.LapGoals
 
 class SlamSettings(val numParticles: Int, val sensorAngVar: Float, val sensorDistVar: Float) : ItrActorMsg()
 
@@ -56,7 +57,8 @@ class RobotSession(
     private val robotStorage: RobotStorage,
     slam: FastSLAM,
     localPlanner: LocalPlanner,
-    globalPathPlanner: GlobalPathPlanner
+    globalPathPlanner: GlobalPathPlanner,
+    lapGoals: LapGoals? = null
 ) {
 
     private val SUBCONC_INPUT_SIZE = 0
@@ -91,7 +93,7 @@ class RobotSession(
         val subConsc = SubconsciousActed(robotPilot, accurateOdo, localPlanner,
                 sensor, spinner, gblManeuvers, minSubcMeasTime, sampleWaitTime)
 
-        val robotCore = RobotCoreActed(initialGoal, accurateOdo, slam, featureDetector, map, robotStorage)
+        val robotCore = RobotCoreActed(initialGoal, accurateOdo, slam, featureDetector, map, robotStorage, lapGoals)
 
         val subConscActor = SubconsciousActor(subConsc, subconscInput, robotCoreInput)
         val plannerActor = PlannerActor(globalPathPlanner, globalPathPlannerInput, robotCoreInput)

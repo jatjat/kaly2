@@ -21,6 +21,7 @@ import ca.joelathiessen.util.image.Color
 import lejos.robotics.geometry.Point
 import org.joda.time.DateTime
 import java.util.Collections
+import ca.joelathiessen.kaly2.core.planner.LapGoals
 
 class SimRobotSessionFactory(
     private val odoAngStdDev: Float,
@@ -54,7 +55,10 @@ class SimRobotSessionFactory(
     private val minSubcMeasTime: Long,
     private val sampleWaitTime: Long,
     private val nnAsocThreshold: Float,
-    private val persistentStorage: PersistentStorage
+    private val persistentStorage: PersistentStorage,
+    private val lapPoints: List<RobotPose>,
+    private val lapReachedDist: Float,
+    private val startPose: RobotPose? = null
 ) : RobotSessionFactory {
     private val ROBOT_NAME = "simRobot"
     private val MAP_NAME = "defaultMap"
@@ -76,11 +80,13 @@ class SimRobotSessionFactory(
             val initalGoalPose = RobotPose(0L, 0f, 0f, 0f, 0f)
 
             val mapData = extractDataFromMapImage(mapImage)
+            // The start can be set instead of coming from the map image's red pixel
+            val start = startPose ?: mapData.startPose
 
             val obstacles = MapTree()
             mapData.obstaclePoints.forEach { obstacles.add(it) }
 
-            val simPilot = SimulatedPilot(odoAngStdDev, odoDistStdDev, stepDist, mapData.startPose, maxRot, maxSpeed)
+            val simPilot = SimulatedPilot(odoAngStdDev, odoDistStdDev, stepDist, start, maxRot, maxSpeed)
             val simSpinner = SimSpinner(sensorStartAng, sensorEndAng, sensorAngIncr)
             val simSensor = SimSensor(mapData.obstacleGrid, mapImage.width, mapImage.height,
                     maxSensorRange, sensorDistStdDev, sensorAngStdDev, simSpinner, simPilot)
@@ -91,7 +97,7 @@ class SimRobotSessionFactory(
             val dataAssoc = NNDataAssociator(nnAsocThreshold)
             val partResamp = FastUnbiasedResampler()
 
-            val slam = FastSLAM(mapData.startPose, motionModel, dataAssoc, partResamp, defaultNumParticles,
+            val slam = FastSLAM(start, motionModel, dataAssoc, partResamp, defaultNumParticles,
                     defaultDistVariance, defaultAngVariance, defaultIdentiryVariance)
 
             val localPlanner = LocalPlanner(0f, localPlannerRotStep, localPlannerDistStep, localPlannerGridStep,
@@ -99,13 +105,14 @@ class SimRobotSessionFactory(
 
             val factory = LinearPathSegmentRootFactory()
             val globalPathPlanner = GlobalPathPlanner(factory, obstacles, obstacleSize, globalPlannerSearchDist, globalPlannerStepDist,
-                    mapData.startPose, initalGoalPose, globalPlannerItrs)
+                    start, initalGoalPose, globalPlannerItrs)
 
             val map = GlobalMap(obstacleSize, obstacleSize, mapRemoveInvalidObsInterval)
 
             return RobotSessionFactoryResult.LocalRobotSession(RobotSession(robotStorage.sid,
-                    sessionStoppedWithNoSubscribersHandler, mapData.startPose, initalGoalPose, simPilot, simSpinner,
-                    simSensor, featureDetector, minSubcMeasTime, sampleWaitTime, map, robotStorage, slam, localPlanner, globalPathPlanner))
+                    sessionStoppedWithNoSubscribersHandler, start, initalGoalPose, simPilot, simSpinner,
+                    simSensor, featureDetector, minSubcMeasTime, sampleWaitTime, map, robotStorage, slam, localPlanner, globalPathPlanner,
+                    LapGoals(lapPoints, lapReachedDist)))
         }
     }
 
