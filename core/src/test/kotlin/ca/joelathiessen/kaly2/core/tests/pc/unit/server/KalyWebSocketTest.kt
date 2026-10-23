@@ -3,6 +3,10 @@ package ca.joelathiessen.kaly2.core.tests.pc.unit.server
 import ca.joelathiessen.kaly2.core.server.KalyWebSocket
 import ca.joelathiessen.kaly2.core.server.RobotSession
 import ca.joelathiessen.kaly2.core.server.RobotSessionManager
+import ca.joelathiessen.kaly2.core.server.messages.RTMsg
+import ca.joelathiessen.kaly2.core.server.messages.RTPose
+import ca.joelathiessen.kaly2.core.server.messages.RTSlamInfoMsg
+import com.google.gson.GsonBuilder
 import com.google.gson.JsonParser
 import com.nhaarman.mockito_kotlin.any
 import com.nhaarman.mockito_kotlin.argumentCaptor
@@ -11,6 +15,7 @@ import com.nhaarman.mockito_kotlin.verify
 import com.nhaarman.mockito_kotlin.whenever
 import org.eclipse.jetty.websocket.WebSocket
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.mockito.Mockito.atLeastOnce
 
@@ -41,5 +46,17 @@ class KalyWebSocketTest {
         assertEquals(true, reply["msg"].asJsonObject["isRunning"].asBoolean)
         // That page only draws the robot once the reply says it hasn't just reset
         assertEquals(false, reply["msg"].asJsonObject["hasJustReset"]?.asBoolean)
+    }
+
+    // The February 2018 page reads the simulation's landmarks from every step, and draws nothing
+    // if they're missing
+    @Test
+    fun stepsHaveTheLandmarksTheFebruary2018PageReads() {
+        val pose = RTPose(1f, 2f, 0f)
+        val step = RTSlamInfoMsg(7L, 1L, 0L, ArrayList(), ArrayList(), pose, pose, pose)
+
+        val sent = JsonParser().parse(GsonBuilder().create().toJson(RTMsg(step))).asJsonObject
+
+        assertTrue(sent["msg"].asJsonObject["trueLandmarks"]?.isJsonArray ?: false)
     }
 }
