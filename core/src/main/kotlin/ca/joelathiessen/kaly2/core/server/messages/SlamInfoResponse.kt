@@ -15,7 +15,10 @@ class RTSlamInfoMsg(
 
     val bestPose: RTPose,
     val odoPose: RTPose,
-    val truePose: RTPose?
+    val truePose: RTPose?,
+    // The February 2018 page reads these, and draws nothing without them. This simulation has no
+    // landmarks. Remove once the 2018-19 page is on the live site
+    val trueLandmarks: List<RTLandmark> = emptyList()
 ) : RTRobotMsg {
     @Expose(serialize = false, deserialize = false)
     override var MSG_TYPE = "slamInfo"
