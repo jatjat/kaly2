@@ -18,6 +18,11 @@ spec:
           image: kaly2:local
           ports:
             - containerPort: 9000
+          # The same as kaly2 gets on Cloud Run
+          resources:
+            limits:
+              cpu: "2"
+              memory: 1Gi
           readinessProbe:
             tcpSocket:
               port: 9000
