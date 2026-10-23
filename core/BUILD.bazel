@@ -76,21 +76,26 @@ pkg_tar(
 
 oci_image(
     name = "image",
-    base = "@eclipse_temurin_8_jre_linux_amd64",
+    # base = "@eclipse_temurin_8_jre_linux_amd64",
+    base = "@eclipse_temurin_25_jre_linux_amd64",
     cmd = [
         "java",
-        "-XX:+UseConcMarkSweepGC",
-        "-XX:CMSIncrementalSafetyFactor=50",
-        "-XX:+UseParNewGC",
-        "-XX:+CMSConcurrentMTEnabled",
-        "-XX:ConcGCThreads=2",
-        "-XX:ParallelGCThreads=2",
-        "-XX:GCTimeRatio=90",
-        "-XX:MaxGCPauseMillis=1",
-        "-XX:GCPauseIntervalMillis=1000",
-        # With Cloud Run's 1 GiB, Java starts with a 16 MB heap and the settings above keep it
-        # that small, so collecting garbage takes about half of kaly2's CPU. 256 MB is the most
-        # Java would allow itself anyway
+        # Java 8's CMS collector, which Java 14 removed. The pause settings were tuned for it
+        # "-XX:+UseConcMarkSweepGC",
+        # "-XX:CMSIncrementalSafetyFactor=50",
+        # "-XX:+UseParNewGC",
+        # "-XX:+CMSConcurrentMTEnabled",
+        # "-XX:ConcGCThreads=2",
+        # "-XX:ParallelGCThreads=2",
+        # "-XX:GCTimeRatio=90",
+        # "-XX:MaxGCPauseMillis=1",
+        # "-XX:GCPauseIntervalMillis=1000",
+        # Of Java 25's collectors, Parallel ran the demo fastest on Cloud Run's 2 CPUs: about
+        # 39 steps a second once warmed up, against 37 for Serial (its default there) and 27 for ZGC
+        "-XX:+UseParallelGC",
+        # With Cloud Run's 1 GiB, Java starts with a 16 MB heap. On Java 8 with the settings
+        # above it stayed that small, and collecting garbage took about half of kaly2's CPU.
+        # 256 MB is the most Java would allow itself anyway
         "-Xms256m",
         "-jar",
         "kaly2.jar",

@@ -65,3 +65,13 @@ oci.pull(
     tag = "8-jre-alpine",
 )
 use_repo(oci, "eclipse_temurin_8_jre", "eclipse_temurin_8_jre_linux_amd64")
+
+# Java 25 (long-term support) warms up faster and collects garbage with less CPU
+oci.pull(
+    name = "eclipse_temurin_25_jre",
+    digest = "sha256:b7528962e65d43064d8a8b67ba175367896bc948363ea2d3fcd7f10d34e1f048",
+    image = "docker.io/library/eclipse-temurin",
+    platforms = ["linux/amd64"],
+    tag = "25-jre-alpine",
+)
+use_repo(oci, "eclipse_temurin_25_jre", "eclipse_temurin_25_jre_linux_amd64")
