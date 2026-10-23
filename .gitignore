@@ -1,8 +1,16 @@
-build/
-out/
+*.iml
 .gradle
-.idea
-out/
+/local.properties
+/.idea/workspace.xml
+/.idea/libraries
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+/core/build
+/core/out
+/ev3/build
+/ev3/out
 /bazel-*
-# Fetched from the private Maven repo, see BUILD.bazel
-/lib/exposed-0.8.6.jar
+# Fetched from the private Maven repo, see core/BUILD.bazel
+/core/lib/exposed-0.8.6.jar

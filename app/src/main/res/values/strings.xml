@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name"></string>
+    <string name="title_home">Home</string>
+    <string name="title_dashboard">Dashboard</string>
+    <string name="title_notifications">Notifications</string>
+    <string name="title_real_position">Current best position estimate: (%1$.2f, %2$.2f, %3$.2f)</string>
+    <string name="bluetooth_robot_name">EV3</string>
+    <string name="bluetooth_robot_pin">1234</string>
+    <string name="bluetooth_sensor_name">HC05</string>
+    <string name="bluetooth_sensor_pin">1234</string>
+</resources>

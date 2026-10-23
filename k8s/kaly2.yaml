@@ -18,6 +18,15 @@ spec:
           image: kaly2:local
           ports:
             - containerPort: 9000
+          # The same as kaly2 gets on Cloud Run
+          resources:
+            limits:
+              cpu: "4"
+              memory: 2Gi
+            # GitHub's machines have 4 CPUs, some of them taken by the cluster itself
+            requests:
+              cpu: "1"
+              memory: 2Gi
           readinessProbe:
             tcpSocket:
               port: 9000

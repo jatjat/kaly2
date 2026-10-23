@@ -1,0 +1,29 @@
+language: android
+
+jdk:
+  - oraclejdk8
+
+script:
+  - ./gradlew check
+
+android:
+  components:
+    - build-tools-27.0.3
+    - android-26
+
+    - extra-google-google_play_services
+    - extra-google-m2repository
+    - extra-android-m2repository
+    - addon-google_apis-google-26
+
+before_cache:
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+cache:
+  directories:
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/
+
+before_install:
+  - yes | sdkmanager "platforms;android-27"

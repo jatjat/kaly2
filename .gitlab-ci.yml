@@ -1,0 +1,87 @@
+services:
+  - docker:dind
+
+stages:
+  - build
+  - release
+  - staging
+  - production
+
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_HOST: "tcp://localhost:2375"
+
+before_script:
+  - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
+
+build:
+  stage: build
+  image: docker:stable
+  script:
+    - docker build --pull -t $CI_REGISTRY_IMAGE:$CI_BUILD_REF core --cache-from $CI_REGISTRY_IMAGE:latest
+    - docker push $CI_REGISTRY_IMAGE:$CI_BUILD_REF
+  except:
+    - tags
+
+release-staging:
+  stage: release
+  image: docker:stable
+  script:
+    - docker pull $CI_REGISTRY_IMAGE:$CI_BUILD_REF
+    - docker tag $CI_REGISTRY_IMAGE:$CI_BUILD_REF $CI_REGISTRY_IMAGE:$CI_BUILD_REF_NAME
+    - docker push $CI_REGISTRY_IMAGE:$CI_BUILD_REF_NAME
+  only:
+    - dev
+
+release-master:
+  stage: release
+  image: docker:stable
+  script:
+    - docker pull $CI_REGISTRY_IMAGE:$CI_BUILD_REF
+    - docker tag $CI_REGISTRY_IMAGE:$CI_BUILD_REF $CI_REGISTRY_IMAGE:stable
+    - docker push $CI_REGISTRY_IMAGE:stable
+  only:
+    - master
+
+.common-deploy-script: &common-deploy-script
+  script:
+    - mkdir -p /etc/deploy/
+    - echo ${KUBE_CONFIG_CONTENTS} | base64 -d > /etc/deploy/config
+    - kubectl config use-context deploy
+    - helm init --client-only
+    - >
+      helm upgrade kaly2 ./helm-chart/kaly2
+      --install
+      --force
+      --wait
+      --set image.repository=$CI_REGISTRY_IMAGE
+      --set image.tag=$CI_BUILD_REF
+      --set imageCredentials.username=gitlab-ci-token
+      --set imageCredentials.password=$CI_BUILD_TOKEN
+      --namespace=${NAMESPACE}
+
+deploy-staging:
+  stage: staging
+  image: registry.joelathiessen.ca/kaly2/kaly2/jbuild:stable
+  variables:
+    KUBECONFIG: /etc/deploy/config
+    NAMESPACE: staging
+  <<: *common-deploy-script
+  environment:
+    name: staging
+    url: https://staging.joelathiessen.ca
+  only:
+    - dev
+
+deploy-production:
+  stage: production
+  image: registry.joelathiessen.ca/kaly2/kaly2/jbuild:stable
+  variables:
+    KUBECONFIG: /etc/deploy/config
+    NAMESPACE: prod
+  <<: *common-deploy-script
+  environment:
+    name: production
+    url: https://prod.joelathiessen.ca
+  only:
+    - master
