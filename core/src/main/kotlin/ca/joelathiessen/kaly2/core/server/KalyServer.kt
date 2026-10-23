@@ -142,10 +142,10 @@ class KalyServer(
 
         val MAP_REMOVE_INVALID_OBS_INTERVAL = 10
 
-        // One simulated step per 40 ms (about 25 a second, like the old demo's 27) instead of one
-        // per 160 ms like the EV3's sensor, so the web demo moves smoothly
+        // At most one simulated step per 25 ms (up to 40 a second, faster than the old demo's 30)
+        // instead of one per 160 ms like the EV3's sensor, so the web demo moves smoothly
         // val MIN_MES_TIME = 160L
-        val MIN_MES_TIME = 40L
+        val MIN_MES_TIME = 25L
         // The simulated sensor needn't wait between readings like the EV3's, so a step takes
         // about MIN_MES_TIME instead of 4 s
         // val SAMPLE_WAIT_TIME = 10L
