@@ -76,6 +76,15 @@ class KalyWebSocket(private val robotSessionManager: RobotSessionManager) : WebS
             }
             RobotSessionSettingsRequest.MSG_TYPE_NAME -> {
                 val settings = gson.fromJson<RobotSessionSettingsRequest>(msg)
+                // The February 2018 page starts a robot without subscribing to one first.
+                // Remove once the 2018-19 page is on the live site
+                if (session == null) {
+                    val robotSessionResult = robotSessionManager.getHandler(null)
+                    if (robotSessionResult is RobotSessionManager.GetHandlerResult.RobotSessionResult) {
+                        robotSessionResult.session.subscribeToRTEvents(handleRTMessageCaller)
+                        session = robotSessionResult.session
+                    }
+                }
                 val running = session?.applyRobotSessionSettings(settings)
                 connection.sendMessage(gson.toJson(RTMsg(RobotSessionSettingsResponse(session?.sid, running ?: false))))
             }
