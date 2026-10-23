@@ -88,6 +88,10 @@ oci_image(
         "-XX:GCTimeRatio=90",
         "-XX:MaxGCPauseMillis=1",
         "-XX:GCPauseIntervalMillis=1000",
+        # With Cloud Run's 1 GiB, Java starts with a 16 MB heap and the settings above keep it
+        # that small, so collecting garbage takes about half of kaly2's CPU. 256 MB is the most
+        # Java would allow itself anyway
+        "-Xms256m",
         "-jar",
         "kaly2.jar",
     ],
