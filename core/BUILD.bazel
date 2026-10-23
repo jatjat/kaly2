@@ -93,9 +93,9 @@ oci_image(
         # Of Java 25's collectors, Parallel ran the demo fastest on Cloud Run's 2 CPUs: about
         # 39 steps a second once warmed up, against 37 for Serial (its default there) and 27 for ZGC
         "-XX:+UseParallelGC",
-        # With Cloud Run's 1 GiB, Java starts with a 16 MB heap. On Java 8 with the settings
-        # above it stayed that small, and collecting garbage took about half of kaly2's CPU.
-        # 256 MB is the most Java would allow itself anyway
+        # Java starts with a heap of 1/64 of the memory, 16 MB in 1 GiB. On Java 8 with the
+        # settings above it stayed that small, and collecting garbage took about half of
+        # kaly2's CPU
         "-Xms256m",
         "-jar",
         "kaly2.jar",
